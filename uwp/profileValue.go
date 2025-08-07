@@ -47,7 +47,7 @@ func Description(category, code string) map[string]string {
 		case "Y":
 			descriptionMap["en"] = "Code Y indicates no spaceport is present. The starport equivalent code, Class X, can also be used."
 		case "?":
-			descriptionMap["en"] = "-UNKNOWN-"
+			descriptionMap["en"] = `<<UNKNOWN>>`
 		}
 	}
 	//SIZE
@@ -90,7 +90,7 @@ func Description(category, code string) map[string]string {
 		case "F":
 			descriptionMap["en"] = fmt.Sprintf("Diameter: 23,200– 25,799km; %v; Maximum Super-Earth", gravity(15))
 		case "?":
-			descriptionMap["en"] = "-UNKNOWN-"
+			descriptionMap["en"] = `<<UNKNOWN>>`
 		}
 	}
 	if category == Atmo {
@@ -132,7 +132,7 @@ func Description(category, code string) map[string]string {
 		case "H":
 			descriptionMap["en"] = "Gas, Hydrogen; Pressure: 1,000+ bar; Survival Gear: Not; Notes: Survivable Gas Dwarf"
 		case "?":
-			descriptionMap["en"] = "-UNKNOWN-"
+			descriptionMap["en"] = `<<UNKNOWN>>`
 		}
 	}
 	if category == Hydr {
@@ -160,7 +160,7 @@ func Description(category, code string) map[string]string {
 		case "A":
 			descriptionMap["en"] = "Surface Cover: 96%–100%"
 		case "?":
-			descriptionMap["en"] = "-UNKNOWN-"
+			descriptionMap["en"] = `<<UNKNOWN>>`
 		}
 	}
 	if category == Pops {
@@ -172,7 +172,7 @@ func Description(category, code string) map[string]string {
 		case "2":
 			descriptionMap["en"] = "Population Range: 100 – 999"
 		case "3":
-			descriptionMap["en"] = "Population Range: 1,000 – 9999"
+			descriptionMap["en"] = "Population Range: 1,000 – 9,999"
 		case "4":
 			descriptionMap["en"] = "Population Range: 10,000 – 99,999"
 		case "5":
@@ -198,7 +198,7 @@ func Description(category, code string) map[string]string {
 		case "F":
 			descriptionMap["en"] = "Population Range: 1,000,000,000,000,000 – 9,999,999,999,999,999"
 		case "?":
-			descriptionMap["en"] = "-UNKNOWN-"
+			descriptionMap["en"] = `<<UNKNOWN>>`
 		}
 	}
 	if category == Govr {
@@ -266,7 +266,7 @@ func Description(category, code string) map[string]string {
 		case "X":
 			descriptionMap["en"] = "Drone Hierarchy (Droyne)"
 		case "?":
-			descriptionMap["en"] = "-UNKNOWN-"
+			descriptionMap["en"] = `<<UNKNOWN>>`
 		}
 	}
 	if category == Laws {
@@ -316,7 +316,7 @@ func Description(category, code string) map[string]string {
 		case "S":
 			descriptionMap["en"] = "Special / Variable situation"
 		case "?":
-			descriptionMap["en"] = "-UNKNOWN-"
+			descriptionMap["en"] = `<<UNKNOWN>>`
 		}
 	}
 	if category == TL {
@@ -364,7 +364,7 @@ func Description(category, code string) map[string]string {
 		case "L":
 			descriptionMap["en"] = "Comprehensible only as technological magic"
 		case "?":
-			descriptionMap["en"] = "-UNKNOWN-"
+			descriptionMap["en"] = `<<UNKNOWN>>`
 		}
 	}
 	descriptionMap["ru"] = descriptionMap["en"]
