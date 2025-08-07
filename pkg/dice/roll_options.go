@@ -1,76 +1,33 @@
 package dice
 
-import "fmt"
+import (
+	"math"
+)
 
-func (dp *Dicepool) Sum(code string, options ...RollOption) int {
-	sum := 0
-	maxEdge := 0
-	locked := false
-	if dp.locked || code == "" {
-		locked = true
-	}
-	switch locked {
-	case true:
-	case false:
-		rr := parseDiceCode(code)
-		dp.dices = make(map[int]dice)
-		for die := rr.diceNum; die > 0; die-- {
-			dp.dices[die] = dice{edges: rr.diceEdges, result: dp.roller.rand.Intn(rr.diceEdges) + 1}
-			if rr.diceEdges > maxEdge {
-				maxEdge = rr.diceEdges
-			}
-		}
-	}
-	rollOpts := defaultRollOptions()
-	for _, modify := range options {
-		modify(&rollOpts)
-	}
-	for _, d := range dp.dices {
-		if val, ok := rollOpts.treatMap[d.result]; ok {
-			d.result = val
-		}
-		sum += d.result + rollOpts.perDieMod
-	}
-	sum += rollOpts.totalDieMod
-	sum = bound(sum, rollOpts.lowerSumLimit, rollOpts.upperSumLimit)
-	return sum
-}
-
-func (dp *Dicepool) D66() string {
-	return fmt.Sprintf("%v%v", dp.Sum("d"), dp.Sum("D"))
-}
-
-func (dp *Dicepool) Flux() int {
-	return dp.Sum("1d6") - dp.Sum("1d6")
-}
-
-func (dp *Dicepool) FluxGood() int {
-	d1 := dp.Sum("1d6")
-	d2 := dp.Sum("1d6")
-	return max(d1, d2) - min(d1, d2)
-}
-
-func (dp *Dicepool) FluxBad() int {
-	d1 := dp.Sum("1d6")
-	d2 := dp.Sum("1d6")
-	return min(d1, d2) - max(d1, d2)
-}
+const (
+	FIRST_DICE = 0
+	LAST_DICE  = math.MaxInt
+)
 
 //OPTIONS
 
 type rollOptions struct {
-	treatMap      map[int]int
-	upperSumLimit int
-	lowerSumLimit int
-	perDieMod     int
-	totalDieMod   int
+	treatMap         map[int]int
+	numberedDiceMods map[int]int
+	upperSumLimit    int
+	lowerSumLimit    int
+	perDieMod        int
+	totalDieMod      int
+	firstDiceMod     int
+	secondDiceMod    int
 }
 
 func defaultRollOptions() rollOptions {
 	ro := rollOptions{}
 	ro.treatMap = make(map[int]int)
-	ro.upperSumLimit = 1000
-	ro.lowerSumLimit = -1000
+	ro.numberedDiceMods = make(map[int]int)
+	ro.upperSumLimit = math.MaxInt
+	ro.lowerSumLimit = math.MinInt
 	return ro
 }
 
@@ -85,6 +42,24 @@ func MaxLimit(max int) RollOption {
 func MinLimit(max int) RollOption {
 	return func(ro *rollOptions) {
 		ro.lowerSumLimit = max
+	}
+}
+
+func SingleDiceMod(diceNumber, mod int) RollOption {
+	return func(ro *rollOptions) {
+		ro.numberedDiceMods[diceNumber] = mod
+	}
+}
+
+func FirstDiceMod(mod int) RollOption {
+	return func(ro *rollOptions) {
+		ro.firstDiceMod = mod
+	}
+}
+
+func SecondDiceMod(mod int) RollOption {
+	return func(ro *rollOptions) {
+		ro.secondDiceMod = mod
 	}
 }
 
@@ -118,7 +93,7 @@ func DM_conditional(dmMap map[string]int, validConditions ...string) RollOption 
 	}
 }
 
-//utils
+// utils
 func bound(i, min, max int) int {
 	if i < min {
 		return min

@@ -7,6 +7,62 @@ import (
 	"strings"
 )
 
+func (dp *Dicepool) Sum(code string, options ...RollOption) int {
+	sum := 0
+	maxEdge := 0
+	locked := false
+	if dp.locked || code == "" {
+		locked = true
+	}
+	switch locked {
+	case true:
+	case false:
+		rr := parseDiceCode(code)
+		dp.dices = make(map[int]dice)
+		for die := rr.diceNum; die > 0; die-- {
+			dp.dices[die] = dice{edges: rr.diceEdges, result: dp.roller.rand.Intn(rr.diceEdges) + 1}
+			if rr.diceEdges > maxEdge {
+				maxEdge = rr.diceEdges
+			}
+		}
+	}
+	rollOpts := defaultRollOptions()
+	for _, modify := range options {
+		modify(&rollOpts)
+	}
+	lastDice := len(dp.dices) - 1
+	rollOpts.numberedDiceMods[lastDice] = rollOpts.numberedDiceMods[LAST_DICE]
+	for i, d := range dp.dices {
+		if val, ok := rollOpts.treatMap[d.result]; ok {
+			d.result = val
+		}
+		sum += d.result + rollOpts.perDieMod + rollOpts.numberedDiceMods[i]
+	}
+	sum += rollOpts.totalDieMod
+	sum = bound(sum, rollOpts.lowerSumLimit, rollOpts.upperSumLimit)
+	return sum
+}
+
+func (dp *Dicepool) D66() string {
+	return fmt.Sprintf("%v%v", dp.Sum("d"), dp.Sum("D"))
+}
+
+func (dp *Dicepool) Flux() int {
+	return dp.Sum("1d6") - dp.Sum("1d6")
+}
+
+func (dp *Dicepool) FluxGood() int {
+	d1 := dp.Sum("1d6")
+	d2 := dp.Sum("1d6")
+	return max(d1, d2) - min(d1, d2)
+}
+
+func (dp *Dicepool) FluxBad() int {
+	d1 := dp.Sum("1d6")
+	d2 := dp.Sum("1d6")
+	return min(d1, d2) - max(d1, d2)
+}
+
 func (dp *Dicepool) Check(code, goal string, rollOpts ...RollOption) bool {
 	sum := dp.Sum(code, rollOpts...)
 	goalValues := parseGoal(goal)
