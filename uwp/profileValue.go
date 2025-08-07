@@ -60,7 +60,7 @@ func Description(category, code string) map[string]string {
 		case "S":
 			descriptionMap["en"] = fmt.Sprintf("Diameter: 400–799km; %v; These small bodies are dwarf planets or significant moons", gravity(0))
 		case "1":
-			descriptionMap["en"] = fmt.Sprintf("Diameter: 800–2,399km; %v; Small planets which may also exist in asteroid or planetoid belts", gravity(1))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 800–2,399km; %v bar; Small planets which may also exist in asteroid or planetoid belts", gravity(1))
 		case "2":
 			descriptionMap["en"] = fmt.Sprintf("Diameter: 2,400-3,999km; %v; Example: Luna", gravity(2))
 		case "3":
@@ -76,7 +76,7 @@ func Description(category, code string) map[string]string {
 		case "8":
 			descriptionMap["en"] = fmt.Sprintf("Diameter: 12,000–13,599km; %v; Examples: Venus, Terra", gravity(8))
 		case "9":
-			descriptionMap["en"] = fmt.Sprintf("Diameter: 13,600–15,199km; %v; Super-Earth", gravity(9))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 13,600–15,199km; %v bar; Super-Earth", gravity(9))
 		case "A":
 			descriptionMap["en"] = fmt.Sprintf("Diameter: 15,200–16,799km; %v", gravity(10))
 		case "B":
@@ -96,41 +96,41 @@ func Description(category, code string) map[string]string {
 	if category == Atmo {
 		switch code {
 		case "0":
-			descriptionMap["en"] = "None; Pressure: 0.00–0.0009; Survival Gear: Vacc Suit; Examples: Mercury, Luna"
+			descriptionMap["en"] = "None; Pressure: 0.00–0.0009 bar; Survival Gear: Vacc Suit; Examples: Mercury, Luna"
 		case "1":
-			descriptionMap["en"] = "Trace; Pressure: 0.001–0.09; Survival Gear: Vacc Suit; Example: Mars"
+			descriptionMap["en"] = "Trace; Pressure: 0.001–0.09 bar; Survival Gear: Vacc Suit; Example: Mars"
 		case "2":
-			descriptionMap["en"] = "Very Thin, Tainted; Pressure: 0.1–0.42; Survival Gear: Respirator and Filter"
+			descriptionMap["en"] = "Very Thin, Tainted; Pressure: 0.1–0.42 bar; Survival Gear: Respirator and Filter"
 		case "3":
-			descriptionMap["en"] = "Very Thin; Pressure: 0.1–0.42; Survival Gear: Respirator"
+			descriptionMap["en"] = "Very Thin; Pressure: 0.1–0.42 bar; Survival Gear: Respirator"
 		case "4":
-			descriptionMap["en"] = "Thin, Tainted 0.43–0.70 0.27; Survival Gear: Filter"
+			descriptionMap["en"] = "Thin, Tainted 0.43–0.70 0.27 bar; Survival Gear: Filter"
 		case "5":
-			descriptionMap["en"] = "Thin; Pressure: 0.43–0.70; Survival Gear: None"
+			descriptionMap["en"] = "Thin; Pressure: 0.43–0.70 bar; Survival Gear: None"
 		case "6":
-			descriptionMap["en"] = "Standard; Pressure: 0.70–1.49; Survival Gear: None; Example: Terra"
+			descriptionMap["en"] = "Standard; Pressure: 0.70–1.49 bar; Survival Gear: None; Example: Terra"
 		case "7":
-			descriptionMap["en"] = "Standard, Tainted; Pressure: 0.70–1.49; Survival Gear: Filter"
+			descriptionMap["en"] = "Standard, Tainted; Pressure: 0.70–1.49 bar; Survival Gear: Filter"
 		case "8":
-			descriptionMap["en"] = "Dense; Pressure: 1.50–2.49; Survival Gear: None"
+			descriptionMap["en"] = "Dense; Pressure: 1.50–2.49 bar; Survival Gear: None"
 		case "9":
-			descriptionMap["en"] = "Dense, Tainted; Pressure: 1.50–2.49; Survival Gear: Filter"
+			descriptionMap["en"] = "Dense, Tainted; Pressure: 1.50–2.49 bar; Survival Gear: Filter"
 		case "A":
-			descriptionMap["en"] = "Exotic; Pressure: Varies; Survival Gear: Air Supply; Example: Titan"
+			descriptionMap["en"] = "Exotic; Pressure: Varies bar; Survival Gear: Air Supply; Example: Titan"
 		case "B":
-			descriptionMap["en"] = "Corrosive; Pressure: Varies; Survival Gear: Vacc Suit; Example: Venus"
+			descriptionMap["en"] = "Corrosive; Pressure: Varies bar; Survival Gear: Vacc Suit; Example: Venus"
 		case "C":
-			descriptionMap["en"] = "Insidious; Pressure: Varies; Survival Gear: Vacc Suit"
+			descriptionMap["en"] = "Insidious; Pressure: Varies bar; Survival Gear: Vacc Suit"
 		case "D":
-			descriptionMap["en"] = "Very Dense; Pressure: 2.50–10.0; Survival Gear: Varies by altitude"
+			descriptionMap["en"] = "Very Dense; Pressure: 2.50–10.0 bar; Survival Gear: Varies by altitude"
 		case "E":
-			descriptionMap["en"] = "Low; Pressure: 0.10–0.42; Survival Gear: Varies by altitude"
+			descriptionMap["en"] = "Low; Pressure: 0.10–0.42 bar; Survival Gear: Varies by altitude"
 		case "F":
-			descriptionMap["en"] = "Unusual; Pressure: Varies; Survival Gear: Varies"
+			descriptionMap["en"] = "Unusual; Pressure: Varies bar; Survival Gear: Varies"
 		case "G":
-			descriptionMap["en"] = "Gas, Helium; Pressure: 100+ HEV; Survival Gear: Suit; Notes: Dense helium-dominated gas"
+			descriptionMap["en"] = "Gas, Helium; Pressure: 100+ HEV bar; Survival Gear: Suit; Notes: Dense helium-dominated gas"
 		case "H":
-			descriptionMap["en"] = "Gas, Hydrogen; Pressure: 1,000+; Survival Gear: Not; Notes: Survivable Gas Dwarf"
+			descriptionMap["en"] = "Gas, Hydrogen; Pressure: 1,000+ bar; Survival Gear: Not; Notes: Survivable Gas Dwarf"
 		case "?":
 			descriptionMap["en"] = "-UNKNOWN-"
 		}
@@ -378,7 +378,7 @@ func Description(category, code string) map[string]string {
 func gravity(i int) string {
 	minG := (lowsizes[i] * 0.82) / 12742.0
 	maxG := (lowsizes[i+1] * 1.12) / 12742.0
-	return fmt.Sprintf("Gravity: %0.2fg-%0.2fg", minG, maxG)
+	return fmt.Sprintf("Gravity: %0.2f-%0.2fg", minG, maxG)
 	// return fmt.Sprintf("Average Gravity: %0.2fg", (minG+maxG)/2)
 }
 
