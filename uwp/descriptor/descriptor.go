@@ -79,3 +79,17 @@ func (ds *Descriptor) AddDescription(category, topic, description string) {
 	ds.Category[category].TopicMap[topic].Description["en"] = description
 	ds.Category[category].TopicMap[topic].Description["ru"] = description
 }
+
+func (ds *Descriptor) Get(category, code, language string) string {
+	if _, ok := ds.Category[category]; !ok {
+		return "<<REDACTED>>"
+	}
+	if _, ok := ds.Category[category].TopicMap[code]; !ok {
+		return "<<REDACTED>>"
+	}
+	if s, ok := ds.Category[category].TopicMap[code].Description[language]; !ok {
+		return "<<REDACTED>>"
+	} else {
+		return s
+	}
+}

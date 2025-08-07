@@ -54,41 +54,41 @@ func Description(category, code string) map[string]string {
 	if category == Size {
 		switch code {
 		case "0":
-			descriptionMap["en"] = fmt.Sprintf("0-400km; %v; One or more small bodies, an asteroid or planetoid belt", gravity(0))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 0-400km; %v; One or more small bodies, an asteroid or planetoid belt", gravity(0))
 		case "R":
 			descriptionMap["en"] = "This is a special code for planetary rings"
 		case "S":
-			descriptionMap["en"] = fmt.Sprintf("400–799km; %v; These small bodies are dwarf planets or significant moons", gravity(0))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 400–799km; %v; These small bodies are dwarf planets or significant moons", gravity(0))
 		case "1":
-			descriptionMap["en"] = fmt.Sprintf("800–2,399km; %v; Small planets which may also exist in asteroid or planetoid belts", gravity(1))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 800–2,399km; %v; Small planets which may also exist in asteroid or planetoid belts", gravity(1))
 		case "2":
-			descriptionMap["en"] = fmt.Sprintf("2,400-3,999km; %v; Example: Luna", gravity(2))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 2,400-3,999km; %v; Example: Luna", gravity(2))
 		case "3":
-			descriptionMap["en"] = fmt.Sprintf("4,000-5,599km; %v; Examples: Mercury, Ganymede, Titan", gravity(3))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 4,000-5,599km; %v; Examples: Mercury, Ganymede, Titan", gravity(3))
 		case "4":
-			descriptionMap["en"] = fmt.Sprintf("5,600–7,199km; %v; Example: Mars", gravity(4))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 5,600–7,199km; %v; Example: Mars", gravity(4))
 		case "5":
-			descriptionMap["en"] = fmt.Sprintf("7,200– 8,799km; %v", gravity(5))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 7,200– 8,799km; %v", gravity(5))
 		case "6":
-			descriptionMap["en"] = fmt.Sprintf("8,800–10,399km; %v", gravity(6))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 8,800–10,399km; %v", gravity(6))
 		case "7":
-			descriptionMap["en"] = fmt.Sprintf("10,400–11,999km; %v", gravity(7))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 10,400–11,999km; %v", gravity(7))
 		case "8":
-			descriptionMap["en"] = fmt.Sprintf("12,000–13,599km; %v; Examples: Venus, Terra", gravity(8))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 12,000–13,599km; %v; Examples: Venus, Terra", gravity(8))
 		case "9":
-			descriptionMap["en"] = fmt.Sprintf("13,600–15,199km; %v; Super-Earth", gravity(9))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 13,600–15,199km; %v; Super-Earth", gravity(9))
 		case "A":
-			descriptionMap["en"] = fmt.Sprintf("15,200–16,799km; %v", gravity(10))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 15,200–16,799km; %v", gravity(10))
 		case "B":
-			descriptionMap["en"] = fmt.Sprintf("16,800–18,399km; %v", gravity(11))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 16,800–18,399km; %v", gravity(11))
 		case "C":
-			descriptionMap["en"] = fmt.Sprintf("18,400–19,999km; %v", gravity(12))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 18,400–19,999km; %v", gravity(12))
 		case "D":
-			descriptionMap["en"] = fmt.Sprintf("20,000–21,599km; %v", gravity(13))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 20,000–21,599km; %v", gravity(13))
 		case "E":
-			descriptionMap["en"] = fmt.Sprintf("21,600–23,199km; %v", gravity(14))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 21,600–23,199km; %v", gravity(14))
 		case "F":
-			descriptionMap["en"] = fmt.Sprintf("23,200– 25,799km; %v; Maximum Super-Earth", gravity(15))
+			descriptionMap["en"] = fmt.Sprintf("Diameter: 23,200– 25,799km; %v; Maximum Super-Earth", gravity(15))
 		case "?":
 			descriptionMap["en"] = "-UNKNOWN-"
 		}
@@ -292,7 +292,7 @@ func Description(category, code string) map[string]string {
 		case "9":
 			descriptionMap["en"] = "Phobited: All weapons, including knives longer than 10cm, all armour; Active auditing of all financial transactions"
 		case "A":
-			descriptionMap["en"] = "All Weapons violations are treated as Serious crimes; Arduous permitting and zoning laws"
+			descriptionMap["en"] = "All Weapons phobited. Violations are treated as Serious crimes; Arduous permitting and zoning laws"
 		case "B":
 			descriptionMap["en"] = "Random sweeps for weapons violations; Continuous auditing of all financial transactions"
 		case "C":
@@ -378,7 +378,7 @@ func Description(category, code string) map[string]string {
 func gravity(i int) string {
 	minG := (lowsizes[i] * 0.82) / 12742.0
 	maxG := (lowsizes[i+1] * 1.12) / 12742.0
-	return fmt.Sprintf("%0.2fg-%0.2fg", minG, maxG)
+	return fmt.Sprintf("Gravity: %0.2fg-%0.2fg", minG, maxG)
 	// return fmt.Sprintf("Average Gravity: %0.2fg", (minG+maxG)/2)
 }
 
