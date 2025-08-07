@@ -1,7 +1,7 @@
 package uwp
 
 import (
-	"github.com/Galdoba/cepheus/rules"
+	"github.com/Galdoba/cepheus/pkg/rules"
 )
 
 func listDataTypes() []string {

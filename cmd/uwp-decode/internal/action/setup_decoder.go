@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Galdoba/cepheus/uwp"
-	"github.com/Galdoba/cepheus/uwp/descriptor"
+	"github.com/Galdoba/cepheus/pkg/uwp"
+	"github.com/Galdoba/cepheus/pkg/uwp/descriptor"
 	"github.com/urfave/cli/v3"
 )
 

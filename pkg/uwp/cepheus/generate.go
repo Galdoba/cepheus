@@ -1,9 +1,9 @@
 package cepheus
 
 import (
-	"github.com/Galdoba/cepheus/dice"
-	"github.com/Galdoba/cepheus/ehex"
-	"github.com/Galdoba/cepheus/uwp"
+	"github.com/Galdoba/cepheus/pkg/dice"
+	"github.com/Galdoba/cepheus/pkg/ehex"
+	"github.com/Galdoba/cepheus/pkg/uwp"
 )
 
 const (
