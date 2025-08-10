@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Galdoba/appcontext"
 	"github.com/Galdoba/cepheus/pkg/uwp"
 	"github.com/Galdoba/cepheus/pkg/uwp/descriptor"
 	"github.com/urfave/cli/v3"
@@ -13,6 +14,7 @@ import (
 
 func Decode(ctx context.Context, c *cli.Command) error {
 	//Init
+	// context.
 	path, err := descriptionFilePath(c.Name)
 	if err != nil {
 		return fmt.Errorf("failed to get description file path: %v", err)
@@ -108,3 +110,5 @@ func dataTypes() []string {
 		uwp.TL,
 	}
 }
+
+// type Action func(context.Context, *Command) error

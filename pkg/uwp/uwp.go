@@ -25,6 +25,24 @@ type UWP struct {
 	Error          string                  `json:"error,omitempty"`
 }
 
+func (u *UWP) ValueOf(key string) int {
+	switch key {
+	case Port, Size, Atmo, Hydr, Pops, Govr, Laws, TL:
+		return u.Data[key].Numerical
+	default:
+		return -1
+	}
+}
+
+func (u *UWP) CodeOf(key string) string {
+	switch key {
+	case Port, Size, Atmo, Hydr, Pops, Govr, Laws, TL:
+		return u.Data[key].Code
+	default:
+		return ""
+	}
+}
+
 // func New(dp dice.Dicepool, options ...UWP_Option) *UWP {
 // 	uwp := UWP{}
 // 	uwp.RuleSystem = rules.MgT2
