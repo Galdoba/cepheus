@@ -7,17 +7,19 @@ import (
 
 	"github.com/Galdoba/cepheus/cmd/uwp-decode/internal/action"
 	"github.com/Galdoba/cepheus/cmd/uwp-decode/internal/flags"
+	"github.com/Galdoba/cepheus/internal/declare"
 	"github.com/urfave/cli/v3"
 )
 
 func main() {
+	appName := declare.APP_UWP_DECODE
 	cmd := cli.Command{
-		Name:           "uwp-decode",
+		Name:           appName,
 		Aliases:        []string{},
 		Usage:          "decode Cepheus engine UWP string to human readable text",
-		UsageText:      "uwp-decode [global options] [arguments]",
+		UsageText:      fmt.Sprintf("%s [global options] [arguments]", appName),
 		ArgsUsage:      "arg usage text",
-		Version:        "0.0.1",
+		Version:        "0.1.0",
 		Description:    "For tabletop games like Traveller, Cepheus Deluxe, Hostile, etc.",
 		DefaultCommand: "",
 		Category:       "",
