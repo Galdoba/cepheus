@@ -1,6 +1,10 @@
 package uwp
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/Galdoba/cepheus/pkg/ehex"
 	"github.com/Galdoba/cepheus/pkg/rules"
 )
 
@@ -23,6 +27,41 @@ type UWP struct {
 	RuleSystem     rules.RuleSystem        `json:"rules,omitempty"`
 	GenerationTags []string                `json:"tags,omitempty"`
 	Error          string                  `json:"error,omitempty"`
+}
+
+func New(opts ...UWP_Option) UWP {
+	u := UWP{}
+	u.RuleSystem = rules.T5
+	u.Data = make(map[string]ProfileValue)
+	for _, data := range listDataTypes() {
+		u.Data[data] = ProfileValue{
+			Category:  data,
+			Code:      "?",
+			Numerical: 0,
+		}
+	}
+	for _, modify := range opts {
+		modify(&u)
+	}
+	return u
+}
+
+type UWP_Option func(*UWP)
+
+func FromString(s string) UWP_Option {
+	return func(u *UWP) {
+		if !StringValid(s) {
+			fmt.Println("invalid uwp")
+			return
+		}
+		data := strings.Split(s, "")
+		for i, dataType := range listDataTypes() {
+			if i == 7 {
+				i++
+			}
+			u.Data[dataType] = ProfileValue{Category: dataType, Code: data[i], Numerical: ehex.FromString(data[i]).Value()}
+		}
+	}
 }
 
 func (u *UWP) ValueOf(key string) int {

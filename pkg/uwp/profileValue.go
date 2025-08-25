@@ -1,6 +1,10 @@
 package uwp
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+	"strings"
+)
 
 const (
 	Port = "Port"
@@ -14,11 +18,11 @@ const (
 )
 
 type ProfileValue struct {
-	Index       string
-	Category    string
-	Code        string
-	Numerical   int
-	Description map[string]string
+	Index       string            `json:"index,omitempty"`
+	Category    string            `json:"category,omitempty"`
+	Code        string            `json:"code"`
+	Numerical   int               `json:"value"`
+	Description map[string]string `json:"description,omitempty"`
 }
 
 func Description(category, code string) map[string]string {
@@ -400,4 +404,28 @@ var lowsizes = map[int]float64{
 	14: 21600,
 	15: 23200,
 	16: 150000,
+}
+
+func StringValid(s string) bool {
+	data := strings.Split(s, "")
+	if len(data) != 9 {
+		return false
+	}
+	for i, value := range data {
+		switch i {
+		case 7:
+			if value != "-" {
+				return false
+			}
+		default:
+			if !slices.Contains(uwpValues(), value) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func uwpValues() []string {
+	return []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "?"}
 }
