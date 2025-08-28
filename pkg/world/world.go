@@ -3,10 +3,13 @@ package world
 import "github.com/Galdoba/cepheus/pkg/uwp"
 
 type World struct {
-	Name       string
-	UWP        uwp.UWP
-	TradeCodes []string
-	TravelZone string
+	Name        string   `json:"name"`
+	IsMainWorld *bool    `json:"is main world,omitempty"`
+	UWP         uwp.UWP  `json:"uwp"`
+	TradeCodes  []string `json:"classifications"`
+	TravelZone  string   `json:"travel zone,omitempty"`
+	OrbitN      *float64 `json:"orbit number,omitempty"`
+	HZCO        *float64 `json:"habitable zone orbit difference,omitempty"`
 }
 
 func New(opts ...WorldOption) *World {
@@ -25,4 +28,15 @@ func WithUWP(profile string) WorldOption {
 		u := uwp.New(uwp.FromString(profile))
 		w.UWP = u
 	}
+}
+
+func floatPtr(f float64) *float64 {
+	return &f
+}
+
+func (w *World) OrbitNumber() (float64, bool) {
+	if w.OrbitN == nil {
+		return 0, false
+	}
+	return *w.OrbitN, true
 }
