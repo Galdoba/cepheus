@@ -20,6 +20,7 @@ type GameTable struct {
 	Name     string        `json:"table name"`
 	RollCode string        `json:"roll"`
 	Options  []*RollResult `json:"options"`
+	mods     int
 }
 
 // RollResult result of GameTable Roll.
@@ -40,6 +41,11 @@ func NewTable(name, code string, options ...*RollResult) (*GameTable, error) {
 		Options:  options,
 	}
 	return &tab, assertIndexes(tab.Options)
+}
+
+func (tab *GameTable) WithMod(mod int) *GameTable {
+	tab.mods = mod
+	return tab
 }
 
 func assertIndexes(rrs []*RollResult) error {
@@ -164,6 +170,7 @@ func (gt *GameTable) roll(dp *dice.Dicepool, depth int) (string, error) {
 		if opt.NextTable != nil {
 			return opt.NextTable.roll(dp, depth+1)
 		}
+		gt.mods = 0
 		return opt.Result, nil
 	}
 
