@@ -1,6 +1,8 @@
 module github.com/Galdoba/cepheus
 
-go 1.23.1
+go 1.24.4
+
+toolchain go1.24.5
 
 require (
 	github.com/Galdoba/appcontext v0.0.0-20250810032459-fc7ccd313381

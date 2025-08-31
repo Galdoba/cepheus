@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Galdoba/appcontext"
+	// "github.com/Galdoba/appcontext"
 	"github.com/Galdoba/cepheus/pkg/uwp"
 	"github.com/Galdoba/cepheus/pkg/uwp/descriptor"
 	"github.com/urfave/cli/v3"
