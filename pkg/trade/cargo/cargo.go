@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/Galdoba/cepheus/pkg/dice"
+	"github.com/Galdoba/cepheus/pkg/trade/tradecodes"
+	"github.com/Galdoba/cepheus/pkg/uwp"
 )
 
 const (
@@ -28,6 +30,116 @@ type Lot struct {
 	needReroll bool
 	Stolen     bool
 	Criminal   bool
+}
+
+func Mgt2Generate(dp *dice.Dicepool, source, target string, mod int) ([]*Lot, error) {
+	u1 := uwp.New(uwp.FromString(source))
+	if len(u1.Data) < 2 {
+		return nil, fmt.Errorf("source uwp invalid")
+	}
+	tc := tradecodes.GenerateFromUWP(u1)
+	u2 := uwp.New(uwp.FromString(target))
+	if len(u1.Data) < 2 {
+		return nil, fmt.Errorf("target uwp invalid")
+	}
+	for _, u := range []uwp.UWP{u1, u2} {
+		pop := u.Data[uwp.Pops].Numerical
+		port := u.Data[uwp.Port].Code
+		tl := u.Data[uwp.TL].Numerical
+		if pop <= 0 {
+			mod -= 4
+		}
+		if pop >= 6 {
+			mod += 2
+		}
+		if pop >= 8 {
+			mod += 2
+		}
+		switch port {
+		case "A":
+			mod += 2
+		case "B":
+			mod += 1
+		case "E":
+			mod -= 1
+		case "X":
+			mod -= 3
+		}
+		if tl <= 6 {
+			mod -= 1
+		}
+		if tl >= 9 {
+			mod += 2
+		}
+		switch u.Zone() {
+		case "Red":
+			mod -= 6
+		case "Amber":
+			mod -= 2
+		}
+	}
+	lots := []*Lot{}
+	lotMods := []int{mod - 4, mod, mod + 2}
+	for n, lotMod := range lotMods {
+		rollCode := freightTraffic(lotMod)
+		fmt.Println(rollCode, lotMod)
+		if rollCode == "0" {
+			continue
+		}
+		roll := dp.Sum(rollCode)
+		fmt.Println(roll)
+		for i := roll; i > 0; i-- {
+			lot, err := NewCargo(dp, tc)
+			if err != nil {
+				return nil, err
+			}
+			lot.Tonns = dp.Sum("1d6") * mult(n)
+			lots = append(lots, lot)
+		}
+
+	}
+	return lots, nil
+}
+
+func mult(n int) int {
+	switch n {
+	case 0:
+		return 10
+	case 1:
+		return 5
+	default:
+		return 1
+
+	}
+}
+
+func freightTraffic(i int) string {
+	switch i {
+	case 1:
+		return "0"
+	case 2, 3:
+		return "1d6"
+	case 4, 5:
+		return "2d6"
+	case 6, 7, 8:
+		return "3d6"
+	case 9, 10, 11:
+		return "4d6"
+	case 12, 13, 14:
+		return "5d6"
+	case 15, 16:
+		return "6d6"
+	case 17:
+		return "7d7"
+	case 18:
+		return "8d6"
+	case 19:
+		return "9d6"
+	}
+	if i < 1 {
+		return "0"
+	}
+	return "10d6"
 }
 
 func NewCargo(dp *dice.Dicepool, tradecodes []string) (*Lot, error) {
@@ -389,7 +501,7 @@ func (l *Lot) rollProcessed(dp *dice.Dicepool) {
 	values["64"] = lotDetails{"Entertainment equipment", 0, 4, 4, 2, 0}
 	values["65"] = lotDetails{"Appliances", 0, 5, 3, 2, 0}
 	values["66"] = lotDetails{"Furniture", 0, 5, 5, 0, 2}
-	key := fmt.Sprintf("%v", dp.Sum("6d6"))
+	key := fmt.Sprintf("%v", dp.D66())
 	details := values[key]
 	l.setDetails(details, dp)
 }

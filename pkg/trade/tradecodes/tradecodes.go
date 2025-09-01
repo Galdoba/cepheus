@@ -28,6 +28,10 @@ const (
 	Wa = "Wa"
 )
 
+func ListCostInfluencers() []string {
+	return []string{Ag, As, Ba, De, Fl, Hi, In, Lo, Ni, Po, Ri, Va}
+}
+
 type TradeCode struct {
 	Code        string `json:"code"`
 	Description string `json:"description,omitempty"`

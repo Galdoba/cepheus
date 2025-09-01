@@ -46,6 +46,16 @@ func New(opts ...UWP_Option) UWP {
 	return u
 }
 
+func (u UWP) Zone() string {
+	if u.Data[Govr].Numerical+u.Data[Laws].Numerical >= 22 {
+		return "Red"
+	}
+	if u.Data[Govr].Numerical+u.Data[Laws].Numerical >= 20 {
+		return "Amber"
+	}
+	return ""
+}
+
 type UWP_Option func(*UWP)
 
 func FromString(s string) UWP_Option {
