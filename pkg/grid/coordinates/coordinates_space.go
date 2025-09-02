@@ -32,7 +32,7 @@ type Sector struct {
 	Abb  string
 }
 
-// NewSpaceCoordinates - cretare space hex coordinates based on values provided:
+// NewSpaceCoordinates - create space hex coordinates based on values provided:
 //
 // 2 values: GlobalWorldCoordinates (X, Y)
 // 3 values: Cube Coordinates (Q,R,S)

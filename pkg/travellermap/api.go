@@ -7,7 +7,6 @@ import (
 )
 
 func Get(url string) ([]byte, error) {
-	url = "https://travellermap.com/data"
 	fmt.Println("send get to", url)
 	resp, err := http.Get(url)
 	if err != nil {
