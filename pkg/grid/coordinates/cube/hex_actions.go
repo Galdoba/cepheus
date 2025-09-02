@@ -5,12 +5,18 @@ import (
 )
 
 const (
-	north     = 0
-	northEast = 1
-	southEast = 2
-	south     = 3
-	southWest = 4
-	northWest = 5
+	north              = 0
+	northEast          = 1
+	southEast          = 2
+	south              = 3
+	southWest          = 4
+	northWest          = 5
+	DirectionNorth     = 0
+	DirectionNorthEast = 1
+	DirectionSouthEast = 2
+	DirectionSouth     = 3
+	DirectionSouthWest = 4
+	DirectionNorthWest = 5
 )
 
 // Distance возвращает расстояние между двумя гексами в шагах
@@ -129,6 +135,9 @@ func move(h Cube, direction, steps int) Cube {
 		current = neighbor(current, direction)
 	}
 	return current
+}
+func Move(h Cube, direction, steps int) Cube {
+	return move(h, direction, steps)
 }
 
 // Получение соседа в определенном направлении

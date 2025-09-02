@@ -37,13 +37,13 @@ func GenerateBeltCenters(n int) [][3]int {
 func main() {
 
 	n := 0
-	for i := 0; i < 2; i++ {
-		for j, crd := range GenerateBeltCenters(i) {
-			fmt.Println(n, i, j, crd)
+	for i := 0; i < 23; i++ {
+		for _, crd := range GenerateBeltCenters(i) {
+			// fmt.Println(n, i, j, crd)
 			coords := coordinates.NewSpaceCoordinates(crd[0], crd[1], crd[2])
-			fmt.Println(coords.GlobalValues())
-			fmt.Println(coords.LocalValues())
-			fmt.Println(coords.StringSectorNameHex())
+			x, y := coords.GlobalValues()
+			q, r, s := coords.CubeValues()
+			fmt.Println(n, x, y, "|", q, r, s)
 			n++
 		}
 	}
