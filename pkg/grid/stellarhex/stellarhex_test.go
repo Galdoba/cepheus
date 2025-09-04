@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Galdoba/t5/internal/grid/coordinates"
-	"github.com/Galdoba/t5/pkg/dice"
-	"github.com/Galdoba/t5/pkg/ehex"
+	"github.com/Galdoba/cepheus/pkg/dice"
+	"github.com/Galdoba/cepheus/pkg/ehex"
+	"github.com/Galdoba/cepheus/pkg/grid/coordinates"
 )
 
 func TestNew(t *testing.T) {

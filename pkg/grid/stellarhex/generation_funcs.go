@@ -3,7 +3,7 @@ package stellarhex
 import (
 	"fmt"
 
-	"github.com/Galdoba/t5/pkg/dice"
+	"github.com/Galdoba/cepheus/pkg/dice"
 )
 
 func generateDensity(dp *dice.Dicepool) int {

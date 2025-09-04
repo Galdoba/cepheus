@@ -4,6 +4,7 @@ package config
 type Config struct {
 	App    AppData `toml:"travellermap"`
 	Logger Logger  `toml:"logger"`
+	Files  Files   `toml:"files"`
 }
 
 type AppData struct {
@@ -11,21 +12,14 @@ type AppData struct {
 }
 
 type Logger struct {
-	Enabled bool   `toml:"enabled"`
-	Level   string `toml:"logging_level"`
-	Color   bool   `toml:"color_output"`
+	Enabled       bool   `toml:"enabled"`
+	Filepath      string `toml:"path"`
+	Level         string `toml:"logging_level"`
+	ConsoleOutput bool   `toml:"console_logging"`
+	Color         bool   `toml:"color_output"`
 }
 
-func New() *Config {
-	cfg := Config{
-		App: AppData{
-			Version: "0.0.x",
-		},
-		Logger: Logger{
-			Enabled: false,
-			Level:   "info",
-			Color:   false,
-		},
-	}
-	return &cfg
+type Files struct {
+	DataDirectory string `toml:"canonical_data_directory"`
+	WorkSpaces    string `toml:"workspaces"`
 }

@@ -1,13 +1,11 @@
 module github.com/Galdoba/cepheus
 
-go 1.24.4
-
-toolchain go1.24.5
+go 1.23.1
 
 require (
-	github.com/Galdoba/appcontext v0.0.0-20250810032459-fc7ccd313381
-	github.com/Galdoba/gogacon v0.0.0-20250626101603-f2917be71ee3
-	github.com/urfave/cli/v3 v3.3.8
+	github.com/Galdoba/appcontext v0.0.0-20250815032954-6ec460aabe50
+	github.com/charmbracelet/huh v0.7.0
+	github.com/urfave/cli/v3 v3.4.1
 )
 
 require (
@@ -24,6 +22,7 @@ require (
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
+	github.com/gookit/color v1.5.4 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
@@ -32,16 +31,10 @@ require (
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
-)
-
-require (
-	github.com/Galdoba/golog v0.0.0-20250731075409-9c51baedd1af // indirect
-	github.com/Galdoba/xdgpaths v0.0.0-20250809142214-c5df86552a99 // indirect
-	github.com/charmbracelet/huh v0.7.0
-	github.com/gookit/color v1.5.4 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
+	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 )
