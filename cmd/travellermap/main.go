@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"github.com/Galdoba/cepheus/cmd/travellermap/internal/files"
+	"github.com/Galdoba/cepheus/cmd/travellermap/internal/infra"
 	"github.com/Galdoba/cepheus/internal/declare"
 	"github.com/urfave/cli/v3"
 )
 
 func main() {
 	appName := declare.APP_TRAVELLERMAP
-	actx, err := Initiate()
+	actx, err := infra.Initiate()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "init error: %v", err)
 		os.Exit(1)
@@ -35,7 +38,7 @@ func main() {
 		ShellCompletionCommandName:      "",
 		ShellComplete:                   nil,
 		ConfigureShellCompletionCommand: nil,
-		Before:                          nil,
+		Before:                          startupCheck(actx),
 		After:                           nil,
 		Action:                          nil,
 		CommandNotFound:                 nil,
@@ -71,4 +74,16 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println(actx.Config)
+}
+
+func startupCheck(actx *infra.Container) cli.BeforeFunc {
+	return func(ctx context.Context, c *cli.Command) (context.Context, error) {
+		os.MkdirAll(actx.Config.Files.DataDirectory, 0755)
+		os.MkdirAll(actx.Config.Files.WorkSpaces, 0755)
+		_, err := files.CanonicalData(actx)
+		if err != nil {
+			return ctx, err
+		}
+		return ctx, nil
+	}
 }
