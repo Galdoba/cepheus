@@ -1,5 +1,9 @@
 package survey
 
+type Import struct {
+	Worlds []ImportFormat `json:"Worlds,omitempty"`
+}
+
 // ImportFormat is a representation of site data for starsystem. It contains all Traveller5 Second Survey Data plus coordinates data and description.
 type ImportFormat struct {
 	Name               string `json:"Name,omitempty"`

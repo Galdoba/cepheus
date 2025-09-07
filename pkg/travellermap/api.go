@@ -167,7 +167,5 @@ func calibrationPoints(n int) []coordinates.SpaceCoordinates {
 	for point := range points {
 		list = append(list, coordinates.NewSpaceCoordinates(point.Q, point.R, point.S))
 	}
-
-	fmt.Println(len(list))
 	return list
 }

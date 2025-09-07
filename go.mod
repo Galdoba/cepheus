@@ -3,7 +3,7 @@ module github.com/Galdoba/cepheus
 go 1.23.1
 
 require (
-	github.com/Galdoba/appcontext v0.0.0-20250815032954-6ec460aabe50
+	github.com/Galdoba/appcontext v0.0.0-20250905103149-7897d06c7a3d
 	github.com/charmbracelet/huh v0.7.0
 	github.com/urfave/cli/v3 v3.4.1
 )

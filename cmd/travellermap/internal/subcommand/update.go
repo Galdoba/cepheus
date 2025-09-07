@@ -1,38 +1,28 @@
-package main
+package subcommand
 
 import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
-	"github.com/Galdoba/cepheus/cmd/travellermap/internal/files"
 	"github.com/Galdoba/cepheus/cmd/travellermap/internal/infra"
-	"github.com/Galdoba/cepheus/cmd/travellermap/internal/subcommand"
-	"github.com/Galdoba/cepheus/internal/declare"
+	"github.com/Galdoba/cepheus/pkg/travellermap"
 	"github.com/urfave/cli/v3"
 )
 
-func main() {
-	appName := declare.APP_TRAVELLERMAP
-	actx, err := infra.Initiate()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "init error: %v", err)
-		os.Exit(1)
-	}
-	cmd := cli.Command{
-		Name:           appName,
-		Aliases:        []string{},
-		Usage:          "cli tool to manipulate traveller game maps",
-		UsageText:      "",
-		ArgsUsage:      "",
-		Version:        "",
-		Description:    "",
-		DefaultCommand: "",
-		Category:       "",
-		Commands: []*cli.Command{
-			subcommand.Update(actx),
-			subcommand.CreateMap(actx),
-		},
+func Update(actx *infra.Container) *cli.Command {
+	return &cli.Command{
+		Name:                            "update",
+		Aliases:                         []string{},
+		Usage:                           "Synchronise local data from travellermap.com",
+		UsageText:                       "",
+		ArgsUsage:                       "",
+		Version:                         "",
+		Description:                     "",
+		DefaultCommand:                  "",
+		Category:                        "",
+		Commands:                        []*cli.Command{},
 		Flags:                           []cli.Flag{},
 		HideHelp:                        false,
 		HideHelpCommand:                 false,
@@ -41,9 +31,16 @@ func main() {
 		ShellCompletionCommandName:      "",
 		ShellComplete:                   nil,
 		ConfigureShellCompletionCommand: nil,
-		// Before:                          startupCheck(actx),
-		After:                    nil,
-		Action:                   nil,
+		Before:                          nil,
+		After:                           nil,
+		Action: func(ctx context.Context, c *cli.Command) error {
+			dir := actx.Config.Files.DataDirectory
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				return fmt.Errorf("failed to assert data directory: %v", err)
+			}
+			path := filepath.Join(dir, "default.json")
+			return travellermap.FullMapUpdate(path)
+		},
 		CommandNotFound:          nil,
 		OnUsageError:             nil,
 		InvalidFlagAccessHandler: nil,
@@ -71,20 +68,5 @@ func main() {
 		MutuallyExclusiveFlags:        []cli.MutuallyExclusiveFlags{},
 		Arguments:                     []cli.Argument{},
 		ReadArgsFromStdin:             false,
-	}
-	if err := cmd.Run(context.Background(), os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "%v error: %v", appName, err)
-		os.Exit(1)
-	}
-}
-
-func startupCheck(actx *infra.Container) cli.BeforeFunc {
-	return func(ctx context.Context, c *cli.Command) (context.Context, error) {
-		os.MkdirAll(actx.Config.Files.DataDirectory, 0755)
-		os.MkdirAll(actx.Config.Files.WorkSpaces, 0755)
-		if err := files.AssertCanonicalData(actx); err != nil {
-			return ctx, err
-		}
-		return ctx, nil
 	}
 }

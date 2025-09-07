@@ -1,18 +1,21 @@
 package files
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/Galdoba/cepheus/cmd/travellermap/internal/infra"
+	"github.com/Galdoba/cepheus/iiss/survey"
 )
 
-func CanonicalData(actx *infra.Container) ([]string, error) {
+func AssertCanonicalData(actx *infra.Container) error {
 	dir := actx.Config.Files.DataDirectory
 	fi, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read canonical data direcory: %v", err)
+		return fmt.Errorf("failed to read canonical data directory: %v", err)
 	}
 	canons := []string{}
 	for _, f := range fi {
@@ -25,7 +28,18 @@ func CanonicalData(actx *infra.Container) ([]string, error) {
 		canons = append(canons, f.Name())
 	}
 	if len(canons) == 0 {
-		return nil, fmt.Errorf("no canonical files detected: run 'travellermap update' to download Traveller OTU data")
+		return fmt.Errorf("no canonical files detected")
 	}
-	return canons, nil
+	for _, file := range canons {
+		data, err := os.ReadFile(filepath.Join(dir, file))
+		if err != nil {
+			return fmt.Errorf("failed to read canonical data: %v", err)
+		}
+		imported := survey.Import{}
+		if err := json.Unmarshal(data, &imported); err != nil {
+			return fmt.Errorf("failed to unmarshal canonical data: %v", err)
+		}
+	}
+
+	return nil
 }

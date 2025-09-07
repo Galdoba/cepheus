@@ -62,6 +62,5 @@ func Initiate() (*Container, error) {
 	logger := logmanager.New(logmanager.WithHandlers(logHandlers...))
 	actx.Logger = logger
 	actx.PathMaker = pathman
-
 	return &actx, nil
 }
