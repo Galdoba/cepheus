@@ -40,6 +40,9 @@ func CreateMap(actx *infra.Container) *cli.Command {
 				return fmt.Errorf("empty key provided")
 			}
 			args := c.Args().Slice()
+			if len(args) != 1 {
+				return fmt.Errorf("command 'create' expect one argument: new_map_name")
+			}
 			for _, arg := range args {
 				db, err := database.Create(actx, source, arg)
 				switch err {
