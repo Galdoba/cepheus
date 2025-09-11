@@ -32,6 +32,7 @@ func main() {
 		Commands: []*cli.Command{
 			subcommand.Update(actx),
 			subcommand.CreateMap(actx),
+			subcommand.List(actx),
 		},
 		Flags:                           []cli.Flag{},
 		HideHelp:                        false,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Galdoba/appcontext/jsonstore"
 	"github.com/Galdoba/cepheus/cmd/travellermap/internal/infra"
@@ -69,4 +70,54 @@ func Canonical(actx *infra.Container, key string) (travellermap.Database, error)
 	}
 	return imported, nil
 
+}
+
+func Open(path string) (*jsonstore.JsonDB[survey.SpaceHex], error) {
+	storage, err := jsonstore.Load[survey.SpaceHex](path)
+	if err != nil {
+		return nil, fmt.Errorf("jstor load: %v", err)
+	}
+	return storage, nil
+}
+
+type searchOption struct {
+	caseSensitive bool
+	maxValues     int
+	random        bool
+}
+
+type SearchOption func(*searchOption)
+
+func CaseSensitive(cs bool) SearchOption {
+	return func(so *searchOption) {
+		so.caseSensitive = cs
+	}
+}
+
+func Search(db *jsonstore.JsonDB[survey.SpaceHex], key string, opts ...SearchOption) []*survey.SpaceHex {
+	so := searchOption{
+		caseSensitive: false,
+	}
+	for _, modify := range opts {
+		modify(&so)
+	}
+	entries, err := db.GetAll()
+	if err != nil {
+		panic(err)
+	}
+	found := []*survey.SpaceHex{}
+	for world_key, worldData := range entries {
+		switch so.caseSensitive {
+		case true:
+			if strings.Contains(world_key, key) {
+				found = append(found, worldData)
+			}
+		case false:
+			if strings.Contains(strings.ToLower(world_key), strings.ToLower(key)) {
+				found = append(found, worldData)
+			}
+
+		}
+	}
+	return found
 }
