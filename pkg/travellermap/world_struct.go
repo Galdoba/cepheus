@@ -4,6 +4,10 @@ type WorldList struct {
 	Worlds []WorldData
 }
 
+type SpaceMap struct {
+	Worlds map[string]WorldData
+}
+
 type WorldData struct {
 	Name               string
 	Hex                string
