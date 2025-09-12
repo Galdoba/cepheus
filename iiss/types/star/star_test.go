@@ -1,6 +1,7 @@
 package star
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -9,11 +10,21 @@ import (
 
 func TestStarTypeDetermination(t *testing.T) {
 	dp := dice.NewDicepool()
-	for i := 0; i < 200000; i++ {
+	for i := 0; i < 50; i++ {
 		st, err := Generate(dp)
-		fmt.Printf("%v\t%v\n", i, st.String())
 		if err != nil {
 			panic(err)
 		}
+		data, err := json.Marshal(&st)
+		fmt.Println(i, string(data))
+		if st.Class == "BD" {
+			panic(2)
+		}
 	}
+	st2, err2 := Generate(dp, KnownClass("BD"))
+	fmt.Println("===")
+	fmt.Println(err2)
+	data, err3 := json.Marshal(&st2)
+	fmt.Println(string(data), err3)
+
 }
