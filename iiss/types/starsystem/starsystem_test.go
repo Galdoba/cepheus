@@ -1,23 +1,20 @@
-package star
+package starsystem
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
-	"github.com/Galdoba/cepheus/pkg/dice"
 	"github.com/Galdoba/cepheus/pkg/travellermap"
 )
 
-func TestFromStellar(t *testing.T) {
+func TestPositions(t *testing.T) {
 	data, err := os.ReadFile(`c:\Users\pemaltynov\.local\share\travellermap\data\default.json`)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	return
 	wl := travellermap.SpaceMap{}
 	wl.Worlds = make(map[string]travellermap.WorldData)
 	fmt.Println(json.Unmarshal(data, &wl))
@@ -26,25 +23,19 @@ func TestFromStellar(t *testing.T) {
 		switch w.Stellar {
 		default:
 			fmt.Printf("%v\t%v\n", i, w.Stellar)
-			stars := FromStellar(w.Stellar)
-			for k, s := range stars {
-				st, err := Generate(dice.NewDicepool(), KnownStellar(s.str))
-				if err != nil {
-					fmt.Println("bad gen")
-					panic(err)
-				}
-				fmt.Println(i, k, st.String())
-				if w.Stellar == "" {
-					fmt.Println("created")
-				}
-
-			}
+			ssg := NewGenerator(WithStellar(w.Stellar))
+			ss := ssg.GenerateSystem()
 			fmt.Println("")
-			time.Sleep(time.Second)
+			for k, v := range ss.Stars {
+				fmt.Println(k, v)
+			}
+			for k, v := range ss.Orbits {
+				fmt.Println(k, v)
+			}
+			//time.Sleep(time.Second)
 
 			i++
 		}
 
 	}
-
 }

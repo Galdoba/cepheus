@@ -42,12 +42,25 @@ func Generate(dp *dice.Dicepool, knownData ...KnownStarData) (Star, error) {
 			return st, fmt.Errorf("failed to determine subtype of the star: %v", err)
 		}
 	}
+
+	st = fixClass(st, dp)
+	st = SetParameters(st, dp)
+	return st, nil
+}
+
+func SetParameters(st Star, dp *dice.Dicepool) Star {
 	mass := 0.0
 	switch st.Class {
 	case "BD":
 		st.Type, st.SubType, mass = bdTypeDetails(dp)
 	case "D":
 		mass = whiteDwarfMass(dp)
+	case "NS", "BH", "PSR":
+		mass = heavyDwarfMass(dp)
+		if mass > 2.16 {
+			st.Class = "BH"
+		}
+		st.Mass = roundFloat(mass)
 	default:
 		mass = adjust(dp, massByIndex(st.index()))
 	}
@@ -63,7 +76,18 @@ func Generate(dp *dice.Dicepool, knownData ...KnownStarData) (Star, error) {
 		st.Temperature = int(whiteDwarfTemp(st.Age))
 		st.Luminocity = roundFloat(calculateLuminosity(st.Diameter, float64(st.Temperature)))
 	}
-	return st, nil
+	return st
+}
+
+func heavyDwarfMass(dp *dice.Dicepool) float64 {
+	m := 1.0
+	r := dp.Sum1D()
+	m += (float64(r) / 10.0) + (float64(dp.Sum1D()) / 100.0)
+	for r == 6 {
+		r = dp.Sum1D()
+		m += float64(r-1) / 10.0
+	}
+	return m
 }
 
 func adjust(dp *dice.Dicepool, fl float64) float64 {
@@ -179,4 +203,36 @@ func (st Star) String() string {
 		return err.Error()
 	}
 	return string(data)
+}
+
+func (s Star) ToStellar() string {
+	switch s.Class {
+	case "D", "BD", "BH", "NS", "PSR", "":
+		return s.Class
+	}
+	return fmt.Sprintf("%v%v %v", s.Type, *s.SubType, s.Class)
+}
+
+func fixClass(st Star, dp *dice.Dicepool) Star {
+	switch st.Type {
+	case "O", "B", "A", "F", "G", "K", "M", "L", "T", "Y", "D", "BD":
+		if st.SubType == nil {
+			r := dp.Sum("1d10") - 1
+			st.SubType = &r
+		}
+	}
+	if st.Class == "IV" {
+		if st.Type == "O" || st.Type == "M" {
+			st.Class = "V"
+		}
+		if st.Type == "K" && *st.SubType > 5 {
+			st.Class = "V"
+		}
+	}
+	if st.Class == "VI" {
+		if st.Type == "A" || st.Type == "F" {
+			st.Class = "V"
+		}
+	}
+	return st
 }

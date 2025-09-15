@@ -13,6 +13,10 @@ type starClassData struct {
 	sub string
 }
 
+func (scd starClassData) StarData() (string, string, string, string) {
+	return scd.ty, scd.sub, scd.cl, scd.str
+}
+
 func FromStellar(stellar string) []starClassData {
 	if stellar == "" {
 		return []starClassData{starClassData{}}
@@ -28,7 +32,7 @@ mainLoop:
 			for _, t := range types {
 				for _, s := range subtypes {
 					if t+s+c == "" {
-						fmt.Println(stellar, stars)
+						fmt.Println(stellar, stars, "<===")
 						panic(0)
 					}
 					star := fmt.Sprintf("%v%v%v", t, s, c)
@@ -76,8 +80,6 @@ func KnownStellar(stellarData string) KnownStarData {
 		case nil:
 			s.SubType = &n
 		default:
-			fmt.Println("sd sun ", sd.sub, sd.str)
-			// panic(0)
 		}
 
 	}

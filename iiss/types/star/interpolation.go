@@ -23,6 +23,12 @@ func (st Star) index() int {
 		index += 800
 	case "BD":
 		index += 900
+	case "PSR":
+		index += 2000
+	case "NS":
+		index += 3000
+	case "BH":
+		index += 4000
 	}
 
 	switch st.Type {
