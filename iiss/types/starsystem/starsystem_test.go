@@ -17,23 +17,26 @@ func TestPositions(t *testing.T) {
 	}
 	wl := travellermap.SpaceMap{}
 	wl.Worlds = make(map[string]travellermap.WorldData)
-	fmt.Println(json.Unmarshal(data, &wl))
+	json.Unmarshal(data, &wl)
 	i := 1
+	types := make(map[string]int)
 	for _, w := range wl.Worlds {
 		switch w.Stellar {
 		default:
-			fmt.Printf("%v\t%v\n", i, w.Stellar)
+
+			// fmt.Printf("%v\t%v\n", i, w.Stellar)
 			ssg := NewGenerator(WithStellar(w.Stellar))
 			ss := ssg.GenerateSystem()
-			fmt.Println("")
-			for k, v := range ss.Stars {
-				fmt.Println(k, v)
-			}
-			for k, v := range ss.Orbits {
-				fmt.Println(k, v)
-			}
+			types[ss.Stars["Aa"].Class]++
+			// fmt.Println("")
+			// for k, v := range ss.Stars {
+			// 	fmt.Println(k, v)
+			// }
+			// for k, v := range ss.Orbits {
+			// 	fmt.Println(k, v)
+			// }
 			//time.Sleep(time.Second)
-
+			fmt.Printf("%v  \r", types)
 			i++
 		}
 

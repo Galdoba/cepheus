@@ -8,19 +8,20 @@ import (
 )
 
 type Orbit struct {
-	Parent       string
-	FromParent   float64
-	Eccentricity float64
-	AU           float64
-	Min          float64
-	Max          float64
-	Period       float64
-	starsDM      int
-	systemAge    float64
-	starMass1    float64
-	starMass2    float64
-	isAsteroid   bool
-	isStar       bool
+	Parent            string
+	FromParent        float64
+	Eccentricity      float64
+	AU                float64
+	Min               float64
+	Max               float64
+	Period            float64
+	starsDM           int
+	systemAge         float64
+	starMass1         float64
+	starMass2         float64
+	isAsteroid        bool
+	isStar            bool
+	isProtostarSystem bool
 }
 
 func NewStar(dp *dice.Dicepool, code string, opts ...OrbitOption) *Orbit {
@@ -58,6 +59,9 @@ func NewStar(dp *dice.Dicepool, code string, opts ...OrbitOption) *Orbit {
 		dm++
 	}
 	if or.isStar {
+		dm = dm + 2
+	}
+	if or.isProtostarSystem {
 		dm = dm + 2
 	}
 	or.Eccentricity = eccentricity(dp, dm)

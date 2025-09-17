@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/Galdoba/cepheus/pkg/dice"
+	"github.com/Galdoba/cepheus/pkg/float"
 )
 
 type Star struct {
@@ -21,6 +22,12 @@ type Star struct {
 	SystemAU       *float64 `json:"au primary,omitempty"`
 	Eccentricity   *float64 `json:"eccentricity,omitempty"`
 	Age            float64  `json:"age,omitempty"`
+	ProtoStar      bool     `json:"is protostar,omitempty"`
+	DeadStar       bool     `json:"is dead star,omitempty"`
+	PostStellar    bool     `json:"is poststellar,omitempty"`
+	NebulaDencity  int      `json:"nebula,omitempty"`
+	ClusterDensity int      `json:"cluster,omitempty"`
+	AnomalyDensity int      `json:"anomaly,omitempty"`
 	realetdPrimary *Star
 }
 
@@ -30,41 +37,71 @@ func Generate(dp *dice.Dicepool, knownData ...KnownStarData) (Star, error) {
 		add(&st)
 	}
 	if st.Type+st.Class == "" && st.realetdPrimary == nil {
-		tpe, cls, err := StarTypeAndClassDetermination(dp)
+		res, err := StarTypeAndClassDetermination(dp)
+		//tpe, cls, err := StarTypeAndClassDetermination(dp)
 		if err != nil {
 			return st, fmt.Errorf("failed to determine type and class of primary star: %v", err)
 		}
-		st.Type = tpe
-		st.Class = cls
+		st.Type = res.starType
+		st.Class = res.class
+		st.NebulaDencity = res.nebula
+		st.ClusterDensity = res.cluster
+		st.AnomalyDensity = res.anomaly
+		st.ProtoStar = (res.proto > 0)
 
 		st.SubType, err = StarSubTypeDetermination(dp, st)
 		if err != nil {
 			return st, fmt.Errorf("failed to determine subtype of the star: %v", err)
 		}
 	}
-
 	st = fixClass(st, dp)
 	st = SetParameters(st, dp)
 	return st, nil
 }
 
-func SetParameters(st Star, dp *dice.Dicepool) Star {
+func SetMass(st Star, dp *dice.Dicepool) Star {
 	mass := 0.0
 	switch st.Class {
-	case "BD":
-		st.Type, st.SubType, mass = bdTypeDetails(dp)
-	case "D":
-		mass = whiteDwarfMass(dp)
-	case "NS", "BH", "PSR":
-		mass = heavyDwarfMass(dp)
-		if mass > 2.16 {
-			st.Class = "BH"
-		}
-		st.Mass = roundFloat(mass)
-	default:
+	case "Ia", "Ib", "II", "III", "IV", "V", "VI":
 		mass = adjust(dp, massByIndex(st.index()))
+	case "D":
+		mass = adjust(dp, whiteDwarfMass(dp))
+	case "BD":
+		ty, cl, m := bdTypeDetails(dp)
+		mass = m
+		st.Type = ty
+		st.SubType = cl
+	case "BH":
+		mass = blackHoleMass(dp)
+	case "NS", "PSR":
+		mass = heavyDwarfMass(dp)
+	case "cluster", "anomaly", "nebula":
+		mass = 0
+	default:
+		panic(fmt.Sprintf("no mass determination for class: %v", st.Class))
 	}
-	st.Mass = roundFloat(mass)
+	st.Mass = float.Round(mass)
+	return st
+}
+
+func blackHoleMass(dp *dice.Dicepool) float64 {
+	m := 0.0
+	r := dp.Sum1D()
+	m = m + 2.1 + float64(r) + float64(dp.Sum("1d10"))/10.0
+	for r >= 4 {
+		r = dp.Sum1D()
+		m += float64(dp.Sum1D())
+
+	}
+	return adjust(dp, m)
+}
+func protoStarMass(dp *dice.Dicepool) float64 {
+	m := 0.01 / float64(dp.Sum("2d10"))
+	return float.Round(m)
+}
+
+func SetParameters(st Star, dp *dice.Dicepool) Star {
+	st = SetMass(st, dp)
 	diam := adjust(dp, diamByIndex(st.index()))
 	st.Diameter = roundFloat(diam)
 	temp := adjust(dp, tempByIndex(st.index()))
@@ -76,6 +113,7 @@ func SetParameters(st Star, dp *dice.Dicepool) Star {
 		st.Temperature = int(whiteDwarfTemp(st.Age))
 		st.Luminocity = roundFloat(calculateLuminosity(st.Diameter, float64(st.Temperature)))
 	}
+
 	return st
 }
 
@@ -104,10 +142,9 @@ func calculateLuminosity(diameter, temperature float64) float64 {
 
 func generateAge(dp *dice.Dicepool, st Star) float64 {
 	age := 0.0
-	msls := mainSequanceLifespan(st.Mass)
+	msls := MainSequanceLifespan(st.Mass)
 	sgls := msls / (4.0 / st.Mass)
 	glls := msls / (10.0 / math.Pow(st.Mass, 3))
-
 	switch st.Class {
 	case "Ia", "Ib", "II", "V", "VI":
 		switch st.Mass > 0.9 {
@@ -124,7 +161,7 @@ func generateAge(dp *dice.Dicepool, st Star) float64 {
 		age = smallStarAge(dp)
 	default:
 		mass := originalMass(dp, st.Mass)
-		msls = mainSequanceLifespan(mass)
+		msls = MainSequanceLifespan(mass)
 		sgls = msls / (4.0 / st.Mass)
 		glls = msls / (10.0 / math.Pow(mass, 3))
 		finalAge := msls + sgls + glls
@@ -133,15 +170,23 @@ func generateAge(dp *dice.Dicepool, st Star) float64 {
 			age = finalAge + smallStarAge(dp)
 		case "PSR":
 			age = 0.1/(float64(dp.Sum("2d10"))) + finalAge
-		case "Protostar":
-			age = 0.01 / float64(dp.Sum("2d10"))
+		case "cluster", "nebula", "anomaly":
+			st.Age = -1
+
+		default:
+			panic(st.Class)
 		}
 
 	}
-	age = adjust(dp, age*variance(dp))
-	if st.Mass < 4.7 && age < 0.01 {
-		age = 0.01
+	if st.ProtoStar {
+		age = 0.01 / float64(dp.Sum("2d10"))
+	} else {
+		if st.Mass < 4.7 && age < 0.01 {
+			age = 0.01
+		}
 	}
+	age = adjust(dp, age*variance(dp))
+
 	for age > 13.0 {
 		age = age / 10
 	}

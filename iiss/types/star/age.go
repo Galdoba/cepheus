@@ -10,7 +10,7 @@ func originalMass(dp *dice.Dicepool, currentMass float64) float64 {
 	return float64(dp.Sum("1d3")) / 2 * currentMass
 }
 
-func mainSequanceLifespan(mass float64) float64 {
+func MainSequanceLifespan(mass float64) float64 {
 	denominator := math.Pow(mass, 2.5)
 	msa := 10.0 / denominator
 	return msa

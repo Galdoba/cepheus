@@ -17,15 +17,22 @@ const (
 )
 
 type StarSystemGenerator struct {
-	method          int
-	injectedStellar string
-	dp              *dice.Dicepool
+	method                int
+	injectedStellar       string
+	injectedUWP           string
+	injectedGGquantity    int
+	injectedBeltsQuantity int
+	dp                    *dice.Dicepool
 	//Star            map[int]*star.Star `json:"stars,omitempty"`
 	//Orbits map[float64]orbit.Orbit
 }
 
 func NewGenerator(options ...SSG_Option) *StarSystemGenerator {
-	ssg := StarSystemGenerator{}
+	ssg := StarSystemGenerator{
+		injectedGGquantity:    -1,
+		injectedBeltsQuantity: -1,
+	}
+
 	for _, modify := range options {
 		modify(&ssg)
 	}
@@ -47,6 +54,12 @@ func WithStellar(stellar string) SSG_Option {
 	return func(ssg *StarSystemGenerator) {
 		ssg.injectedStellar = stellar
 		ssg.method = method_Continuation
+	}
+}
+
+func WithUWP(profile string) SSG_Option {
+	return func(ssg *StarSystemGenerator) {
+		ssg.injectedUWP = profile
 	}
 }
 
@@ -84,9 +97,8 @@ func (ssg *StarSystemGenerator) GenerateStarOrbits(ss *StarSystem) {
 }
 
 func (ssg *StarSystemGenerator) extendedStarGeneration() *StarSystem {
-	ss := StarSystem{}
+	ss := NewStarSystem()
 	primary, _ := star.Generate(ssg.dp)
-	ss.Stars = make(map[string]*star.Star)
 	codes := positions(ssg.dp, secondaryPlacementDM(primary))
 	for _, code := range codes {
 		switch code {
@@ -103,8 +115,7 @@ func (ssg *StarSystemGenerator) extendedStarGeneration() *StarSystem {
 
 func (ssg *StarSystemGenerator) continuationStarGeneration() *StarSystem {
 	starData := star.FromStellar(ssg.injectedStellar)
-	ss := StarSystem{}
-
+	ss := NewStarSystem()
 	switch len(starData) {
 	case 0:
 		return ssg.extendedStarGeneration()
@@ -194,6 +205,9 @@ func setStar(dp *dice.Dicepool, code string, primary star.Star) *star.Star {
 	starRollType, err := NonPrimaryStarDetection(dp, column)
 	if err != nil {
 		panic(err)
+	}
+	if primary.ProtoStar || primary.Class == "BD" {
+		starRollType = "twin"
 	}
 	newStar := star.Star{}
 	switch starRollType {
@@ -299,7 +313,128 @@ func addStar(dp *dice.Dicepool, dm int) bool {
 }
 
 type StarSystem struct {
-	Primary *star.Star
-	Stars   map[string]*star.Star
-	Orbits  map[float64]*orbit.Orbit
+	Primary     *star.Star
+	Stars       map[string]*star.Star
+	Orbits      map[float64]*orbit.Orbit
+	presenceGG  int
+	presenceBT  int
+	presenceTP  int
+	totalWorlds int
+	MAO         float64
+}
+
+func NewStarSystem() StarSystem {
+	ss := StarSystem{
+		Primary:    &star.Star{},
+		Stars:      make(map[string]*star.Star),
+		Orbits:     make(map[float64]*orbit.Orbit),
+		presenceGG: -1,
+		presenceBT: -1,
+		presenceTP: -1,
+	}
+	return ss
+}
+
+func (ssg *StarSystemGenerator) CreateSystemWorldsAndOrbits(ss *StarSystem) error {
+	for _, setParameter := range []func() error{
+		func() error { return ssg.setGGquantity(ss) },
+		func() error { return ssg.setBTquantity(ss) },
+		func() error { return ssg.setTPquantity(ss) },
+	} {
+		if err := setParameter(); err != nil {
+			return fmt.Errorf("failed to Create System Worlds and Orbits: %v", err)
+		}
+	}
+	ss.totalWorlds = ss.presenceGG + ss.presenceBT + ss.presenceTP
+
+	return nil
+}
+
+func (ssg *StarSystemGenerator) setGGquantity(ss *StarSystem) error {
+	if ss == nil {
+		return fmt.Errorf("no Star System provided")
+	}
+	ss.presenceGG = ssg.injectedGGquantity
+	targetNumber := 10
+	if ss.Primary.Class == "BD" {
+		targetNumber = 8
+	}
+	if ss.presenceGG < 0 {
+		switch ssg.dp.Sum("2d6") >= targetNumber {
+		case true:
+			switch bounded(ssg.dp.Sum("2d6")+ggQuantityDM(ss), 4, 13) {
+			case 4:
+				ss.presenceGG = 1
+			case 5, 6:
+				ss.presenceGG = 2
+			case 7, 8:
+				ss.presenceGG = 3
+			case 9, 10, 11:
+				ss.presenceGG = 4
+			case 12:
+				ss.presenceGG = 5
+			case 13:
+				ss.presenceGG = 6
+			}
+		case false:
+			ss.presenceGG = 0
+		}
+	}
+	return nil
+}
+
+func (ssg *StarSystemGenerator) setBTquantity(ss *StarSystem) error {
+	if ss == nil {
+		return fmt.Errorf("no Star System provided")
+	}
+	ss.presenceBT = ssg.injectedBeltsQuantity
+	if ss.presenceBT < 0 {
+		targetNumber := 10
+		if ss.Primary.Class == "BD" {
+			targetNumber = 8
+		}
+		if ss.presenceBT < 0 {
+			switch ssg.dp.Sum("2d6") >= targetNumber {
+			case true:
+				switch bounded(ssg.dp.Sum("2d6")+ggQuantityDM(ss), 6, 12) {
+				case 6:
+					ss.presenceBT = 1
+				case 7, 8, 9, 10, 11:
+					ss.presenceBT = 2
+				case 12:
+					ss.presenceBT = 3
+				}
+			case false:
+				ss.presenceBT = 0
+			}
+		}
+	}
+	return nil
+}
+
+func (ssg *StarSystemGenerator) setTPquantity(ss *StarSystem) error {
+	if ss == nil {
+		return fmt.Errorf("no Star System provided")
+	}
+	ss.presenceBT = ssg.injectedBeltsQuantity
+	if ss.presenceBT < 2 {
+		ss.presenceTP = ssg.dp.Sum("2d6") - 2 - DeadStars(ss)
+		switch ss.presenceTP >= 3 {
+		case true:
+			ss.presenceTP += ssg.dp.Sum("1d3") - 1
+		case false:
+			ss.presenceTP = ssg.dp.Sum("1d3") + 2
+		}
+	}
+	return nil
+}
+
+func bounded(i, min, max int) int {
+	if i < min {
+		return min
+	}
+	if i > max {
+		return max
+	}
+	return i
 }
