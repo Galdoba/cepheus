@@ -6,8 +6,8 @@ import (
 
 func (s Star) Lesser(dp *dice.Dicepool) Star {
 	second := Star{}
-	primary := s.index()
-	primClass, primType, primSub := fromIndex(primary)
+	primary := s.Index()
+	primClass, primType, primSub := FromIndex(primary)
 	stellar := ""
 	for stellar == "" {
 		second, _ = Generate(dp, KnownClass(primClass), KnownType(lesserType(primType)))

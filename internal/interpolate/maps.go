@@ -1,6 +1,6 @@
-package star
+package interpolate
 
-func massByIndex(i int) float64 {
+func MassByIndex(i int) float64 {
 	massMap := make(map[int]float64)
 
 	massMap[110] = 200
@@ -116,7 +116,7 @@ func massByIndex(i int) float64 {
 	return interpolate(massMap, i)
 }
 
-func tempByIndex(i int) float64 {
+func TempByIndex(i int) float64 {
 	tempMap := make(map[int]float64)
 	if i < 900 {
 		i = i % 100
@@ -146,7 +146,7 @@ func tempByIndex(i int) float64 {
 	return interpolate(tempMap, i)
 }
 
-func diamByIndex(i int) float64 {
+func DiamByIndex(i int) float64 {
 	diamMap := make(map[int]float64)
 
 	diamMap[110] = 25
@@ -268,4 +268,128 @@ func diamByIndex(i int) float64 {
 	diamMap[930] = 0.1
 	diamMap[935] = 0.1
 	return interpolate(diamMap, i)
+}
+
+func MAO_ByIndex(i int) float64 {
+	maoMap := make(map[int]float64)
+
+	maoMap[110] = 0.63
+	maoMap[115] = 0.55
+	maoMap[120] = 0.5
+	maoMap[125] = 1.67
+	maoMap[130] = 3.34
+	maoMap[135] = 4.17
+	maoMap[140] = 4.42
+	maoMap[145] = 5.0
+	maoMap[150] = 5.21
+	maoMap[155] = 5.34
+	maoMap[160] = 5.59
+	maoMap[165] = 6.17
+	maoMap[170] = 6.8
+	maoMap[175] = 7.2
+	maoMap[179] = 7.8
+
+	maoMap[210] = 0.6
+	maoMap[215] = 0.5
+	maoMap[220] = 0.35
+	maoMap[225] = 0.63
+	maoMap[230] = 1.4
+	maoMap[235] = 2.17
+	maoMap[240] = 2.5
+	maoMap[245] = 3.25
+	maoMap[250] = 3.59
+	maoMap[255] = 3.84
+	maoMap[260] = 4.17
+	maoMap[265] = 4.84
+	maoMap[270] = 5.42
+	maoMap[275] = 6.17
+	maoMap[279] = 6.59
+
+	maoMap[310] = 0.55
+	maoMap[315] = 0.45
+	maoMap[320] = 0.3
+	maoMap[325] = 0.35
+	maoMap[330] = 0.75
+	maoMap[335] = 1.17
+	maoMap[340] = 1.33
+	maoMap[345] = 1.87
+	maoMap[350] = 2.24
+	maoMap[355] = 2.67
+	maoMap[360] = 3.17
+	maoMap[365] = 4.0
+	maoMap[370] = 4.59
+	maoMap[375] = 5.3
+	maoMap[379] = 5.92
+
+	maoMap[410] = 0.53
+	maoMap[415] = 0.38
+	maoMap[420] = 0.25
+	maoMap[425] = 0.15
+	maoMap[430] = 0.13
+	maoMap[435] = 0.13
+	maoMap[440] = 0.13
+	maoMap[445] = 0.13
+	maoMap[450] = 0.25
+	maoMap[455] = 0.38
+	maoMap[460] = 0.5
+	maoMap[465] = 1.0
+	maoMap[470] = 1.68
+	maoMap[475] = 3.0
+	maoMap[479] = 4.34
+
+	// massMap[510] = 110
+	// massMap[515] = 30
+	maoMap[520] = 0.2
+	maoMap[525] = 0.13
+	maoMap[530] = 0.1
+	maoMap[535] = 0.07
+	maoMap[540] = 0.07
+	maoMap[545] = 0.06
+	maoMap[550] = 0.07
+	maoMap[555] = 0.1
+	maoMap[560] = 0.15
+	// massMap[565] = 1.5
+	// massMap[570] = 1.8
+	// massMap[575] = 2.4
+	// massMap[579] = 8
+
+	maoMap[610] = 0.5
+	maoMap[615] = 0.3
+	maoMap[620] = 0.18
+	maoMap[625] = 0.09
+	maoMap[630] = 0.06
+	maoMap[635] = 0.05
+	maoMap[640] = 0.04
+	maoMap[645] = 0.03
+	maoMap[650] = 0.03
+	maoMap[655] = 0.02
+	maoMap[660] = 0.02
+	maoMap[665] = 0.02
+	maoMap[670] = 0.02
+	maoMap[675] = 0.01
+	maoMap[679] = 0.01
+
+	maoMap[710] = 0.01
+	maoMap[715] = 0.01
+	maoMap[720] = 0.01
+	maoMap[725] = 0.01
+	// massMap[730] = 2.2
+	// massMap[735] = 1.8
+	// massMap[740] = 1.5
+	// massMap[745] = 1.3
+	maoMap[750] = 0.02
+	maoMap[755] = 0.02
+	maoMap[760] = 0.02
+	maoMap[765] = 0.01
+	maoMap[770] = 0.01
+	maoMap[775] = 0.01
+	maoMap[779] = 0.01
+
+	maoMap[910] = 0.005
+	maoMap[915] = 0.005
+	maoMap[920] = 0.005
+	maoMap[925] = 0.005
+	maoMap[930] = 0.005
+	maoMap[935] = 0.005
+	return interpolate(maoMap, i)
 }

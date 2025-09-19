@@ -5,30 +5,34 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/Galdoba/cepheus/iiss/types/orbit"
+	"github.com/Galdoba/cepheus/internal/interpolate"
 	"github.com/Galdoba/cepheus/pkg/dice"
 	"github.com/Galdoba/cepheus/pkg/float"
 )
 
 type Star struct {
-	Type           string   `json:"type,omitempty"`
-	SubType        *int     `json:"subtype,omitempty"`
-	Class          string   `json:"class,omitempty"`
-	Mass           float64  `json:"mass,omitempty"`
-	Temperature    int      `json:"temperature,omitempty"`
-	Diameter       float64  `json:"diameter,omitempty"`
-	Luminocity     float64  `json:"luminocity,omitempty"`
-	Designation    *string  `json:"designation,omitempty"`
-	OrbitN         *float64 `json:"orbit#,omitempty"`
-	SystemAU       *float64 `json:"au primary,omitempty"`
-	Eccentricity   *float64 `json:"eccentricity,omitempty"`
-	Age            float64  `json:"age,omitempty"`
-	ProtoStar      bool     `json:"is protostar,omitempty"`
-	DeadStar       bool     `json:"is dead star,omitempty"`
-	PostStellar    bool     `json:"is poststellar,omitempty"`
-	NebulaDencity  int      `json:"nebula,omitempty"`
-	ClusterDensity int      `json:"cluster,omitempty"`
-	AnomalyDensity int      `json:"anomaly,omitempty"`
-	realetdPrimary *Star
+	Type                string                       `json:"type,omitempty"`
+	SubType             *int                         `json:"subtype,omitempty"`
+	Class               string                       `json:"class,omitempty"`
+	Mass                float64                      `json:"mass,omitempty"`
+	Temperature         int                          `json:"temperature,omitempty"`
+	Diameter            float64                      `json:"diameter,omitempty"`
+	Luminocity          float64                      `json:"luminocity,omitempty"`
+	Designation         string                       `json:"designation,omitempty"`
+	OrbitN              float64                      `json:"orbit#,omitempty"`
+	MinimumAllowedOrbit float64                      `json:"minimum allowed orbit,omitempty"`
+	AllowedOrbits       orbit.OrbitAllowanceSequence `json:"allowed orbits,omitempty"`
+	SystemAU            float64                      `json:"au primary,omitempty"`
+	Eccentricity        float64                      `json:"eccentricity,omitempty"`
+	Age                 float64                      `json:"age,omitempty"`
+	ProtoStar           bool                         `json:"is protostar,omitempty"`
+	DeadStar            bool                         `json:"is dead star,omitempty"`
+	PostStellar         bool                         `json:"is poststellar,omitempty"`
+	NebulaDencity       int                          `json:"nebula,omitempty"`
+	ClusterDensity      int                          `json:"cluster,omitempty"`
+	AnomalyDensity      int                          `json:"anomaly,omitempty"`
+	realetdPrimary      *Star
 }
 
 func Generate(dp *dice.Dicepool, knownData ...KnownStarData) (Star, error) {
@@ -63,7 +67,7 @@ func SetMass(st Star, dp *dice.Dicepool) Star {
 	mass := 0.0
 	switch st.Class {
 	case "Ia", "Ib", "II", "III", "IV", "V", "VI":
-		mass = adjust(dp, massByIndex(st.index()))
+		mass = adjust(dp, interpolate.MassByIndex(st.Index()))
 	case "D":
 		mass = adjust(dp, whiteDwarfMass(dp))
 	case "BD":
@@ -102,9 +106,9 @@ func protoStarMass(dp *dice.Dicepool) float64 {
 
 func SetParameters(st Star, dp *dice.Dicepool) Star {
 	st = SetMass(st, dp)
-	diam := adjust(dp, diamByIndex(st.index()))
+	diam := adjust(dp, interpolate.DiamByIndex(st.Index()))
 	st.Diameter = roundFloat(diam)
-	temp := adjust(dp, tempByIndex(st.index()))
+	temp := adjust(dp, interpolate.TempByIndex(st.Index()))
 	st.Temperature = int(temp)
 	st.Luminocity = roundFloat(calculateLuminosity(st.Diameter, temp))
 	st.Age = roundFloat(generateAge(dp, st))
@@ -225,7 +229,7 @@ func whiteDwarfDiameter(mass float64) float64 {
 }
 
 func whiteDwarfTemp(age float64) float64 {
-	return interpolateWhiteDwarfTemp(age)
+	return interpolate.WhiteDwarfTemp(age)
 }
 
 type KnownStarData func(*Star)

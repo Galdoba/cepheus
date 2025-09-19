@@ -2,6 +2,24 @@ package starsystem
 
 import "github.com/Galdoba/cepheus/iiss/types/star"
 
+func secondaryPlacementDM(primary star.Star) int {
+	dm := 0
+	switch primary.Class {
+	case "Ia", "Ib", "II", "III", "IV":
+		dm++
+	case "V", "VI":
+		switch primary.Type {
+		case "O", "B", "A", "F":
+			dm++
+		case "M":
+			dm--
+		}
+	case "D", "BD", "PSR", "BH", "NS":
+		dm--
+	}
+	return dm
+}
+
 func ggQuantityDM(ss *StarSystem) int {
 	dm := 0
 	if len(ss.Stars) == 1 && ss.Primary.Class == "V" {

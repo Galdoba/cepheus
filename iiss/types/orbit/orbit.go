@@ -207,3 +207,72 @@ func Period(m1, m2, distAU float64) float64 {
 	years := math.Pow((math.Pow(distAU, 3.0))/(m1+m2), 0.5)
 	return float.Round(years)
 }
+
+type OrbitAllowanceSegment struct {
+	Start float64
+	End   float64
+}
+
+type OrbitAllowanceSequence struct {
+	segments []OrbitAllowanceSegment
+}
+
+var Full = OrbitAllowanceSegment{0.005, 20.0}
+
+var InitialPrimarySequance = OrbitAllowanceSequence{
+	segments: []OrbitAllowanceSegment{Full},
+}
+
+func InitialSequance(mao float64, end float64) OrbitAllowanceSequence {
+	return OrbitAllowanceSequence{
+		segments: []OrbitAllowanceSegment{
+			{
+				Start: mao,
+				End:   end,
+			},
+		},
+	}
+}
+
+func SubtractSubSequence(sequence OrbitAllowanceSequence, center, width float64) OrbitAllowanceSequence {
+	remove := OrbitAllowanceSegment{
+		Start: center - width,
+		End:   center + width,
+	}
+
+	var resultSegments []OrbitAllowanceSegment
+
+	for _, seg := range sequence.segments {
+		// Проверяем, есть ли перекрытие между сегментом и удаляемым диапазоном
+		if seg.End <= remove.Start || seg.Start >= remove.End {
+			// Нет перекрытия - добавляем весь сегмент
+			resultSegments = append(resultSegments, seg)
+			continue
+		}
+
+		// Есть перекрытие - разделяем сегмент на части
+		if seg.Start < remove.Start {
+			// Добавляем левую часть
+			resultSegments = append(resultSegments, OrbitAllowanceSegment{
+				Start: seg.Start,
+				End:   remove.Start,
+			})
+		}
+
+		if seg.End > remove.End {
+			// Добавляем правую часть
+			resultSegments = append(resultSegments, OrbitAllowanceSegment{
+				Start: remove.End,
+				End:   seg.End,
+			})
+		}
+	}
+
+	return OrbitAllowanceSequence{segments: resultSegments}
+}
+
+func CenterWidth(segment OrbitAllowanceSegment) (float64, float64) {
+	center := (segment.Start + segment.End) / 2
+	width := (segment.End - segment.Start) / 2
+	return center, width
+}
