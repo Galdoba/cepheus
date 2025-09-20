@@ -6,7 +6,7 @@ import (
 )
 
 type StarSystem struct {
-	Primary     *star.Star
+	// Primary     *star.Star
 	Stars       map[string]*star.Star
 	Orbits      map[float64]*orbit.Orbit
 	presenceGG  int
@@ -18,7 +18,7 @@ type StarSystem struct {
 
 func NewStarSystem() StarSystem {
 	ss := StarSystem{
-		Primary:    &star.Star{},
+		// Primary:    &star.Star{},
 		Stars:      make(map[string]*star.Star),
 		Orbits:     make(map[float64]*orbit.Orbit),
 		presenceGG: -1,
@@ -26,4 +26,8 @@ func NewStarSystem() StarSystem {
 		presenceTP: -1,
 	}
 	return ss
+}
+
+func (ss *StarSystem) primary() *star.Star {
+	return ss.Stars["Aa"]
 }

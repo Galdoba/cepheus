@@ -3,19 +3,20 @@ package starsystem
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/Galdoba/cepheus/iiss/types/orbit"
 	"github.com/Galdoba/cepheus/iiss/types/star"
 	"github.com/Galdoba/cepheus/internal/interpolate"
 	"github.com/Galdoba/cepheus/pkg/dice"
+	"github.com/Galdoba/cepheus/pkg/float"
 )
 
 func (ssg *StarSystemGenerator) GenerateStarOrbits(ss *StarSystem) {
 	ss.Orbits = make(map[float64]*orbit.Orbit)
 	primary := ss.Stars["Aa"]
-	codes := []string{"Aa", "Ab", "Ba", "Bb", "Ca", "Cb", "Da", "Db"}
-	for _, code := range codes {
+	for _, code := range allCodes {
 		if ss.Stars[code] == nil {
 			continue
 		}
@@ -31,9 +32,7 @@ func (ssg *StarSystemGenerator) GenerateStarOrbits(ss *StarSystem) {
 		ss.Orbits[orb.FromParent] = orb
 		ss.Stars[code].Designation = code
 		ss.Stars[code].OrbitN = orb.FromParent
-		if ss.Stars[code].OrbitN == 0 {
-			ss.Stars[code].OrbitN = 0.01
-		}
+		ss.Stars[code].Eccentricity = orb.Eccentricity
 	}
 }
 
@@ -172,7 +171,7 @@ func (ssg *StarSystemGenerator) setGGquantity(ss *StarSystem) error {
 	}
 	ss.presenceGG = ssg.injectedGGquantity
 	targetNumber := 10
-	if ss.Primary.Class == "BD" {
+	if ss.primary().Class == "BD" {
 		targetNumber = 8
 	}
 	if ss.presenceGG < 0 {
@@ -206,7 +205,7 @@ func (ssg *StarSystemGenerator) setBTquantity(ss *StarSystem) error {
 	ss.presenceBT = ssg.injectedBeltsQuantity
 	if ss.presenceBT < 0 {
 		targetNumber := 10
-		if ss.Primary.Class == "BD" {
+		if ss.primary().Class == "BD" {
 			targetNumber = 8
 		}
 		if ss.presenceBT < 0 {
@@ -259,237 +258,134 @@ func companionCode(code string) string {
 	return ""
 }
 
+var allCodes = []string{"Aa", "Ab", "Ba", "Bb", "Ca", "Cb", "Da", "Db"}
+
 func (ssg *StarSystemGenerator) GenerateAllowedOrbits(ss *StarSystem) {
-	codes := []string{"Aa", "Ba", "Ca", "Da"}
+	//rules 1-2
+	ss.setMao()
+	ss.joinWithCompanionStar()
+	//rules 3-11
+	ss.setUnavailabilityZones()
 
+}
+
+func (ss *StarSystem) setMao() error {
+	for _, st := range ss.Stars {
+		st.MinAO = getMAO(st)
+	}
+	return nil
+}
+
+func (ss *StarSystem) joinWithCompanionStar() error {
+	for code, st := range ss.Stars {
+		if !ss.hasCompanion(code) {
+			continue
+		}
+		compCode := strings.ReplaceAll(code, "a", "b")
+		compStar := ss.Stars[compCode]
+		maxVal := maxOf(st.MinAO, compStar.MinAO, compStar.Eccentricity+0.5)
+		st.MinAO = maxVal
+		compStar.MinAO = maxVal
+	}
+	return nil
+}
+
+func maxOf(v ...float64) float64 {
+	slices.Sort(v)
+	return v[len(v)-1]
+}
+
+var secondaryCodes = []string{"Ba", "Ca", "Da"}
+
+func (ss *StarSystem) setUnavailabilityZones() error {
+	//rule 3
+	ss.primary().MaxAO = 20.0
+	ss.primary().AllowedOrbits = orbit.InitialSequance(ss.primary().MinAO, ss.primary().MaxAO)
+	//rule 4
+	codes := secondaryCodes
+	//rule 5
 	for _, code := range codes {
-		if _, ok := ss.Stars[code]; !ok {
-			continue
-		}
-		st := ss.Stars[code]
-		mao := st.MinimumAllowedOrbit
-		if comp, ok := ss.Stars[companionCode(code)]; ok {
-			mao += comp.Eccentricity
-		}
-		max := 20.0
-		if st.OrbitN > 0.5 {
-			max = st.OrbitN - 3.0
-		}
-		if max < mao {
-			max = mao
-		}
-		st.AllowedOrbits = orbit.InitialSequance(mao, max)
+		if secondary, ok := ss.Stars[code]; ok {
+			width := 1.0
+			//rule 6
+			if secondary.Eccentricity > 0.2 {
+				width = width + 1.0
+			}
+			//rule 7
+			if secondary.Eccentricity > 0.5 && code != "Da" {
+				width = width + 1.0
+			}
+			newAo := orbit.SubtractSubSequence(ss.primary().AllowedOrbits, secondary.OrbitN, width)
+			if len(newAo.Segments) > 1 {
+				fmt.Println(newAo)
 
+			}
+			ss.Stars["Aa"].AllowedOrbits = newAo
+
+			//rule 8
+			secondary.MaxAO = secondary.OrbitN - 3.0
+			//rule 9
+			neibhours := neibhourStars(ss, code)
+			neibMod := float64(len(neibhours))
+			if neibMod > 0.0 {
+				secondary.MaxAO -= neibMod
+			}
+			//rules 10-11
+			if rule1011_apply(neibhours, 0.2) {
+				secondary.MaxAO -= 1.0
+			}
+			if rule1011_apply(neibhours, 0.5) {
+				secondary.MaxAO -= 1.0
+			}
+
+		}
 	}
-	for _, code := range []string{"Ba", "Ca", "Da"} {
-		if _, ok := ss.Stars[code]; !ok {
-			continue
-		}
-		st := ss.Stars[code]
-		mao := st.MinimumAllowedOrbit
-		if comp, ok := ss.Stars[companionCode(code)]; ok {
-			mao += comp.Eccentricity
-		}
-		max := 20.0
-		if st.OrbitN > 0.5 {
-			max = st.OrbitN - 3.0
-		}
-		if max < mao {
-			max = mao
-		}
-		st.AllowedOrbits = orbit.InitialSequance(mao, max)
-
-	}
-
-	// primary := ss.Primary
-	// primMao := primary.MinimumAllowedOrbit
-	// if primComp, ok := ss.Stars["Ab"]; ok {
-	// 	primMao += primComp.Eccentricity
-	// }
-	// primary.AllowedOrbits = orbit.InitialSequance(primary.MinimumAllowedOrbit, 20.0)
-	// for _, code := range codes {
-	// 	if _, ok := ss.Stars[code]; !ok {
-	// 		continue
-	// 	}
-	// 	st := ss.Stars[code]
-	// 	st.MinimumAllowedOrbit = getMAO(st)
-	// 	ss.Stars["Aa"].AllowedOrbits = calculatePrimaryOrbits(ss)
-	// 	if code == "Aa" {
-	// 		for _, code2 := range []string{"Ba", "Ca", "Da"} {
-	// 			if _, ok := ss.Stars[code2]; !ok {
-	// 				continue
-	// 			}
-
-	// 			secondary := ss.Stars[code2]
-
-	// 			fmt.Println(code2, "===>", secondary)
-	// 		}
-	// 	}
-
-	// for _, code := range codes {
-	// 	if ss.Stars[code] == nil {
-	// 		continue
-	// 	}
-	// 	switch code {
-	// 	case "Aa":
-	// 		ss.Stars[code].AllowedOrbits = calculatePrimaryOrbits(ss)
-	// 	default:
-	// 		allowed := calculateSecondaryOrbits(ss.Stars[code], ss)
-	// 		fmt.Println(allowed)
-	// 		ss.Stars[code].AllowedOrbits = allowed
-	// 	}
-	// 	// }
-	// }
-}
-func getMAO(st *star.Star) float64 {
-	index := st.Index()
-	return interpolate.MAO_ByIndex(index)
+	return nil
 }
 
-// calculatePrimaryOrbits вычисляет доступные орбиты вокруг главной звезды
-func calculatePrimaryOrbits(ss *StarSystem) []map[string]float64 {
-	// Начальные доступные орбиты: от MAO первичной звезды до 20.0
-	primaryMAO := getMAO(ss.Primary)
-	available := []map[string]float64{{fmt.Sprintf("%v start", "Aa"): primaryMAO, fmt.Sprintf("%v end", "Aa"): 20.0}}
-
-	// Применить правила для компаньонов
-
-	for code, comp := range ss.Stars {
-		if strings.Contains(code, "a") {
-			continue
+func rule1011_apply(nb []*star.Star, eccValue float64) bool {
+	apply := false
+	for _, st := range nb {
+		if st.Eccentricity > eccValue {
+			apply = true
 		}
-		minOrbit := 0.5 + comp.Eccentricity
-		available = subtractRange(available, 0, minOrbit)
 	}
-
-	// Применить правила для вторичных звёзд
-	for code, sec := range ss.Stars {
-		if strings.Contains(code, "a") {
-			continue
-		}
-		if strings.Contains(code, "b") {
-			continue
-		}
-		// Базовая запретная зона
-		zoneStart := sec.OrbitN - 1.0
-		zoneEnd := sec.OrbitN + 1.0
-
-		// Расширить зону если ecc > 0.2
-		if sec.Eccentricity > 0.2 {
-			zoneStart -= 1.0
-			zoneEnd += 1.0
-		}
-
-		// Дополнительное расширение если ecc > 0.5 и не Far звезда
-		// Note: В реализации нужно определить, является ли звезда Far
-		// Для простоты предположим, что у нас есть метод определения
-		if sec.Eccentricity > 0.5 && !isFarStar(sec) {
-			zoneStart -= 1.0
-			zoneEnd += 1.0
-		}
-
-		available = subtractRange(available, zoneStart, zoneEnd)
-	}
-
-	return available
+	return apply
 }
 
-func calculateSecondaryOrbits(sec *star.Star, sys *StarSystem) []map[string]float64 {
-	// Базовый максимум
-	orb := sec.OrbitN
+func neibhourStars(ss *StarSystem, code string) []*star.Star {
+	strs := []*star.Star{}
+	if _, ok := ss.Stars[code]; ok {
 
-	maxOrbit := orb - 3.0
-
-	// Применить модификаторы
-	hasCloseNeighbor := hasAdjacentStar(sys, "Close")
-	hasFarNeighbor := hasAdjacentStar(sys, "Far")
-
-	// Правило 9: соседи в смежных зонах
-	if (hasCloseNeighbor && hasFarNeighbor) ||
-		(hasCloseNeighbor && orb > 5.0) || // Примерная логика для Near
-		(hasFarNeighbor && orb < 10.0) { // Примерная логика для Near
-		maxOrbit -= 1.0
-	}
-
-	// Правило 10: высокий эксцентриситет у соседей
-	if hasHighEccNeighbor(sys, sec, 0.2) {
-		maxOrbit -= 1.0
-	}
-
-	// Правило 11: очень высокий собственный эксцентриситет
-	if sec.Eccentricity > 0.5 {
-		maxOrbit -= 1.0
-	}
-
-	// Вернуть доступный диапазон
-	secMAO := getMAO(sec)
-	if maxOrbit <= secMAO {
-		return []map[string]float64{} // Нет доступных орбит
-	}
-
-	return []map[string]float64{{"start": secMAO, "end": maxOrbit}}
-}
-
-func hasAdjacentStar(sys *StarSystem, zone string) bool {
-	// Проверка наличия звезды в указанной зоне
-	for _, sec := range sys.Stars {
-		orb := sec.OrbitN
-		if (zone == "Close" && orb < 5.0) ||
-			(zone == "Near" && orb >= 5.0 && orb <= 11.0) ||
-			(zone == "Far" && orb > 11.0) {
-			return true
-		}
-	}
-	return false
-}
-
-func hasHighEccNeighbor(sys *StarSystem, current *star.Star, threshold float64) bool {
-	// Проверка наличия соседа с высоким эксцентриситетом
-	for code, st := range sys.Stars {
-		if strings.Contains(code, "b") || strings.Contains(code, "A") {
-			continue
-		}
-		orb1, orb2 := st.OrbitN, current.OrbitN
-
-		if st.Designation != current.Designation && math.Abs(orb1-orb2) < 5.0 {
-			if st.Eccentricity > threshold {
-				return true
+		switch code {
+		case "Ba":
+			if nb, ok := ss.Stars["Ca"]; ok {
+				strs = append(strs, nb)
+			}
+		case "Ca":
+			if nb, ok := ss.Stars["Ba"]; ok {
+				strs = append(strs, nb)
+			}
+			if nb, ok := ss.Stars["Da"]; ok {
+				strs = append(strs, nb)
+			}
+		case "Da":
+			if nb, ok := ss.Stars["Ca"]; ok {
+				strs = append(strs, nb)
 			}
 		}
 	}
-	return false
+	return strs
 }
 
-func subtractRange(ranges []map[string]float64, start, end float64) []map[string]float64 {
-	var result []map[string]float64
-
-	for _, r := range ranges {
-		rStart := r["start"]
-		rEnd := r["end"]
-
-		// Проверяем, есть ли перекрытие диапазонов
-		if end <= rStart || start >= rEnd {
-			// Нет перекрытия - добавляем весь диапазон
-			result = append(result, r)
-			continue
-		}
-
-		// Есть перекрытие - разделяем на части
-		if rStart < start {
-			result = append(result, map[string]float64{"start": rStart, "end": start})
-		}
-		if rEnd > end {
-			result = append(result, map[string]float64{"start": end, "end": rEnd})
-		}
-	}
-
-	return result
+func (ss *StarSystem) hasCompanion(code string) bool {
+	_, ok := ss.Stars[companionCode(code)]
+	return ok
 }
 
-func isFarStar(sec *star.Star) bool {
-	// Реализация определения, является ли звезда Far
-	// Это упрощённая версия - в реальности нужно учитывать систему классификации
-	return sec.OrbitN > 11.0
+func getMAO(st *star.Star) float64 {
+	index := st.Index()
+	return interpolate.MAO_ByIndex(index)
 }
 
 func (ssg *StarSystemGenerator) GenerateSystem() *StarSystem {
@@ -502,5 +398,26 @@ func (ssg *StarSystemGenerator) GenerateSystem() *StarSystem {
 	}
 	ssg.GenerateStarOrbits(ss)
 	ssg.GenerateAllowedOrbits(ss)
+	ssg.CalculateHZCO(ss)
 	return ss
+}
+
+func (ssg *StarSystemGenerator) CalculateHZCO(ss *StarSystem) error {
+	for _, code := range []string{"Aa", "Ba", "Ca", "Da"} {
+		if _, ok := ss.Stars[code]; !ok {
+			continue
+		}
+		st := ss.Stars[code]
+		luma := st.Luminocity
+		if comp, ok := ss.Stars[companionCode(code)]; ok {
+			luma += comp.Luminocity
+		}
+		hzco := float.Round(math.Sqrt(luma))
+		st.HZCO = hzco
+		if comp, ok := ss.Stars[companionCode(code)]; ok {
+			comp.HZCO = hzco
+		}
+
+	}
+	return nil
 }

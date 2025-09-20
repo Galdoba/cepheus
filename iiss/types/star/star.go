@@ -12,27 +12,29 @@ import (
 )
 
 type Star struct {
-	Type                string                       `json:"type,omitempty"`
-	SubType             *int                         `json:"subtype,omitempty"`
-	Class               string                       `json:"class,omitempty"`
-	Mass                float64                      `json:"mass,omitempty"`
-	Temperature         int                          `json:"temperature,omitempty"`
-	Diameter            float64                      `json:"diameter,omitempty"`
-	Luminocity          float64                      `json:"luminocity,omitempty"`
-	Designation         string                       `json:"designation,omitempty"`
-	OrbitN              float64                      `json:"orbit#,omitempty"`
-	MinimumAllowedOrbit float64                      `json:"minimum allowed orbit,omitempty"`
-	AllowedOrbits       orbit.OrbitAllowanceSequence `json:"allowed orbits,omitempty"`
-	SystemAU            float64                      `json:"au primary,omitempty"`
-	Eccentricity        float64                      `json:"eccentricity,omitempty"`
-	Age                 float64                      `json:"age,omitempty"`
-	ProtoStar           bool                         `json:"is protostar,omitempty"`
-	DeadStar            bool                         `json:"is dead star,omitempty"`
-	PostStellar         bool                         `json:"is poststellar,omitempty"`
-	NebulaDencity       int                          `json:"nebula,omitempty"`
-	ClusterDensity      int                          `json:"cluster,omitempty"`
-	AnomalyDensity      int                          `json:"anomaly,omitempty"`
-	realetdPrimary      *Star
+	Type           string                       `json:"type,omitempty"`
+	SubType        *int                         `json:"subtype,omitempty"`
+	Class          string                       `json:"class,omitempty"`
+	Mass           float64                      `json:"mass,omitempty"`
+	Temperature    int                          `json:"temperature,omitempty"`
+	Diameter       float64                      `json:"diameter,omitempty"`
+	Luminocity     float64                      `json:"luminocity,omitempty"`
+	Designation    string                       `json:"designation,omitempty"`
+	OrbitN         float64                      `json:"orbit#,omitempty"`
+	MinAO          float64                      `json:"minimum allowed orbit,omitempty"`
+	MaxAO          float64                      `json:"maximum allowed orbit,omitempty"`
+	AllowedOrbits  orbit.OrbitAllowanceSequence `json:"allowed orbits,omitempty"`
+	HZCO           float64                      `json:"habitable zone center orbit,omitempty"`
+	SystemAU       float64                      `json:"au primary,omitempty"`
+	Eccentricity   float64                      `json:"eccentricity,omitempty"`
+	Age            float64                      `json:"age,omitempty"`
+	ProtoStar      bool                         `json:"is protostar,omitempty"`
+	DeadStar       bool                         `json:"is dead star,omitempty"`
+	PostStellar    bool                         `json:"is poststellar,omitempty"`
+	NebulaDencity  int                          `json:"nebula,omitempty"`
+	ClusterDensity int                          `json:"cluster,omitempty"`
+	AnomalyDensity int                          `json:"anomaly,omitempty"`
+	realetdPrimary *Star
 }
 
 func Generate(dp *dice.Dicepool, knownData ...KnownStarData) (Star, error) {

@@ -28,21 +28,24 @@ func TestPositions(t *testing.T) {
 			ssg := NewGenerator(WithStellar(w.Stellar))
 			ss := ssg.GenerateSystem()
 			types[ss.Stars["Aa"].Class]++
-
-			fmt.Println("")
-			for k, v := range ss.Stars {
-				fmt.Println(k, v)
-
-				fmt.Println(v.AllowedOrbits)
-
-			}
-			for k, v := range ss.Orbits {
-				fmt.Println(k, v)
-			}
-
-			//time.Sleep(time.Second)
-			fmt.Printf("%v  \r", types)
 			i++
+			if len(ss.Stars) > 1 {
+				fmt.Println("")
+				for k, v := range ss.Stars {
+					fmt.Println(k, v)
+
+					fmt.Println(v.AllowedOrbits)
+
+				}
+				for k, v := range ss.Orbits {
+					fmt.Println(k, v)
+				}
+
+				//time.Sleep(time.Second)
+				fmt.Printf("%v  \r", types)
+
+			}
+
 		}
 
 	}

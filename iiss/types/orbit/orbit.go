@@ -209,23 +209,23 @@ func Period(m1, m2, distAU float64) float64 {
 }
 
 type OrbitAllowanceSegment struct {
-	Start float64
-	End   float64
+	Start float64 `json:"start,omitempty"`
+	End   float64 `json:"end,omitempty"`
 }
 
 type OrbitAllowanceSequence struct {
-	segments []OrbitAllowanceSegment
+	Segments []OrbitAllowanceSegment `json:"segments,omitempty"`
 }
 
 var Full = OrbitAllowanceSegment{0.005, 20.0}
 
 var InitialPrimarySequance = OrbitAllowanceSequence{
-	segments: []OrbitAllowanceSegment{Full},
+	Segments: []OrbitAllowanceSegment{Full},
 }
 
 func InitialSequance(mao float64, end float64) OrbitAllowanceSequence {
 	return OrbitAllowanceSequence{
-		segments: []OrbitAllowanceSegment{
+		Segments: []OrbitAllowanceSegment{
 			{
 				Start: mao,
 				End:   end,
@@ -242,7 +242,7 @@ func SubtractSubSequence(sequence OrbitAllowanceSequence, center, width float64)
 
 	var resultSegments []OrbitAllowanceSegment
 
-	for _, seg := range sequence.segments {
+	for _, seg := range sequence.Segments {
 		// Проверяем, есть ли перекрытие между сегментом и удаляемым диапазоном
 		if seg.End <= remove.Start || seg.Start >= remove.End {
 			// Нет перекрытия - добавляем весь сегмент
@@ -267,11 +267,10 @@ func SubtractSubSequence(sequence OrbitAllowanceSequence, center, width float64)
 			})
 		}
 	}
-
-	return OrbitAllowanceSequence{segments: resultSegments}
+	return OrbitAllowanceSequence{Segments: resultSegments}
 }
 
-func CenterWidth(segment OrbitAllowanceSegment) (float64, float64) {
+func Center(segment OrbitAllowanceSegment) (float64, float64) {
 	center := (segment.Start + segment.End) / 2
 	width := (segment.End - segment.Start) / 2
 	return center, width

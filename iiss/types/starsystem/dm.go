@@ -22,10 +22,10 @@ func secondaryPlacementDM(primary star.Star) int {
 
 func ggQuantityDM(ss *StarSystem) int {
 	dm := 0
-	if len(ss.Stars) == 1 && ss.Primary.Class == "V" {
+	if len(ss.Stars) == 1 && ss.primary().Class == "V" {
 		dm = dm + 1
 	}
-	switch ss.Primary.Class {
+	switch ss.primary().Class {
 	case "BD", "D", "L", "T", "Y", "PSR", "NS", "BH":
 		dm = dm - 2
 	}
@@ -53,7 +53,7 @@ func beltQuantityDM(ss *StarSystem) int {
 		dm = dm + 2
 	}
 
-	switch ss.Primary.Class {
+	switch ss.primary().Class {
 	case "BH", "D", "PSR", "NS":
 		dm = dm + 1
 	}
@@ -68,21 +68,21 @@ func beltQuantityDM(ss *StarSystem) int {
 }
 
 func IsPrimordialSystem(ss *StarSystem) bool {
-	switch ss.Primary.Class {
+	switch ss.primary().Class {
 	case "Ia", "Ib", "II":
 		return true
 	}
-	if ss.Primary.Type == "O" {
+	if ss.primary().Type == "O" {
 		return true
 	}
-	switch ss.Primary.Mass > 8.0 {
+	switch ss.primary().Mass > 8.0 {
 	case true:
-		if ss.Primary.Age <= star.MainSequanceLifespan(ss.Primary.Mass) {
+		if ss.primary().Age <= star.MainSequanceLifespan(ss.primary().Mass) {
 			return true
 		}
 	case false:
 	}
-	if ss.Primary.Age >= 0.01 && ss.Primary.Age <= 0.1 {
+	if ss.primary().Age >= 0.01 && ss.primary().Age <= 0.1 {
 		return true
 	}
 	return false
