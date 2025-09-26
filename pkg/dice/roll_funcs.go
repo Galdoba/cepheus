@@ -136,3 +136,27 @@ func uniqueInts(sl []int) []int {
 func (dp *Dicepool) Sum1D(options ...RollOption) int {
 	return dp.Sum("1d6", options...)
 }
+
+func RandomIndex[T any](objects []T) int {
+	max := fmt.Sprintf("%v", len(objects))
+	return NewDicepool().Sum(fmt.Sprintf("1d%v", max)) - 1
+}
+
+func (dp *Dicepool) SkillCheck(mods ...int) int {
+	r := dp.Sum("2d6")
+	for _, mod := range mods {
+		r += mod
+	}
+	return r
+}
+
+func FastRandom(code string) int {
+	return NewDicepool().Sum(code)
+}
+
+func FromSliceRandom[T any](sl []T) int {
+	if len(sl) == 0 {
+		panic("nothing to choose from")
+	}
+	return NewDicepool().Sum(fmt.Sprintf("1d%v", len(sl))) - 1
+}
