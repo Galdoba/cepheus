@@ -1,5 +1,5 @@
-github.com/Galdoba/appcontext v0.0.0-20250905103149-7897d06c7a3d h1:Q3AU1LyPvXx1/HhzjT+1IAhb+p5qRXwBr9DwjFpaNtc=
-github.com/Galdoba/appcontext v0.0.0-20250905103149-7897d06c7a3d/go.mod h1:J43ab4FhNGUsd0Y8ysCBsKIb4QoUtqNWlIHJaHrAo+8=
+github.com/Galdoba/appcontext v0.0.0-20250917121635-7ecd9d5412b5 h1:spj+YuEjotJIz3Clycpdbw1UDTA9szahxPadrGkvn4c=
+github.com/Galdoba/appcontext v0.0.0-20250917121635-7ecd9d5412b5/go.mod h1:J43ab4FhNGUsd0Y8ysCBsKIb4QoUtqNWlIHJaHrAo+8=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
 github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=
