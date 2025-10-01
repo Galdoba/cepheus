@@ -74,7 +74,7 @@ func main() {
 		ReadArgsFromStdin:             false,
 	}
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "%v error: %v", appName, err)
+		fmt.Fprintf(os.Stderr, "%v error: %v\n", appName, err)
 		os.Exit(1)
 	}
 }

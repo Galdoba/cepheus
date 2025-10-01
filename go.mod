@@ -1,6 +1,6 @@
 module github.com/Galdoba/cepheus
 
-go 1.23.1
+go 1.25.1
 
 require (
 	github.com/Galdoba/appcontext v0.0.0-20250917121635-7ecd9d5412b5
@@ -9,6 +9,7 @@ require (
 )
 
 require (
+	github.com/Galdoba/consolio v0.0.0-20250929125128-a42bba12794f
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/catppuccin/go v0.3.0 // indirect

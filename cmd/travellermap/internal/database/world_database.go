@@ -50,6 +50,9 @@ func Create(actx *infra.Container, canonicalData, newMap string) (*jsonstore.Jso
 		wnum++
 	}
 	fmt.Println("")
+	if err := os.MkdirAll(filepath.Dir(dbm.db.Path()), 0755); err != nil {
+		return nil, fmt.Errorf("map file directorycreation failed: %v", err)
+	}
 	if err := dbm.db.Save(); err != nil {
 		return nil, fmt.Errorf("map file saving failed: %v", err)
 	}

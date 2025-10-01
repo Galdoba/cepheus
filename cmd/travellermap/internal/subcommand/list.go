@@ -3,19 +3,20 @@ package subcommand
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/Galdoba/cepheus/cmd/travellermap/internal/database"
 	"github.com/Galdoba/cepheus/cmd/travellermap/internal/infra"
-	"github.com/Galdoba/cepheus/pkg/interaction"
+	"github.com/Galdoba/consolio/prompt"
 	"github.com/urfave/cli/v3"
 )
 
 func List(actx *infra.Container) *cli.Command {
 	return &cli.Command{
-		Name:                            "list",
+		Name:                            "search",
 		Aliases:                         []string{},
-		Usage:                           "List world data",
+		Usage:                           "Search world data",
 		UsageText:                       "",
 		ArgsUsage:                       "",
 		Version:                         "",
@@ -34,19 +35,32 @@ func List(actx *infra.Container) *cli.Command {
 		Before:                          nil,
 		After:                           nil,
 		Action: func(ctx context.Context, c *cli.Command) error {
-			key, err := interaction.GetInput("set key:")
-			if err != nil {
-				return fmt.Errorf("failed to get user input: %v", err)
-			}
-			fmt.Println("key:", key)
 			db, err := database.Open(filepath.Join(actx.Config.Files.WorkSpaces, "M1105.json"))
 			if err != nil {
 				return err
 			}
-			worlds := database.Search(db, key)
-			for _, world := range worlds {
-				fmt.Println(world.Key())
+			worldMap, err := db.GetAll()
+			if err != nil {
+				return fmt.Errorf("failed to read worlds database")
 			}
+			items := []*prompt.Item{}
+			for key := range worldMap {
+				items = append(items, prompt.CreateItem(key))
+			}
+			found, err := prompt.SearchItem(
+				prompt.WithTitle("search world"),
+				prompt.WithDescription("enter world name or UWP"),
+				prompt.FromItems(items...),
+			)
+			if err != nil {
+				return err
+			}
+			world, err := db.Get(found.GetKey())
+			if err != nil {
+				return fmt.Errorf("failed to get world: %v", err)
+			}
+			fmt.Fprintf(os.Stderr, "%v\n", world)
+
 			return nil
 		},
 		CommandNotFound:          nil,
