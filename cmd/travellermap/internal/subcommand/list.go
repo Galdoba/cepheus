@@ -45,17 +45,17 @@ func List(actx *infra.Container) *cli.Command {
 			}
 			items := []*prompt.Item{}
 			for key := range worldMap {
-				items = append(items, prompt.CreateItem(key))
+				items = append(items, prompt.NewItem(key))
 			}
 			found, err := prompt.SearchItem(
 				prompt.WithTitle("search world"),
 				prompt.WithDescription("enter world name or UWP"),
-				prompt.FromItems(items...),
+				prompt.FromItems(items),
 			)
 			if err != nil {
 				return err
 			}
-			world, err := db.Get(found.GetKey())
+			world, err := db.Get(found.Key())
 			if err != nil {
 				return fmt.Errorf("failed to get world: %v", err)
 			}

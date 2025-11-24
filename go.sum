@@ -1,7 +1,7 @@
 github.com/Galdoba/appcontext v0.0.0-20250917121635-7ecd9d5412b5 h1:spj+YuEjotJIz3Clycpdbw1UDTA9szahxPadrGkvn4c=
 github.com/Galdoba/appcontext v0.0.0-20250917121635-7ecd9d5412b5/go.mod h1:J43ab4FhNGUsd0Y8ysCBsKIb4QoUtqNWlIHJaHrAo+8=
-github.com/Galdoba/consolio v0.0.0-20250929125128-a42bba12794f h1:5k/QhhIMjJV5zp2J7tIKUOOgRRHNcO4L7biRkiMDWwc=
-github.com/Galdoba/consolio v0.0.0-20250929125128-a42bba12794f/go.mod h1:Sjdj7pMhSngYOjr6ajfnVcAUnwBNmTPujMvBEBJ5PS8=
+github.com/Galdoba/consolio v0.0.0-20251007103523-72101f713ae2 h1:MUlTd63ZAK7N6jVKg6J1C+e1YHicO6tVFAgpIViW9u0=
+github.com/Galdoba/consolio v0.0.0-20251007103523-72101f713ae2/go.mod h1:uL4psTAxGJGbMekDdSrIQORrZjuLVDKCMhPNmHFWnvo=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
 github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=
