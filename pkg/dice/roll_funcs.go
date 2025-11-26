@@ -160,3 +160,7 @@ func FromSliceRandom[T any](sl []T) int {
 	}
 	return NewDicepool().Sum(fmt.Sprintf("1d%v", len(sl))) - 1
 }
+
+func (dp *Dicepool) Roll(code string) int {
+	return dp.Sum(code)
+}

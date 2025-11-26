@@ -1,6 +1,8 @@
-package collection
+package typeset
 
 import (
+	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/Galdoba/cepheus/internal/domain/core/entities/value"
@@ -58,6 +60,24 @@ func (cs *Collection[T]) Exist(key T) bool {
 	return exist
 }
 
+func (cs *Collection[T]) List() []T {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	keyedMap := make(map[string]T)
+	keys := []string{}
+	output := []T{}
+	for k := range cs.values {
+		key := fmt.Sprintf("%v", k)
+		keys = append(keys, key)
+		keyedMap[key] = k
+	}
+	slices.Sort(keys)
+	for _, k := range keys {
+		output = append(output, keyedMap[k])
+	}
+	return output
+}
+
 func (cs *Collection[T]) SetMultiple(values map[T]value.AdjustableValue) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -79,4 +99,10 @@ func (cs *Collection[T]) GetMultiple(keys ...T) map[T]value.AdjustableValue {
 		return nil
 	}
 	return output
+}
+
+func (cs *Collection[T]) Len() int {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	return len(cs.values)
 }

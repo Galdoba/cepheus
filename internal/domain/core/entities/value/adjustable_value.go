@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	valueTypeCharacteristic = "characteristic"
-	valueTypeSkill          = "skill"
+	ValueTypeCharacteristic = "characteristic"
+	ValueTypeSkill          = "skill"
 	minAdj                  = -6
 	maxAdj                  = 6
 )
@@ -49,12 +49,13 @@ func Base(i int) ValueOption {
 func ValueFor(valueType string) ValueOption {
 	return func(av *AdjustableValue) {
 		switch valueType {
-		case valueTypeCharacteristic:
+		case ValueTypeCharacteristic:
 			av.valueType = valueType
 			av.dmFunc = characteristicDM
 			av.highLimit = 15
 			av.ebsenceValue = -3
-		case valueTypeSkill:
+
+		case ValueTypeSkill:
 			av.valueType = valueType
 			av.dmFunc = skillDM
 			av.highLimit = 6
@@ -121,19 +122,26 @@ func minmax(val, min, max int) int {
 func (av *AdjustableValue) String() string {
 	s := ""
 	val := av.BaseValue()
-	mVal := av.Value()
-	switch mVal == val {
-	case true:
-		s += fmt.Sprintf("%d", val)
-	case false:
-		s += fmt.Sprintf("%d/%d", mVal, val)
-	}
-	dm := av.DM()
-	switch dm >= 0 {
-	case true:
-		s += fmt.Sprintf(" (+%v)", dm)
-	case false:
-		s += fmt.Sprintf(" (%v)", dm)
+	switch av.valueType {
+	case ValueTypeCharacteristic:
+		mVal := av.Value()
+		switch mVal == val {
+		case true:
+			s += fmt.Sprintf("%d", val)
+		case false:
+			s += fmt.Sprintf("%d/%d", mVal, val)
+		}
+		dm := av.DM()
+		switch dm >= 0 {
+		case true:
+			s += fmt.Sprintf(" (+%v)", dm)
+		case false:
+			s += fmt.Sprintf(" (%v)", dm)
+		}
+	case ValueTypeSkill:
+		if av.exist {
+			s = fmt.Sprintf("%d", av.baseValue)
+		}
 	}
 	return s
 }
@@ -174,4 +182,38 @@ func (av *AdjustableValue) Adjust(change int) int {
 	initial := av.adjustment
 	av.adjustment = minmax(av.adjustment+change, minAdj, maxAdj)
 	return av.adjustment - initial
+}
+
+func (av *AdjustableValue) Ensure(val int) error {
+	if val < 0 {
+		return fmt.Errorf("can't ensure negative value")
+	}
+	if val > av.highLimit {
+		return fmt.Errorf("can't ensure value above high limit")
+	}
+	av.exist = true
+	av.baseValue = max(av.baseValue, val)
+	return nil
+}
+
+func (av *AdjustableValue) Enforce(val int) error {
+	if val < 0 {
+		return fmt.Errorf("can't enforce negative value")
+	}
+	if val > av.highLimit {
+		return fmt.Errorf("can't enforce value above high limit")
+	}
+	av.exist = true
+	switch av.baseValue >= val {
+	case true:
+		av.Increase()
+	case false:
+		av.baseValue = minmax(val, 0, av.highLimit)
+	}
+	return nil
+}
+
+func (av *AdjustableValue) Increase() {
+	av.exist = true
+	av.baseValue = minmax(av.baseValue+1, 0, av.highLimit)
 }
