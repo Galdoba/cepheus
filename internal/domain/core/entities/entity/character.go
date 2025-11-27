@@ -7,14 +7,15 @@ import (
 	"github.com/Galdoba/cepheus/internal/domain/core/aggregates/typeset"
 	"github.com/Galdoba/cepheus/internal/domain/core/entities/value"
 	"github.com/Galdoba/cepheus/internal/domain/core/values/characteristic"
-	"github.com/Galdoba/cepheus/internal/domain/core/values/race"
 	"github.com/Galdoba/cepheus/internal/domain/core/values/skill"
+	"github.com/Galdoba/cepheus/internal/domain/core/values/species"
 	"github.com/Galdoba/cepheus/pkg/dice"
+	"github.com/Galdoba/cepheus/pkg/selector"
 )
 
 type Sophont struct {
 	name               string
-	race               race.Race
+	race               species.Specie
 	seed               int64
 	generationComplete bool
 	characteristics    *typeset.Collection[characteristic.Characteristic]
@@ -29,7 +30,7 @@ func NewSophont(opts ...SophontOption) (*Sophont, error) {
 	soph := Sophont{}
 	soph.seed = time.Now().UnixNano()
 	soph.name = fmt.Sprintf("Sophont %v", soph.seed)
-	soph.race = race.Human
+	soph.race = species.Human
 	for _, modify := range opts {
 		modify(&soph)
 	}
@@ -45,6 +46,10 @@ func NewSophont(opts ...SophontOption) (*Sophont, error) {
 		val := value.New(value.ValueFor(value.ValueTypeSkill))
 		soph.skills.Set(skl, *val)
 	}
+	backgroundSkills := skill.BackgroundSkillList()
+	fmt.Println(backgroundSkills)
+	sel := selector.ManualSkillCli(backgroundSkills...)
+	fmt.Println(sel)
 	// generate career path
 	return &soph, nil
 
@@ -58,7 +63,7 @@ func WithSeed(val int64) SophontOption {
 	}
 }
 
-func WithRace(val race.Race) SophontOption {
+func WithRace(val species.Specie) SophontOption {
 	return func(s *Sophont) {
 		s.race = val
 	}

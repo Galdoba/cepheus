@@ -63,21 +63,21 @@ type Skill struct {
 var NoSkill = Skill{}
 
 func (s Skill) String() string {
-	str := fmt.Sprintf("%s", groupString(s.Group))
+	str := fmt.Sprintf("%s", s.Group)
 	if s.Speciality != "" {
 		str += fmt.Sprintf(" (%v)", s.Speciality)
 	}
 	return str
 }
 
-func groupString(group SkillGroup) string {
-	switch group {
-	case ScienceLife, SciencePhysical, ScienceRobotics, ScienceSocial, ScienceSpaces:
-		return "Science"
-	default:
-		return fmt.Sprintf("%s", group)
-	}
-}
+// func groupString(group SkillGroup) string {
+// 	switch group {
+// 	case ScienceLife, SciencePhysical, ScienceRobotics, ScienceSocial, ScienceSpaces:
+// 		return "Science"
+// 	default:
+// 		return fmt.Sprintf("%s", group)
+// 	}
+// }
 
 func Call(key string, skills ...Skill) Skill {
 	for _, s := range skills {
@@ -129,4 +129,29 @@ var Speciality = map[SkillGroup][]string{
 	ScienceSpaces:   []string{"Astronomy", "Cosmology", "Planetology"},
 	Seafarer:        []string{"Ocean Ships", "Personal", "Sail", "Submarines"},
 	Tactics:         []string{"Military", "Naval"},
+}
+
+func BackgroundSkillList() []Skill {
+	return []Skill{
+		Skill{Group: Admin},
+		Skill{Group: Animals},
+		Skill{Group: Art},
+		Skill{Group: Athletics},
+		Skill{Group: Carouse},
+		Skill{Group: Drive},
+		Skill{Group: Electronics},
+		Skill{Group: Flyer},
+		Skill{Group: Language},
+		Skill{Group: Mechanic},
+		Skill{Group: Medic},
+		Skill{Group: Profession},
+		Skill{Group: ScienceLife},
+		Skill{Group: SciencePhysical},
+		Skill{Group: ScienceRobotics},
+		Skill{Group: ScienceSocial},
+		Skill{Group: ScienceSpaces},
+		Skill{Group: Streetwise},
+		Skill{Group: Survival},
+		Skill{Group: VaccSuit},
+	}
 }

@@ -1,4 +1,4 @@
-package race
+package species
 
 import (
 	"fmt"
@@ -8,14 +8,14 @@ import (
 )
 
 const (
-	Human Race = "Human"
-	Aslan Race = "Aslan"
-	Vargr Race = "Vargr"
+	Human Specie = "Human"
+	Aslan Specie = "Aslan"
+	Vargr Specie = "Vargr"
 )
 
-type Race string
+type Specie string
 
-func (r Race) Characteristics() []characteristic.Characteristic {
+func (r Specie) Characteristics() []characteristic.Characteristic {
 	switch r {
 	default:
 		panic(fmt.Sprintf("race %v characteristic list is not implemented", r))
@@ -39,7 +39,7 @@ func (r Race) Characteristics() []characteristic.Characteristic {
 	}
 }
 
-func (r Race) Skills() []skill.Skill {
+func (r Specie) Skills() []skill.Skill {
 	switch r {
 	default:
 		panic(fmt.Sprintf("race %v skill list is not implemented", r))
