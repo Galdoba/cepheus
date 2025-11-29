@@ -8,27 +8,27 @@ const (
 	TypeObscured      CharacteristicType = "Obscured"
 	TypeCore          CharacteristicType = "Core"
 	TypeSecondary     CharacteristicType = "Obscured"
-	NO_CHARACTERISTIC Characteristic     = "[NO CHARACTERISTIC]"
-	Strength          Characteristic     = "Strength"
-	Dexterity         Characteristic     = "Dexterity"
-	Endurance         Characteristic     = "Endurance"
-	Inteligence       Characteristic     = "Inteligence"
-	Education         Characteristic     = "Education"
-	SocialStanding    Characteristic     = "Social Standing"
-	PsionicStrength   Characteristic     = "Psionic Strength"
-	Wealth            Characteristic     = "Wealth"
-	Sanity            Characteristic     = "Sanity"
-	Morale            Characteristic     = "Morale"
-	Luck              Characteristic     = "Luck"
-	Territory         Characteristic     = "Territory"
-	Charisma          Characteristic     = "Charisma"
+	NO_CHARACTERISTIC CharacteristicName = "[NO CHARACTERISTIC]"
+	Strength          CharacteristicName = "Strength"
+	Dexterity         CharacteristicName = "Dexterity"
+	Endurance         CharacteristicName = "Endurance"
+	Inteligence       CharacteristicName = "Inteligence"
+	Education         CharacteristicName = "Education"
+	SocialStanding    CharacteristicName = "Social Standing"
+	PsionicStrength   CharacteristicName = "Psionic Strength"
+	Wealth            CharacteristicName = "Wealth"
+	Sanity            CharacteristicName = "Sanity"
+	Morale            CharacteristicName = "Morale"
+	Luck              CharacteristicName = "Luck"
+	Territory         CharacteristicName = "Territory"
+	Charisma          CharacteristicName = "Charisma"
 )
 
 type CharacteristicType string
 
-type Characteristic string
+type CharacteristicName string
 
-func Call(key string, list ...Characteristic) Characteristic {
+func Call(key string, list ...CharacteristicName) CharacteristicName {
 	for _, l := range list {
 		name := string(l)
 		if strings.EqualFold(key, name) {
@@ -41,7 +41,7 @@ func Call(key string, list ...Characteristic) Characteristic {
 	return NO_CHARACTERISTIC
 }
 
-var Abbreviation = map[Characteristic]string{
+var Abbreviation = map[CharacteristicName]string{
 	Strength:        "STR",
 	Dexterity:       "DEX",
 	Endurance:       "END",
@@ -57,4 +57,8 @@ var Abbreviation = map[Characteristic]string{
 	Charisma:        "CHA",
 }
 
-var NONE Characteristic = ""
+type CharacteristicValue int
+
+func (c CharacteristicValue) BaseValue() int {
+	return int(c)
+}

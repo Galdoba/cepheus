@@ -1,9 +1,7 @@
 package value
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
+	"github.com/Galdoba/cepheus/internal/domain/core/values/modifier"
 )
 
 const (
@@ -18,93 +16,11 @@ type AdjustableValue struct {
 	exist        bool
 	ebsenceValue int
 	baseValue    int
-	modifier     int
+	modifiers    map[string]modifier.Modifier
 	adjustment   int
 	highLimit    int
 	valueType    string
 	dmFunc       func(int) int
-}
-
-// New creates a new AdjustableValue with the provided options
-func New(opts ...ValueOption) *AdjustableValue {
-	nv := AdjustableValue{}
-	for _, set := range opts {
-		set(&nv)
-	}
-	return &nv
-}
-
-// ValueOption defines a function type for configuring AdjustableValue
-type ValueOption func(*AdjustableValue)
-
-// Base sets the initial base value for AdjustableValue
-func Base(i int) ValueOption {
-	return func(av *AdjustableValue) {
-		av.exist = true
-		av.baseValue = i
-	}
-}
-
-// ValueFor configures the value type and associated properties
-func ValueFor(valueType string) ValueOption {
-	return func(av *AdjustableValue) {
-		switch valueType {
-		case ValueTypeCharacteristic:
-			av.valueType = valueType
-			av.dmFunc = characteristicDM
-			av.highLimit = 15
-			av.ebsenceValue = -3
-
-		case ValueTypeSkill:
-			av.valueType = valueType
-			av.dmFunc = skillDM
-			av.highLimit = 6
-			av.ebsenceValue = -3
-		}
-	}
-}
-
-// characteristicDM calculates the dice modifier for characteristic values
-func characteristicDM(value int) int {
-	return max(-2, (value/3)-2)
-}
-
-// skillDM calculates the dice modifier for skill values
-func skillDM(value int) int {
-	return value
-}
-
-// BaseValue returns the original unmodified value
-func (av *AdjustableValue) BaseValue() int {
-	if !av.exist {
-		return av.ebsenceValue
-	}
-	return av.baseValue
-}
-
-// Value returns the current modified value within defined limits
-func (av *AdjustableValue) Value() int {
-	if !av.exist {
-		return av.ebsenceValue
-	}
-	return minmax(av.baseValue+av.modifier, 0, av.highLimit)
-}
-
-// AdjustedValue returns the value with adjustments applied
-func (av *AdjustableValue) AdjustedValue() int {
-	if !av.exist {
-		return av.ebsenceValue
-	}
-	adj := minmax(av.adjustment, minAdj, maxAdj)
-	return minmax(av.Value()+adj, 0, av.highLimit)
-}
-
-// DM returns the dice modifier based on current value
-func (av *AdjustableValue) DM() int {
-	if !av.exist || av.dmFunc == nil {
-		return av.ebsenceValue
-	}
-	return av.dmFunc(av.Value())
 }
 
 // minmax constrains a value between minimum and maximum bounds
@@ -118,102 +34,37 @@ func minmax(val, min, max int) int {
 	return val
 }
 
-// String returns a formatted string representation of the value
-func (av *AdjustableValue) String() string {
-	s := ""
-	val := av.BaseValue()
-	switch av.valueType {
-	case ValueTypeCharacteristic:
-		mVal := av.Value()
-		switch mVal == val {
-		case true:
-			s += fmt.Sprintf("%d", val)
-		case false:
-			s += fmt.Sprintf("%d/%d", mVal, val)
-		}
-		dm := av.DM()
-		switch dm >= 0 {
-		case true:
-			s += fmt.Sprintf(" (+%v)", dm)
-		case false:
-			s += fmt.Sprintf(" (%v)", dm)
-		}
-	case ValueTypeSkill:
-		if av.exist {
-			s = fmt.Sprintf("%d", av.baseValue)
-		}
-	}
-	return s
+func (av *AdjustableValue) SetBase(v int) {
+	av.baseValue = minmax(v, 0, av.highLimit)
 }
 
-// Unstring parses a string to populate the AdjustableValue fields
-func (av *AdjustableValue) Unstring(s string) error {
-	parts := strings.Split(s, " ")
-	valParts := strings.Split(parts[0], "/")
-	for len(valParts) < 2 {
-		valParts = append(valParts, valParts[0])
-	}
-	if bv, err := strconv.Atoi(valParts[1]); err != nil {
-		return fmt.Errorf("imposible to parse base value '%s'", s)
-	} else {
-		av.baseValue = bv
-	}
-	if mv, err := strconv.Atoi(valParts[1]); err != nil {
-		return fmt.Errorf("imposible to parse modified value '%s'", s)
-	} else {
-		av.modifier = mv - av.baseValue
-	}
-	return nil
+func (av *AdjustableValue) SetModifier(mod modifier.Modifier) {
+	av.modifiers[mod.Category()] = mod
 }
 
-func (av *AdjustableValue) ChangeBase(change int) int {
-	initial := av.baseValue
-	av.baseValue = minmax(av.baseValue+change, 0, av.highLimit)
-	return av.baseValue - initial
+func (av *AdjustableValue) GetModifier(category string) modifier.Modifier {
+	if m, ok := av.modifiers[category]; ok {
+		return m
+	}
+	return modifier.Modifier{}
 }
 
-func (av *AdjustableValue) ChangeModifier(change int) int {
-	initial := av.modifier
-	av.modifier = av.modifier + change
-	return av.modifier - initial
+func (av *AdjustableValue) SumModifiers(category ...string) int {
+	sum := 0
+	for _, mod := range av.modifiers {
+		sum += mod.Value()
+	}
+	return sum
 }
 
-func (av *AdjustableValue) Adjust(change int) int {
-	initial := av.adjustment
-	av.adjustment = minmax(av.adjustment+change, minAdj, maxAdj)
-	return av.adjustment - initial
+func (av *AdjustableValue) ListModifiers() []modifier.Modifier {
+	list := []modifier.Modifier{}
+	for _, m := range av.modifiers {
+		list = append(list, m)
+	}
+	return list
 }
 
-func (av *AdjustableValue) Ensure(val int) error {
-	if val < 0 {
-		return fmt.Errorf("can't ensure negative value")
-	}
-	if val > av.highLimit {
-		return fmt.Errorf("can't ensure value above high limit")
-	}
-	av.exist = true
-	av.baseValue = max(av.baseValue, val)
-	return nil
-}
-
-func (av *AdjustableValue) Enforce(val int) error {
-	if val < 0 {
-		return fmt.Errorf("can't enforce negative value")
-	}
-	if val > av.highLimit {
-		return fmt.Errorf("can't enforce value above high limit")
-	}
-	av.exist = true
-	switch av.baseValue >= val {
-	case true:
-		av.Increase()
-	case false:
-		av.baseValue = minmax(val, 0, av.highLimit)
-	}
-	return nil
-}
-
-func (av *AdjustableValue) Increase() {
-	av.exist = true
-	av.baseValue = minmax(av.baseValue+1, 0, av.highLimit)
+func (av *AdjustableValue) RemoveModifier(category string) {
+	delete(av.modifiers, category)
 }
