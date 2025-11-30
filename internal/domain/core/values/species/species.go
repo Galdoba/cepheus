@@ -15,12 +15,12 @@ const (
 
 type Specie string
 
-func (r Specie) Characteristics() []characteristic.Characteristic {
+func (r Specie) Characteristics() []characteristic.CharacteristicName {
 	switch r {
 	default:
 		panic(fmt.Sprintf("race %v characteristic list is not implemented", r))
 	case Human:
-		return []characteristic.Characteristic{
+		return []characteristic.CharacteristicName{
 			characteristic.Strength,
 			characteristic.Dexterity,
 			characteristic.Endurance,
@@ -47,8 +47,8 @@ func (r Specie) Skills() []skill.Skill {
 		return []skill.Skill{}
 	case Aslan:
 		return []skill.Skill{
-			skill.New(skill.Independence),
-			skill.New(skill.Tolerance),
+			skill.Independence,
+			skill.Tolerance,
 		}
 	}
 }

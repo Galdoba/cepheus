@@ -1,0 +1,172 @@
+package gametime
+
+import (
+	"fmt"
+	"sync"
+)
+
+const (
+	ImperialCalendar     Calendar = "IC"
+	secondsPerTick                = 6
+	minutesPerHour                = 60
+	minutesPerSpaceRound          = 6
+	hoursPerDay                   = 24
+	daysPerWeek                   = 7
+	daysPerMonth                  = 28
+	daysPerYear                   = 365
+	ticsPerMinute                 = 10
+	ticsPerSpaceRound             = ticsPerMinute * minutesPerSpaceRound
+	ticsPerHour                   = minutesPerHour * ticsPerMinute
+	ticsPer4Hours                 = 4 * ticsPerHour
+	ticsPer10Hours                = 10 * ticsPerHour
+	ticsPerDay                    = hoursPerDay * ticsPerHour
+	ticsPerWeek                   = daysPerWeek * ticsPerDay
+	ticsPerMonth                  = daysPerMonth * ticsPerDay
+	ticsPerYear                   = daysPerYear * ticsPerDay
+)
+
+type Calendar string
+
+var calendar = ImperialCalendar
+
+type GameTime int64
+
+type Global struct {
+	time GameTime
+	mu   sync.RWMutex
+}
+
+func (g *Global) NextCombatRound() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.time++
+}
+
+func (g *Global) NextSpaceRound() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.time += ticsPerMinute * 6
+}
+
+func (g *Global) Time() GameTime {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return g.time
+}
+
+func (gt GameTime) Seconds() int {
+	return int(gt%10) * secondsPerTick
+}
+
+func (gt GameTime) Minutes() int {
+	return int((gt / 10) % minutesPerHour)
+}
+
+func (gt GameTime) Hour() int {
+	ticsInDay := int64(gt) % ticsPerDay
+	return int(ticsInDay / ticsPerHour)
+}
+
+func (gt GameTime) Day() int {
+	// День года (1-365)
+	totalDays := int64(gt) / ticsPerDay
+	return int(totalDays%daysPerYear) + 1
+}
+
+func (gt GameTime) DayOfMonth() int {
+	dayOfYear := gt.Day()
+
+	// 1 января - праздник, не принадлежит ни одному месяцу
+	if dayOfYear == 1 {
+		return 0
+	}
+
+	// Вычисляем день месяца (1-28)
+	// dayOfYear = 2 -> месяц 1, день 1
+	// dayOfYear = 3 -> месяц 1, день 2
+	// ...
+	// dayOfYear = 30 -> месяц 2, день 1
+	dayInMonth := (dayOfYear - 2) % daysPerMonth
+	return dayInMonth + 1
+}
+
+func (gt GameTime) Month() int {
+	dayOfYear := gt.Day()
+
+	// 1 января - праздник, не принадлежит ни одному месяцу
+	if dayOfYear == 1 {
+		return 0
+	}
+
+	// Вычисляем месяц (1-13)
+	// dayOfYear = 2-29 -> месяц 1
+	// dayOfYear = 30-57 -> месяц 2
+	// ...
+	month := (dayOfYear - 2) / daysPerMonth
+	return month + 1
+}
+
+func (gt GameTime) DayWeek() int {
+	dayOfYear := gt.Day()
+
+	// 1 января - праздник, не имеет дня недели
+	if dayOfYear == 1 {
+		return -1
+	}
+
+	// 2 января - понедельник (день недели 0)
+	// dayOfYear = 2 -> 0 (понедельник)
+	// dayOfYear = 3 -> 1 (вторник)
+	// ...
+	return (dayOfYear - 2) % daysPerWeek
+}
+
+// Дополнительные полезные методы:
+
+func (gt GameTime) Year() int {
+	totalYears := int64(gt) / ticsPerYear
+	return int(totalYears) + 1 // Года начинаются с 1
+}
+
+func (gt GameTime) IsHoliday() bool {
+	return gt.Day() == 1
+}
+
+func (gt GameTime) Format() string {
+	if gt.IsHoliday() {
+		return fmt.Sprintf("Holiday %04d", gt.Year())
+	}
+
+	month := gt.Month()
+	dayOfMonth := gt.DayOfMonth()
+	dayWeek := gt.DayWeek()
+	hour := gt.Hour()
+	minute := gt.Minutes()
+
+	weekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+
+	return fmt.Sprintf("Year %04d, Month %02d, Day %02d (%s) %02d:%02d",
+		gt.Year(), month, dayOfMonth, weekdays[dayWeek], hour, minute)
+}
+
+// Вспомогательные методы для удобства:
+
+func (gt GameTime) AddTicks(ticks GameTime) GameTime {
+	return gt + ticks
+}
+
+func (gt GameTime) AddMinutes(minutes int) GameTime {
+	return gt + GameTime(minutes*ticsPerMinute)
+}
+
+func (gt GameTime) AddHours(hours int) GameTime {
+	return gt + GameTime(hours*ticsPerHour)
+}
+
+func (gt GameTime) AddDays(days int) GameTime {
+	return gt + GameTime(days*ticsPerDay)
+}
+
+func (gt GameTime) DateTime() string {
+	return fmt.Sprintf("%03d-%04d %02d:%02d:%02d", gt.Day(), gt.Year(), gt.Hour(), gt.Minutes(), gt.Seconds())
+}

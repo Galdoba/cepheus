@@ -12,11 +12,10 @@ type CharacteristicValue struct {
 	AdjustableValue
 }
 
-func NewCharacteristicValue(base int) *CharacteristicValue {
+func NewCharacteristicValue() *CharacteristicValue {
 	c := CharacteristicValue{}
 	c.exist = true
 	c.valueType = ValueTypeCharacteristic
-	c.baseValue = base
 	c.highLimit = defaultCharactristicLimit
 	c.dmFunc = charactristicDM
 	c.modifiers = make(map[string]modifier.Modifier)
