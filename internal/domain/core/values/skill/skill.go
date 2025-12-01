@@ -2,7 +2,6 @@ package skill
 
 import (
 	"fmt"
-	"strings"
 )
 
 const (

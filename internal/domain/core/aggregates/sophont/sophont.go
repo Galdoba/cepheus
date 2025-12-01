@@ -59,3 +59,7 @@ func newSkills(specie species.Specie) *skills {
 	}
 	return &skills{skillSet}
 }
+
+func (s *Sophont) CreationSheet() string {
+
+}
