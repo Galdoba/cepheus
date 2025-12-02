@@ -11,8 +11,8 @@ func TestGlobal_NextCombatRound(t *testing.T) {
 
 	// Симулируем прохождение времени
 	for range 100000000 {
-		global.NextCombatRound()
-		fmt.Printf("%s\r", global.Time().DateTime())
+		global.NextSpaceRound()
+		fmt.Printf("%s %v          \r", global.Time().DateTime(), global.Time().DayWeek())
 		time.Sleep(time.Millisecond)
 	}
 

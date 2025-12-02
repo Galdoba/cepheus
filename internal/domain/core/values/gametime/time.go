@@ -75,17 +75,10 @@ func (gt GameTime) Day() int {
 
 func (gt GameTime) DayOfMonth() int {
 	dayOfYear := gt.Day()
-
-	// 1 января - праздник, не принадлежит ни одному месяцу
 	if dayOfYear == 1 {
 		return 0
 	}
 
-	// Вычисляем день месяца (1-28)
-	// dayOfYear = 2 -> месяц 1, день 1
-	// dayOfYear = 3 -> месяц 1, день 2
-	// ...
-	// dayOfYear = 30 -> месяц 2, день 1
 	dayInMonth := (dayOfYear - 2) % daysPerMonth
 	return dayInMonth + 1
 }
@@ -93,15 +86,9 @@ func (gt GameTime) DayOfMonth() int {
 func (gt GameTime) Month() int {
 	dayOfYear := gt.Day()
 
-	// 1 января - праздник, не принадлежит ни одному месяцу
 	if dayOfYear == 1 {
 		return 0
 	}
-
-	// Вычисляем месяц (1-13)
-	// dayOfYear = 2-29 -> месяц 1
-	// dayOfYear = 30-57 -> месяц 2
-	// ...
 	month := (dayOfYear - 2) / daysPerMonth
 	return month + 1
 }
@@ -109,15 +96,10 @@ func (gt GameTime) Month() int {
 func (gt GameTime) DayWeek() int {
 	dayOfYear := gt.Day()
 
-	// 1 января - праздник, не имеет дня недели
 	if dayOfYear == 1 {
 		return -1
 	}
 
-	// 2 января - понедельник (день недели 0)
-	// dayOfYear = 2 -> 0 (понедельник)
-	// dayOfYear = 3 -> 1 (вторник)
-	// ...
 	return (dayOfYear - 2) % daysPerWeek
 }
 
