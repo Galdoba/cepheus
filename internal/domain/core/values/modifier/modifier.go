@@ -1,7 +1,5 @@
 package modifier
 
-const ()
-
 type Modifier struct {
 	category    string
 	description string

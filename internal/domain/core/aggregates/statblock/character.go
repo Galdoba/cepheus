@@ -1,10 +1,17 @@
 package statblock
 
+import (
+	"fmt"
+
+	"github.com/Galdoba/cepheus/internal/domain/core/values/skill"
+	"github.com/charmbracelet/lipgloss"
+)
+
 type CharacterSheet struct {
 	PersonalDataFile     PersonalData             `json:"personal_data_file"`
 	CoreCharacteristics  CoreCharacteristics      `json:"core_characteristics"`
 	OtherCharacteristics SecondaryCharacteristics `json:"other_characteristics"`
-	Careers              CareerSummary            `json:"careers,omitempty"`
+	Careers              []CareerTerm             `json:"careers,omitempty"`
 	Skills               SkillSummary             `json:"skills"`
 	Finances             Finances                 `json:"finances"`
 	Armour               []Armor                  `json:"armour,omitempty"`
@@ -21,13 +28,12 @@ type CharacterSheet struct {
 }
 
 type PersonalData struct {
-	Name      string        `json:"name,omitempty"`
-	Age       int           `json:"age,omitempty"`
-	Species   string        `json:"species,omitempty"`
-	Traits    []string      `json:"traits,omitempty"`
-	Homeworld string        `json:"homeworld,omitempty"`
-	Rads      int           `json:"rads,omitempty"`
-	Careers   CareerSummary `json:"careers,omitempty"`
+	Name      string   `json:"name,omitempty"`
+	Age       int      `json:"age,omitempty"`
+	Species   string   `json:"species,omitempty"`
+	Traits    []string `json:"traits,omitempty"`
+	Homeworld string   `json:"homeworld,omitempty"`
+	Rads      int      `json:"rads,omitempty"`
 }
 
 type CoreCharacteristics struct {
@@ -48,24 +54,22 @@ type SecondaryCharacteristics struct {
 	Territory int `json:"territory,omitempty"`
 }
 
-type CareerSummary []CareerTerm
-
 type CareerTerm struct {
-	Career string `json:"career,omitempty"`
-	Terms  string `json:"terms,omitempty"`
-	Rank   int    `json:"rank,omitempty"`
+	Career string `json:"career"`
+	Terms  int    `json:"terms"`
+	Rank   int    `json:"rank"`
 }
 
 type SkillSummary struct {
-	SkillInTraining          string       `json:"skill_in_training"`
+	SkillInTraining          skill.Skill  `json:"skill_in_training"`
 	TrainingPeriodsCompleted int          `json:"training_periods_completed,omitempty"`
 	TrainingPeriodsRequired  int          `json:"training_periods_required,omitempty"`
 	Skills                   []SkillEntry `json:"skills,omitempty"`
 }
 
 type SkillEntry struct {
-	Skill  string `json:"skill"`
-	Rating int    `json:"rating"`
+	Skill  skill.Skill `json:"skill"`
+	Rating int         `json:"rating"`
 }
 
 type Finances struct {
@@ -128,4 +132,152 @@ type Wound struct {
 	Location        string `json:"location"`
 	RecoveryPreriod string `json:"recovery_preriod"`
 	Notes           string `json:"notes"`
+}
+
+/*
+
+STR:  8 (+0) DEX: 10 (+1) END:  8 (+0) INT: 10 (+1) EDU:  8 (+0) SOC: 10 (+1)
+
+
+STR: __8_ DEX: _10_ END: __5_ INT: ____ EDU: ____ SOC: ____ |
+     (+1)      (+1)      (-1)      ____      ____      ____ |
+
+
+
+STR:  8 (+0)
+DEX: 10 (+1)
+END:  8 (+0)
+INT: 10 (+1)
+EDU:  8 (+0)
+SOC: 10 (+1)
+
+
+STR:  8 (+0) INT: 10 (+1)
+DEX: 10 (+1) EDU:  8 (+0)
+END:  8 (+0) SOC:  2 (-2)
+
+
+STR:  8 INT: 10
+DEX: 10 EDU:  8
+END:  8 SOC:  2
+*/
+
+var Leeroy = CharacterSheet{
+	PersonalDataFile: PersonalData{
+		Name:      "Leeroy Jenkins",
+		Age:       42,
+		Species:   "Human",
+		Traits:    []string{},
+		Homeworld: "Drinax",
+		Rads:      15,
+	},
+	CoreCharacteristics: CoreCharacteristics{
+		Strenght:       8,
+		Dexterity:      9,
+		Endurance:      10,
+		Inteligence:    11,
+		Education:      12,
+		SocialStanding: 6,
+	},
+	OtherCharacteristics: SecondaryCharacteristics{
+		Psionic:   0,
+		Morale:    11,
+		Luck:      7,
+		Sanity:    6,
+		Charm:     8,
+		Territory: 0,
+	},
+	Careers: []CareerTerm{
+		{Career: "Rogue", Terms: 1, Rank: 1},
+		{Career: "Military", Terms: 3, Rank: 2},
+		{Career: "Drifter", Terms: 1, Rank: 0},
+	},
+	Skills: SkillSummary{
+		SkillInTraining:          skill.Admin,
+		TrainingPeriodsCompleted: 1,
+		TrainingPeriodsRequired:  5,
+		Skills: []SkillEntry{
+			{Skill: skill.ScienceLife, Rating: 0},
+			{Skill: skill.Pilot_SmallCraft, Rating: 1},
+			{Skill: skill.Tactics_Military, Rating: 1},
+			{Skill: skill.Medic, Rating: 4},
+		},
+	},
+	Finances: Finances{
+		Pension:    10000,
+		Debt:       5000,
+		CashOnHand: 200,
+		LivingCost: 1600,
+	},
+	Armour: []Armor{
+		{
+			Type:             "Cloth",
+			Rad:              0,
+			Protection:       8,
+			ProtectionEnergy: 8,
+			Mass:             14.5,
+			Options:          []string{},
+			Equiped:          false,
+		},
+	},
+	Weapons: []Weapon{
+		{
+			Weapon:   "Laser Pistol",
+			TL:       11,
+			Range:    "Long",
+			Damage:   "3D+3",
+			Mass:     5,
+			Magazine: 100,
+			Equiped:  true,
+		},
+	},
+	Augments: []Augment{
+		{
+			Type:        "Wafer jack",
+			TL:          12,
+			Improvement: "Rating 2; Bandwith /8",
+		},
+	},
+	Equipment:      EquipmentSummary{},
+	BackgrondNotes: BackgrondNotes{},
+	Allies:         []Connection{},
+	Contacts:       []Connection{},
+	Rivals:         []Connection{},
+	Enemies: []Connection{
+		{Name: "Elsa Brimor", Occupancy: "Agent", Relations: -2, Power: 1, Influence: 4, Note: "Loves Leeroy"},
+	},
+	Wounds: []Wound{
+		{
+			Type:            "Gun Shot",
+			Location:        "Head",
+			RecoveryPreriod: "None",
+			Notes:           "",
+		},
+	},
+	Biography: "This is Leeroys BIO",
+}
+
+func (cs CharacterSheet) View() string {
+	s := renderCoreCharacteristics(cs.CoreCharacteristics)
+	return s
+
+}
+
+func renderCoreCharacteristics(core CoreCharacteristics) string {
+	s := fmt.Sprintf("STR: %v", statValue(core.Strenght))
+	r := lipgloss.DefaultRenderer()
+	st := lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder(), true).
+		Renderer(r)
+	return st.Render(s)
+}
+
+func statValue(i int) string {
+	s := " "
+	s += fmt.Sprintf("%d", i)
+	for len(s) < 3 {
+		s = " " + s
+	}
+	s += " "
+	return s
 }

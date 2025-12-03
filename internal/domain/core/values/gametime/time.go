@@ -23,6 +23,14 @@ const (
 	ticsPerWeek                   = daysPerWeek * ticsPerDay
 	ticsPerMonth                  = daysPerMonth * ticsPerDay
 	ticsPerYear                   = daysPerYear * ticsPerDay
+	Holiday                       = "Holiday"
+	Wonday                        = "Wonday"
+	Tuday                         = "Tuday"
+	Thirday                       = "Thirday"
+	Forday                        = "Forday"
+	Fiday                         = "Fiday"
+	Sixday                        = "Sixday"
+	Senday                        = "Senday"
 )
 
 type Calendar string
@@ -48,6 +56,12 @@ func (g *Global) NextSpaceRound() {
 	g.time += ticsPerMinute * 6
 }
 
+func (g *Global) NextPortRound() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.time += ticsPerHour
+}
+
 func (g *Global) Time() GameTime {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -68,7 +82,6 @@ func (gt GameTime) Hour() int {
 }
 
 func (gt GameTime) Day() int {
-	// День года (1-365)
 	totalDays := int64(gt) / ticsPerDay
 	return int(totalDays%daysPerYear) + 1
 }
@@ -93,17 +106,46 @@ func (gt GameTime) Month() int {
 	return month + 1
 }
 
-func (gt GameTime) DayWeek() int {
+func (gt GameTime) DayOfWeek() int {
 	dayOfYear := gt.Day()
 
 	if dayOfYear == 1 {
-		return -1
+		return 0
 	}
-
-	return (dayOfYear - 2) % daysPerWeek
+	return ((dayOfYear - 2) % daysPerWeek) + 1
 }
 
-// Дополнительные полезные методы:
+func (gt GameTime) Weekday() string {
+	switch gt.DayOfWeek() {
+	case 0:
+		return Holiday
+	case 1:
+		return Wonday
+	case 2:
+		return Tuday
+	case 3:
+		return Thirday
+	case 4:
+		return Forday
+	case 5:
+		return Fiday
+	case 6:
+		return Sixday
+	case 7:
+		return Senday
+	}
+	return "Undefined"
+}
+
+func (gt GameTime) WeekOfMonth() int {
+	d := gt.DayOfMonth()
+	switch d {
+	case -1, 0:
+		return 0
+	default:
+		return ((d - 1) / daysPerWeek) + 1
+	}
+}
 
 func (gt GameTime) Year() int {
 	totalYears := int64(gt) / ticsPerYear
@@ -113,25 +155,6 @@ func (gt GameTime) Year() int {
 func (gt GameTime) IsHoliday() bool {
 	return gt.Day() == 1
 }
-
-func (gt GameTime) Format() string {
-	if gt.IsHoliday() {
-		return fmt.Sprintf("Holiday %04d", gt.Year())
-	}
-
-	month := gt.Month()
-	dayOfMonth := gt.DayOfMonth()
-	dayWeek := gt.DayWeek()
-	hour := gt.Hour()
-	minute := gt.Minutes()
-
-	weekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
-
-	return fmt.Sprintf("Year %04d, Month %02d, Day %02d (%s) %02d:%02d",
-		gt.Year(), month, dayOfMonth, weekdays[dayWeek], hour, minute)
-}
-
-// Вспомогательные методы для удобства:
 
 func (gt GameTime) AddTicks(ticks GameTime) GameTime {
 	return gt + ticks
@@ -151,4 +174,31 @@ func (gt GameTime) AddDays(days int) GameTime {
 
 func (gt GameTime) DateTime() string {
 	return fmt.Sprintf("%03d-%04d %02d:%02d:%02d", gt.Day(), gt.Year(), gt.Hour(), gt.Minutes(), gt.Seconds())
+}
+
+func (gt GameTime) DaysUntilWeekStart() int {
+	days := 0
+	for gt.Weekday() != Wonday {
+		gt = gt.AddDays(1)
+		days++
+	}
+	return days
+}
+
+func (gt GameTime) DaysUntilMonthStart() int {
+	days := 0
+	for gt.DayOfMonth() != 1 {
+		gt = gt.AddDays(1)
+		days++
+	}
+	return days
+}
+
+func (gt GameTime) DaysUntilYearStart() int {
+	switch d := gt.Day(); d {
+	case 1:
+		return 0
+	default:
+		return daysPerYear - d + 1
+	}
 }
