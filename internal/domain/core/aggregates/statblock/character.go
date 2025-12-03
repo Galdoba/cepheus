@@ -3,6 +3,7 @@ package statblock
 import (
 	"fmt"
 
+	"github.com/Galdoba/cepheus/internal/domain/core/entities/dice"
 	"github.com/Galdoba/cepheus/internal/domain/core/values/skill"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -259,15 +260,37 @@ var Leeroy = CharacterSheet{
 
 func (cs CharacterSheet) View() string {
 	s := renderCoreCharacteristics(cs.CoreCharacteristics)
-	return s
+	s2 := renderCoreCharacteristics(cs.CoreCharacteristics)
+	ss := lipgloss.Place(20, 15, 10, 5, lipgloss.JoinVertical(lipgloss.Center, s, s2))
+	return ss
 
 }
 
 func renderCoreCharacteristics(core CoreCharacteristics) string {
-	s := fmt.Sprintf("STR: %v", statValue(core.Strenght))
+	s := ""
+	s += fmt.Sprintf(" STR: %v \n", statValue(core.Strenght))
+	s += fmt.Sprintf(" DEX: %v \n", statValue(core.Dexterity))
+	s += fmt.Sprintf(" END: %v \n", statValue(core.Endurance))
+	s += fmt.Sprintf(" INT: %v \n", statValue(core.Inteligence))
+	s += fmt.Sprintf(" EDU: %v \n", statValue(core.Education))
+	s += fmt.Sprintf(" SOC: %v ", statValue(core.SocialStanding))
 	r := lipgloss.DefaultRenderer()
 	st := lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder(), true).
+		Border(lipgloss.Border{
+			Top:          "-",
+			Bottom:       "-",
+			Left:         "|",
+			Right:        "|",
+			TopLeft:      "1",
+			TopRight:     "+",
+			BottomLeft:   "+",
+			BottomRight:  "+",
+			MiddleLeft:   "!",
+			MiddleRight:  "!",
+			Middle:       "!",
+			MiddleTop:    "=",
+			MiddleBottom: "=",
+		}, false, false, false, true).
 		Renderer(r)
 	return st.Render(s)
 }
@@ -279,5 +302,11 @@ func statValue(i int) string {
 		s = " " + s
 	}
 	s += " "
+	dm := dice.CharacteristicDM(i)
+	s += "("
+	if dm >= 0 {
+		s += "+"
+	}
+	s += fmt.Sprintf("%v)", dm)
 	return s
 }

@@ -150,3 +150,15 @@ func Roll(code string, mods ...int) int {
 	d.roll(num, faces, mods...)
 	return d.lastSum
 }
+
+func CharacteristicDM(i int) int {
+	i = max(i, 0)
+	switch i {
+	case 0:
+		return -3
+	case 1, 2:
+		return -2
+	default:
+		return (i / 3) - 2
+	}
+}
