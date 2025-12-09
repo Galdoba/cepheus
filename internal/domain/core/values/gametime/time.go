@@ -31,6 +31,11 @@ const (
 	Fiday                         = "Fiday"
 	Sixday                        = "Sixday"
 	Senday                        = "Senday"
+
+	Minute GameTime = ticsPerMinute
+	Hour   GameTime = ticsPerHour
+	Day    GameTime = ticsPerHour * 24
+	Week   GameTime = Day * 7
 )
 
 type Calendar string

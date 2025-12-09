@@ -2,6 +2,7 @@ package skill
 
 import (
 	"fmt"
+	"strings"
 )
 
 const (
@@ -88,9 +89,93 @@ const (
 
 type Skill string
 
-func (s Skill) String() string {
-	return fmt.Sprintf("%s", s)
+func list() []Skill {
+	return []Skill{
+		Admin,
+		Advocate,
+		Animals_Handling,
+		Animals_Veterinary,
+		Animals_Training,
+		Art_Performing,
+		Art_Creative,
+		Art_Presentation,
+		Astrogation,
+		Athletics_Dexterity,
+		Athletics_Endurance,
+		Athletics_Strength,
+		Broker,
+		Carouse,
+		Deception,
+		Diplomat,
+		Drive_Hovercraft,
+		Drive_Mole,
+		Drive_Track,
+		Drive_Walker,
+		Drive_Wheel,
+		Electronics_Comms,
+		Electronics_Computers,
+		Electronics_RemoteOps,
+		Electronics_Sensors,
+		Engineer_MDrive,
+		Engineer_JDrive,
+		Engineer_LiveSupport,
+		Engineer_Power,
+		Explosives,
+		Flyer_Airship,
+		Flyer_Grav,
+		Flyer_Ornithopter,
+		Flyer_Rotor,
+		Flyer_Wing,
+		Gambler,
+		Gunner_Turret,
+		Gunner_Ortilery,
+		Gunner_Screen,
+		Gunner_Capital,
+		GunCombat_Archaic,
+		GunCombat_Energy,
+		GunCombat_Slug,
+		HeavyWeapons_Artilery,
+		HeavyWeapons_Portable,
+		HeavyWeapons_Vechicle,
+		Independence,
+		Investigate,
+		JOAT,
+		Language,
+		Leadership,
+		Mechanic,
+		Medic,
+		Melee_Unarmed,
+		Melee_Blade,
+		Melee_Bludgen,
+		Melee_Natural,
+		Navigation,
+		Persuade,
+		Pilot_SmallCraft,
+		Pilot_Spaceship,
+		Pilot_CapitalShips,
+		Profession,
+		Recon,
+		ScienceLife,
+		SciencePhysical,
+		ScienceRobotics,
+		ScienceSocial,
+		ScienceSpaces,
+		Seafarer,
+		Stealth,
+		Steward,
+		Streetwise,
+		Survival,
+		Tactics_Military,
+		Tactics_Navy,
+		Tactics_SmallUnit,
+		Tolerance,
+		VaccSuit,
+	}
 }
+
+// func (s Skill) String() string {
+// 	return fmt.Sprintf("%s", s)
+// }
 
 func BackgroundSkillList() []Skill {
 	return []Skill{
@@ -132,4 +217,21 @@ func BackgroundSkillList() []Skill {
 		Survival,
 		VaccSuit,
 	}
+}
+
+func FromDescription(descr string) (Skill, error) {
+	skills := []Skill{}
+	for _, sk := range list() {
+		if strings.Contains(descr, string(sk)) {
+			skills = append(skills, sk)
+		}
+	}
+	switch len(skills) {
+	case 0:
+		return "", fmt.Errorf("no known skill in description")
+	default:
+		return "", fmt.Errorf("multiple skills in description: %v", skills)
+	case 1:
+	}
+	return skills[0], nil
 }

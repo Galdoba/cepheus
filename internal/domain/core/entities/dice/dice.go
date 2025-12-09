@@ -162,3 +162,9 @@ func CharacteristicDM(i int) int {
 		return (i / 3) - 2
 	}
 }
+
+func Flux() int {
+	r1 := Roll(Code_1D)
+	r2 := Roll(Code_1D)
+	return r1 - r2
+}
