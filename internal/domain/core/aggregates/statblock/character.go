@@ -290,7 +290,7 @@ func renderCoreCharacteristics(core CoreCharacteristics) string {
 			Middle:       "!",
 			MiddleTop:    "=",
 			MiddleBottom: "=",
-		}, false, false, false, true).
+		}, true).
 		Renderer(r)
 	return st.Render(s)
 }
