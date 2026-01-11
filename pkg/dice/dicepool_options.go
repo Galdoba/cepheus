@@ -1,6 +1,9 @@
 package dice
 
-import "time"
+import (
+	"hash/crc64"
+	"time"
+)
 
 type setupSettings struct {
 	seed   int64
@@ -22,6 +25,17 @@ func WithSeed(seed int64) SetupOption {
 	}
 }
 
+func WithSeedString(s string) SetupOption {
+	return func(ss *setupSettings) {
+		ss.seed = stringToInt64(s)
+	}
+}
+
+func stringToInt64(s string) int64 {
+	table := crc64.MakeTable(crc64.ECMA)
+	hash := crc64.Checksum([]byte(s), table)
+	return int64(hash)
+}
 func Locked() SetupOption {
 	return func(ss *setupSettings) {
 		ss.locked = true

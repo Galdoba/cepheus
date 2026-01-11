@@ -2,7 +2,7 @@ package float
 
 import "math"
 
-//AI generated
+// AI generated
 func Round(fl float64) float64 {
 	// Сначала округляем до миллиардных (9 знаков)
 	intermediate := math.Round(fl*1e9) / 1e9
@@ -26,4 +26,12 @@ func Round(fl float64) float64 {
 func RoundN(fl float64, n int) float64 {
 	pow := math.Pow(10, float64(n))
 	return math.Round(fl*pow) / pow
+}
+
+func SplitFloatAbs(x float64) (float64, float64) {
+	integer, fraction := math.Modf(x)
+	if fraction < 0 {
+		fraction = -fraction
+	}
+	return integer, fraction
 }
