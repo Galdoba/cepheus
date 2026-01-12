@@ -3,7 +3,7 @@ package survey
 import (
 	"fmt"
 
-	"github.com/Galdoba/cepheus/pkg/travellermap"
+	"github.com/Galdoba/cepheus/internal/domain/generic/services/travellermap"
 )
 
 type SpaceHex struct {

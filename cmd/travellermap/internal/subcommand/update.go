@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/Galdoba/cepheus/cmd/travellermap/internal/infra"
-	"github.com/Galdoba/cepheus/pkg/travellermap"
+	"github.com/Galdoba/cepheus/internal/domain/generic/services/travellermap"
 	"github.com/urfave/cli/v3"
 )
 

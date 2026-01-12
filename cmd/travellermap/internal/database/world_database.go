@@ -10,7 +10,7 @@ import (
 	"github.com/Galdoba/appcontext/jsonstore"
 	"github.com/Galdoba/cepheus/cmd/travellermap/internal/infra"
 	"github.com/Galdoba/cepheus/iiss/survey"
-	"github.com/Galdoba/cepheus/pkg/travellermap"
+	"github.com/Galdoba/cepheus/internal/domain/generic/services/travellermap"
 )
 
 type dbManager struct {
