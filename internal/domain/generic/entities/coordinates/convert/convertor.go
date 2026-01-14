@@ -3,9 +3,9 @@ package convert
 import (
 	"fmt"
 
-	"github.com/Galdoba/cepheus/pkg/grid/coordinates/cube"
-	"github.com/Galdoba/cepheus/pkg/grid/coordinates/global"
-	"github.com/Galdoba/cepheus/pkg/grid/coordinates/local"
+	"github.com/Galdoba/cepheus/internal/domain/generic/entities/coordinates/cube"
+	"github.com/Galdoba/cepheus/internal/domain/generic/entities/coordinates/global"
+	"github.com/Galdoba/cepheus/internal/domain/generic/entities/coordinates/local"
 )
 
 const (

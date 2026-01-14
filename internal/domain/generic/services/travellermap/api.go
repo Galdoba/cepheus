@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Galdoba/cepheus/pkg/grid/coordinates"
-	"github.com/Galdoba/cepheus/pkg/grid/coordinates/cube"
+	"github.com/Galdoba/cepheus/internal/domain/generic/entities/coordinates"
+	"github.com/Galdoba/cepheus/internal/domain/generic/entities/coordinates/cube"
 )
 
 const (

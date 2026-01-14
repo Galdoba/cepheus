@@ -2,7 +2,6 @@ package jsonstorage
 
 import (
 	"fmt"
-	"time"
 )
 
 // Create adds a new entry with the specified key.

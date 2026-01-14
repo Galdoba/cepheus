@@ -2,9 +2,11 @@ package jsonstorage
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -18,6 +20,9 @@ type fileData[T any] struct {
 // newStorage creates a new empty JSON storage file at the specified path.
 func newStorage[T any](path string) (*storage[T], error) {
 	// Try to create the file atomically, failing if it exists.
+	if err := os.MkdirAll(filepath.Dir(path), 0777); err != nil {
+		return nil, fmt.Errorf("failed to create directory: %v", err)
+	}
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0666)
 	if err != nil {
 		if os.IsExist(err) {
@@ -99,7 +104,7 @@ func (s *storage[T]) commitUnsafe() error {
 		fd.LastUpdated = s.LastUpdated
 	}
 
-	if err := writeFileDataToPath(s.path, fd); err != nil {
+	if err := atomicWriteFileData(s.path, fd); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
@@ -169,6 +174,9 @@ func (s *storage[T]) safeReadFileData() (*fileData[T], error) {
 func readFileData[T any](path string) (*fileData[T], error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
 		return nil, fmt.Errorf("failed to read file: %v", err)
 	}
 
@@ -196,12 +204,59 @@ func writeFileData[T any](w io.Writer, fd *fileData[T]) error {
 }
 
 // writeFileDataToPath writes data to a file at the specified path
-func writeFileDataToPath[T any](path string, fd *fileData[T]) error {
-	file, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("failed to create file: %v", err)
-	}
-	defer file.Close()
+// func writeFileDataToPath[T any](path string, fd *fileData[T]) error {
+// 	file, err := os.Create(path)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to create file: %v", err)
+// 	}
+// 	defer file.Close()
 
-	return writeFileData(file, fd)
+// 	return writeFileData(file, fd)
+// }
+
+func atomicWriteFileData[T any](path string, fd *fileData[T]) error {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path: %v", err)
+	}
+
+	dir := filepath.Dir(absPath)
+	base := filepath.Base(absPath)
+
+	// Create temp file with random name to avoid collisions
+	tempFile, err := os.CreateTemp(dir, "."+base+".*.tmp")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %v", err)
+	}
+	tempPath := tempFile.Name()
+
+	// Clean up temp file if we fail
+	defer func() {
+		if err != nil {
+			os.Remove(tempPath)
+		}
+	}()
+
+	// Write data
+	if err := writeFileData(tempFile, fd); err != nil {
+		tempFile.Close()
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	// Sync to ensure data is written to disk
+	if err := tempFile.Sync(); err != nil {
+		tempFile.Close()
+		return fmt.Errorf("failed to sync temp file: %v", err)
+	}
+
+	if err := tempFile.Close(); err != nil {
+		return fmt.Errorf("failed to close temp file: %v", err)
+	}
+
+	// Atomic rename (atomic on most filesystems)
+	if err := os.Rename(tempPath, absPath); err != nil {
+		return fmt.Errorf("failed to rename temp file: %v", err)
+	}
+
+	return nil
 }
