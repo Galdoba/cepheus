@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 )
 
 // Глобальный клиент с настройками для повторного использования
@@ -97,9 +99,9 @@ func GetData(urls ...string) (map[string][]byte, map[string]error) {
 			// Добавляем User-Agent и другие заголовки
 			req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; MyApp/1.0)")
 
-			start := time.Now()
+			// start := time.Now()
 			resp, err := client.Do(req)
-			requestTime := time.Since(start)
+			// requestTime := time.Since(start)
 
 			if err != nil {
 				lastErr = fmt.Errorf("HTTP запрос: %v", err)
@@ -132,9 +134,9 @@ func GetData(urls ...string) (map[string][]byte, map[string]error) {
 			}
 
 			// Логируем время выполнения (можно убрать в продакшене)
-			if requestTime > 250*time.Millisecond {
-				fmt.Printf("Медленный ответ %s: %v\n", url, requestTime)
-			}
+			// if requestTime > 4500*time.Millisecond {
+			// 	fmt.Printf("Медленный ответ %s: %v\n", url, requestTime)
+			// }
 
 			return data, nil
 		}
@@ -399,4 +401,46 @@ func GetDataWithProgress(urls ...string) (
 	}
 
 	return progressCh, getResults
+}
+
+func UrlFromCoords(coords coordinates.Global, radius int) string {
+	x, y := coords.Coordinates()
+	url := fmt.Sprintf("https://travellermap.com/api/jumpworlds?x=%v&y=%v&jump=%v", x, y, radius)
+	return url
+}
+
+func calibrationPoints(rings int) []coordinates.Cube {
+	zero := coordinates.MustCube(0, 0, 0)
+	points := make(map[coordinates.Cube]bool)
+	points[zero] = true
+	for i := 0; i <= rings; i++ {
+		nextPoints := []coordinates.Cube{}
+		for point := range points {
+			p1 := coordinates.Move(coordinates.Move(point, coordinates.DirectionNorth, 13), coordinates.DirectionNorthEast, 12)
+			p2 := coordinates.Move(coordinates.Move(point, coordinates.DirectionNorthEast, 13), coordinates.DirectionSouthEast, 12)
+			p3 := coordinates.Move(coordinates.Move(point, coordinates.DirectionSouthEast, 13), coordinates.DirectionSouth, 12)
+			p4 := coordinates.Move(coordinates.Move(point, coordinates.DirectionSouth, 13), coordinates.DirectionSouthWest, 12)
+			p5 := coordinates.Move(coordinates.Move(point, coordinates.DirectionSouthWest, 13), coordinates.DirectionNorthWest, 12)
+			p6 := coordinates.Move(coordinates.Move(point, coordinates.DirectionNorthWest, 13), coordinates.DirectionNorth, 12)
+			nextPoints = append(nextPoints, p1, p2, p3, p4, p5, p6)
+		}
+		for _, np := range nextPoints {
+			points[np] = true
+		}
+
+	}
+	list := []coordinates.Cube{}
+	for point := range points {
+		list = append(list, coordinates.MustCube(point.Q(), point.R(), point.S()))
+	}
+	return list
+}
+
+func ImportUrlList(rings int) []string {
+	crdlist := calibrationPoints(rings)
+	urlList := []string{}
+	for _, crd := range crdlist {
+		urlList = append(urlList, UrlFromCoords(crd.ToGlobal(), 12))
+	}
+	return urlList
 }

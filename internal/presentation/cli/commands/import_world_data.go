@@ -2,16 +2,16 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 
-	"github.com/Galdoba/cepheus/internal/domain/generic/entities/coordinates"
-	"github.com/Galdoba/cepheus/internal/domain/generic/services/travellermap"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
 	"github.com/Galdoba/cepheus/internal/infrastructure/app"
 	"github.com/Galdoba/cepheus/internal/infrastructure/config"
 	"github.com/Galdoba/cepheus/internal/infrastructure/jsonstorage"
+	"github.com/Galdoba/cepheus/internal/presentation/api"
 	"github.com/Galdoba/cepheus/internal/presentation/cli/flags"
 	"github.com/urfave/cli/v3"
 )
@@ -52,16 +52,43 @@ func importAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 				return fmt.Errorf("failed to create new storage: %v", err)
 			}
 		}
-		fmt.Printf("storage contains data on %v worlds\n", js.Len())
 
-		wd, err := travellermap.GetWorldData(coordinates.NewSpaceCoordinates(0, 0), cfg.Import.CoordinatesRingSize)
-		fmt.Println(err)
-		fmt.Println(len(wd), "worlds:")
-		for _, w := range wd {
-			fmt.Println(w)
+		worldDatamap, errormap := api.GetData(api.ImportUrlList(14)...)
+		fmt.Println("")
+		for url, err := range errormap {
+			fmt.Printf("failed to get data from [%v]:\nerror: %v\n", url, err)
 		}
+		updated := 0
+		created := 0
+		for url, data := range worldDatamap {
+			batch := t5ss.WorldBatch{}
+			// fmt.Println(data)
+			// fmt.Println(string(data))
+			if err := json.Unmarshal(data, &batch); err != nil {
+				fmt.Printf("failed to unmarshal data from [%v]:\nerror: %v\n", url, err)
+			}
+			// fmt.Println(batch)
+			// fmt.Println(len(batch.List))
+			for _, world := range batch.List {
+				crd := world.Coordinates()
+				if err := js.Update(crd.DatabaseKey(), world); err == nil {
+					updated++
+				}
+				if err := js.Create(crd.DatabaseKey(), world); err == nil {
+					created++
+				}
+			}
 
-		js.Close()
+		}
+		if err := js.CommitAndClose(); err != nil {
+			return fmt.Errorf("failed to commit&&close database: %v", err)
+		}
+		if updated > 0 {
+			fmt.Println("database entries updated:", updated)
+		}
+		if created > 0 {
+			fmt.Println("database entries created:", created)
+		}
 		return nil
 	}
 }

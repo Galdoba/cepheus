@@ -146,6 +146,7 @@ func move(h Cube, direction, steps int) Cube {
 	}
 	return current
 }
+
 func Move(h Cube, direction, steps int) Cube {
 	return move(h, direction, steps)
 }

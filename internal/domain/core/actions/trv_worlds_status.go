@@ -5,8 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/Galdoba/cepheus/internal/domain/support/entities/paths"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
 	"github.com/Galdoba/cepheus/internal/infrastructure/app"
+	"github.com/Galdoba/cepheus/internal/infrastructure/jsonstorage"
 	"github.com/urfave/cli/v3"
 )
 
@@ -22,10 +26,23 @@ func TrvWorlds_Status(app *app.TrvWorldsInfrastructure) cli.ActionFunc {
 				fmt.Printf("run `trv_worlds import` to download data from https://travellermap.com\n")
 				return nil
 			case false:
-				return fmt.Errorf("failed to read import file: %v", err)
+				return fmt.Errorf("failed to read import file: %v\n", err)
 			}
 		}
-		fmt.Printf("import file detected: %v bytes", file.Size())
+		fmt.Printf("database detected: %v bytes\n", file.Size())
+		fmt.Println("test read database...")
+		db, err := jsonstorage.OpenStorage[t5ss.WorldData](paths.ImportStoragePath())
+		if err != nil {
+			return fmt.Errorf("failed to open database: %v\n", err)
+		}
+		fmt.Printf("database contains %v entries\n", db.Len())
+		if err := db.Close(); err != nil {
+			return fmt.Errorf("failed to close database")
+		}
+		fmt.Println("everything seems fine to me... ")
+		time.Sleep(time.Second * 2)
+		fmt.Println("or is it?")
+		fmt.Println("")
 		return nil
 	}
 }
