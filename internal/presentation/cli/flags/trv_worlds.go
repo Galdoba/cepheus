@@ -2,9 +2,15 @@ package flags
 
 import "github.com/urfave/cli/v3"
 
+const (
+	DRY_RUN = "dry-run"
+	RINGS   = "rings"
+)
+
 func TrvWorlds_Import() []cli.Flag {
 	return []cli.Flag{
 		dryRun,
+		rings,
 	}
 }
 
@@ -15,4 +21,16 @@ var dryRun = &cli.BoolFlag{
 	Local:    true,
 	Value:    false,
 	Aliases:  []string{"d"},
+}
+
+var rings = &cli.IntFlag{
+	Name:        "rings",
+	Category:    "",
+	HideDefault: false,
+	Usage:       "calibration rings quantity [1-15]",
+	Required:    false,
+	Hidden:      false,
+	Local:       false,
+	Value:       13,
+	Aliases:     []string{"r"},
 }

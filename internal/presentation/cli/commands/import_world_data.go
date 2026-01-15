@@ -22,12 +22,13 @@ const (
 
 func ImportWorldData(app *app.TrvWorldsInfrastructure) *cli.Command {
 	add := cli.Command{
-		Name:      IMPORT_WORLD_DATA_COMMAND,
-		Aliases:   []string{},
-		Usage:     "download world data in t5ss format",
-		UsageText: "trv_worlds [global options] import [options]",
-		Action:    importAction(*app.Config),
-		Flags:     flags.TrvWorlds_Import(),
+		Name:        IMPORT_WORLD_DATA_COMMAND,
+		Aliases:     []string{},
+		Usage:       "download world data in t5ss format",
+		UsageText:   "trv_worlds [global options] import [options]",
+		Description: "Download jumpmaps with t5ss data from https://travellermap.com",
+		Action:      importAction(*app.Config),
+		Flags:       flags.TrvWorlds_Import(),
 	}
 	return &add
 }
@@ -35,54 +36,56 @@ func ImportWorldData(app *app.TrvWorldsInfrastructure) *cli.Command {
 func importAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 	return func(ctx context.Context, c *cli.Command) error {
 		dbPath := cfg.Import.ImportDataPath
-
-		//Open Storage
-		js, err := jsonstorage.OpenStorage[t5ss.WorldData](dbPath)
-		if err != nil {
-			switch errors.Is(err, os.ErrNotExist) {
-			case true:
-				fmt.Printf("import storage does not exits!\ncreate new: ")
-				js, err = jsonstorage.NewStorage[t5ss.WorldData](dbPath)
-				if err != nil {
-					fmt.Println("failed!")
-					fmt.Println("aborting program...")
-					return err
-				}
-			case false:
-				return fmt.Errorf("failed to create new storage: %v", err)
-			}
+		rings := cfg.Import.CoordinatesRingSize
+		if c.Int(flags.RINGS) != 0 {
+			rings = c.Int(flags.RINGS)
 		}
 
-		worldDatamap, errormap := api.GetData(api.ImportUrlList(14)...)
-		fmt.Println("")
+		//open db
+		db, err := openStorage(dbPath)
+		if err != nil {
+			return err
+		}
+
+		//setup request links
+		ursList := []string{}
+		switch c.Bool(flags.DRY_RUN) {
+		case false:
+			ursList = api.ImportUrlList(rings)
+		case true:
+			fmt.Fprintf(os.Stderr, "warning: dry-run mode activated\n")
+		}
+
+		//download data
+		worldDatamap, errormap := api.GetData(ursList...)
 		for url, err := range errormap {
 			fmt.Printf("failed to get data from [%v]:\nerror: %v\n", url, err)
 		}
+
+		//write to db and close
 		updated := 0
 		created := 0
 		for url, data := range worldDatamap {
 			batch := t5ss.WorldBatch{}
-			// fmt.Println(data)
-			// fmt.Println(string(data))
 			if err := json.Unmarshal(data, &batch); err != nil {
 				fmt.Printf("failed to unmarshal data from [%v]:\nerror: %v\n", url, err)
 			}
-			// fmt.Println(batch)
-			// fmt.Println(len(batch.List))
 			for _, world := range batch.List {
 				crd := world.Coordinates()
-				if err := js.Update(crd.DatabaseKey(), world); err == nil {
+				if err := db.Update(crd.DatabaseKey(), world); err == nil {
 					updated++
 				}
-				if err := js.Create(crd.DatabaseKey(), world); err == nil {
+				if err := db.Create(crd.DatabaseKey(), world); err == nil {
 					created++
 				}
 			}
 
 		}
-		if err := js.CommitAndClose(); err != nil {
+		if err := db.CommitAndClose(); err != nil {
 			return fmt.Errorf("failed to commit&&close database: %v", err)
 		}
+
+		//exit stats
 		if updated > 0 {
 			fmt.Println("database entries updated:", updated)
 		}
@@ -91,4 +94,29 @@ func importAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 		}
 		return nil
 	}
+}
+
+type storage interface {
+	Create(string, t5ss.WorldData) error
+	Update(string, t5ss.WorldData) error
+	CommitAndClose() error
+}
+
+func openStorage(dbPath string) (storage, error) {
+	js, err := jsonstorage.OpenStorage[t5ss.WorldData](dbPath)
+	if err != nil {
+		switch errors.Is(err, os.ErrNotExist) {
+		case true:
+			fmt.Printf("import storage does not exits!\ncreate new: ")
+			js, err = jsonstorage.NewStorage[t5ss.WorldData](dbPath)
+			if err != nil {
+				fmt.Println("failed!")
+				fmt.Println("aborting program...")
+				return nil, err
+			}
+		case false:
+			return nil, fmt.Errorf("failed to create new storage: %v", err)
+		}
+	}
+	return js, nil
 }

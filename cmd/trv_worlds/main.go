@@ -31,6 +31,7 @@ func main() {
 		Category:       "",
 		Commands: []*cli.Command{
 			commands.ImportWorldData(options),
+			commands.SurveyWorld(options),
 		},
 		Flags:                           []cli.Flag{},
 		HideHelp:                        false,
