@@ -70,19 +70,19 @@ func importAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 			if err := json.Unmarshal(data, &batch); err != nil {
 				fmt.Printf("failed to unmarshal data from [%v]:\nerror: %v\n", url, err)
 			}
-			for _, world := range batch.List {
-				crd := world.Coordinates()
-				if err := db.Update(crd.DatabaseKey(), world); err == nil {
+			for _, surveyImported := range batch.List {
+				crd := surveyImported.Coordinates()
+				if err := db.Update(crd.DatabaseKey(), surveyImported); err == nil {
 					updated++
 				}
-				if err := db.Create(crd.DatabaseKey(), world); err == nil {
+				if err := db.Create(crd.DatabaseKey(), surveyImported); err == nil {
 					created++
 				}
 			}
 
 		}
 		if err := db.CommitAndClose(); err != nil {
-			return fmt.Errorf("failed to commit&&close database: %v", err)
+			return fmt.Errorf("failed to commit&&close import database: %v", err)
 		}
 
 		//exit stats

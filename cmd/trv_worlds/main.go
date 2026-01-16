@@ -32,6 +32,7 @@ func main() {
 		Commands: []*cli.Command{
 			commands.ImportWorldData(options),
 			commands.SurveyWorld(options),
+			commands.Reset(options),
 		},
 		Flags:                           []cli.Flag{},
 		HideHelp:                        false,

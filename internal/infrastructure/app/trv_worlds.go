@@ -10,7 +10,8 @@ import (
 )
 
 type TrvWorldsInfrastructure struct {
-	Config *config.TrvWorldsCfg
+	CfgPath string
+	Config  *config.TrvWorldsCfg
 }
 
 func InitTrvWorlds() (*TrvWorldsInfrastructure, error) {
@@ -25,6 +26,6 @@ func InitTrvWorlds() (*TrvWorldsInfrastructure, error) {
 		fmt.Fprintf(os.Stderr, "config loading failed: %v\nfallback to default configuration...\n", err)
 	}
 	inf.Config = cfgman.Config()
-
+	inf.CfgPath = cfgman.Path()
 	return &inf, nil
 }

@@ -484,3 +484,44 @@ func TradeCodes(u uwp.UWP) []Classification {
 	}
 	return tc
 }
+
+func Export(cls ...Classification) []string {
+	export := []string{}
+	for _, cl := range cls {
+		export = append(export, string(cl))
+	}
+	return export
+}
+
+func Import(list ...string) []Classification {
+	confirmed := []Classification{}
+	for _, cl := range all() {
+		if slices.Contains(list, string(cl)) {
+			confirmed = append(confirmed, cl)
+		}
+	}
+	return confirmed
+}
+
+func all() []Classification {
+	return []Classification{
+		Ab, Ag, An, As,
+		Ba, Bo,
+		Co, Cp, Cs, Cx, Cy,
+		Da, De, Di,
+		Fa, Fl, Fo, Fr,
+		Ga,
+		He, Hi, Ho, Ht,
+		Ic, In,
+		Lk, Lo, Lt,
+		Mi, Mr,
+		Na, Ni,
+		Oc,
+		Pa, Pe, Ph, Pi, Po, Pr, Px, Pz,
+		Re, Ri,
+		Sa,
+		Tr, Tu, Tz,
+		Va,
+		Wa,
+	}
+}
