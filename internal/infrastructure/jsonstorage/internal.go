@@ -18,7 +18,7 @@ type fileData[T any] struct {
 }
 
 // newStorage creates a new empty JSON storage file at the specified path.
-func newStorage[T any](path string) (*storage[T], error) {
+func newStorage[T any](path string) (*Storage[T], error) {
 	// Try to create the file atomically, failing if it exists.
 	if err := os.MkdirAll(filepath.Dir(path), 0777); err != nil {
 		return nil, fmt.Errorf("failed to create directory: %v", err)
@@ -32,7 +32,7 @@ func newStorage[T any](path string) (*storage[T], error) {
 	}
 	defer file.Close()
 
-	s := &storage[T]{
+	s := &Storage[T]{
 		path:        path,
 		Created:     time.Now(),
 		LastUpdated: time.Now(),
@@ -57,13 +57,13 @@ func newStorage[T any](path string) (*storage[T], error) {
 }
 
 // openStorage loads an existing JSON storage file from the specified path.
-func openStorage[T any](path string) (*storage[T], error) {
+func openStorage[T any](path string) (*Storage[T], error) {
 	fd, err := readFileData[T](path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open storage: %w", err)
 	}
 
-	s := &storage[T]{
+	s := &Storage[T]{
 		path:        path,
 		Created:     fd.Created,
 		LastUpdated: fd.LastUpdated,
@@ -76,7 +76,7 @@ func openStorage[T any](path string) (*storage[T], error) {
 }
 
 // commitUnsafe performs the commit operation without locking. Caller must hold the lock.
-func (s *storage[T]) commitUnsafe() error {
+func (s *Storage[T]) commitUnsafe() error {
 	if s.closed {
 		return ErrStorageClosed
 	}
@@ -114,33 +114,33 @@ func (s *storage[T]) commitUnsafe() error {
 }
 
 // markChanged marks a key as changed and updates timestamp
-func (s *storage[T]) markChanged(key string) {
+func (s *Storage[T]) markChanged(key string) {
 	s.changed[key] = true
 	delete(s.deleted, key)
 	s.LastUpdated = time.Now()
 }
 
 // markDeleted marks a key as deleted and updates timestamp
-func (s *storage[T]) markDeleted(key string) {
+func (s *Storage[T]) markDeleted(key string) {
 	s.deleted[key] = true
 	delete(s.changed, key)
 	s.LastUpdated = time.Now()
 }
 
 // clearChangeTracking clears all change tracking for a key
-func (s *storage[T]) clearChangeTracking(key string) {
+func (s *Storage[T]) clearChangeTracking(key string) {
 	delete(s.changed, key)
 	delete(s.deleted, key)
 }
 
 // clearChangeTracking clears all change tracking for a key
-func (s *storage[T]) resetTracking() {
+func (s *Storage[T]) resetTracking() {
 	s.deleted = make(map[string]bool)
 	s.changed = make(map[string]bool)
 }
 
 // getPendingKeys returns a slice of keys that have pending changes
-func (s *storage[T]) getPendingKeys() []string {
+func (s *Storage[T]) getPendingKeys() []string {
 	pendingKeys := make([]string, 0, len(s.changed)+len(s.deleted))
 
 	for key := range s.changed {
@@ -157,7 +157,7 @@ func (s *storage[T]) getPendingKeys() []string {
 }
 
 // safeReadFileData reads file data safely, returning empty data if file doesn't exist
-func (s *storage[T]) safeReadFileData() (*fileData[T], error) {
+func (s *Storage[T]) safeReadFileData() (*fileData[T], error) {
 	if _, err := os.Stat(s.path); err != nil {
 		// File doesn't exist, return empty data with current timestamps
 		return &fileData[T]{

@@ -8,24 +8,24 @@ type TrvWorldsCfg struct {
 }
 
 type TrvWorldsImport struct {
-	ImportDataPath        string `toml:"import_data_path"`
+	External_DB_File      string `toml:"external_db_file"`
 	DownloadRetryAttempts int    `toml:"download_retry_attempts"`
 	CoordinatesRingSize   int    `toml:"coordinates_ring_size"`
 }
 
 type Worlds struct {
-	WorldsDataPath string `toml:"worlds_data_path"`
+	Derived_DB_File string `toml:"dirived_db_file"`
 }
 
 func DefaultTrvWorldsConfig() TrvWorldsCfg {
 	return TrvWorldsCfg{
 		Import: TrvWorldsImport{
-			ImportDataPath:        paths.ImportStoragePath(),
+			External_DB_File:      paths.DefaultExternalDB_File(),
 			DownloadRetryAttempts: 3,
 			CoordinatesRingSize:   2,
 		},
 		World: Worlds{
-			WorldsDataPath: paths.WorldsStoragePath(),
+			Derived_DB_File: paths.DefaultDerivedDB_File(),
 		},
 	}
 }

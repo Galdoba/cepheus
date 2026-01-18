@@ -12,12 +12,12 @@ const (
 	WorldsDataFile = "worlds_data.json"
 )
 
-func ImportStoragePath() string {
+func DefaultExternalDB_File() string {
 	path := xdg.New(declare.APP_TRV_WORLDS)
 	return filepath.Join(path.PersistentDataDir(), ImportDataFile)
 }
 
-func WorldsStoragePath() string {
+func DefaultDerivedDB_File() string {
 	path := xdg.New(declare.APP_TRV_WORLDS)
 	return filepath.Join(path.PersistentDataDir(), WorldsDataFile)
 }

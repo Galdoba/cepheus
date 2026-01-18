@@ -49,7 +49,7 @@ func GetData(urls ...string) (map[string][]byte, map[string]error) {
 
 	// Запускаем мониторинг прогресса (опционально)
 	go func() {
-		ticker := time.NewTicker(5 * time.Second)
+		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 
 		for {
@@ -60,7 +60,7 @@ func GetData(urls ...string) (map[string][]byte, map[string]error) {
 				mu.RLock()
 				current := processed
 				mu.RUnlock()
-				fmt.Printf("Прогресс: %d/%d запросов (%.1f%%)\n",
+				fmt.Printf("Прогресс: %d/%d запросов (%.1f%%)\r",
 					current, total, float64(current)*100/float64(total))
 			}
 		}
@@ -186,7 +186,7 @@ func GetData(urls ...string) (map[string][]byte, map[string]error) {
 	// Ждем завершения всех горутин
 	wg.Wait()
 
-	fmt.Printf("Готово! Успешно: %d, Ошибок: %d\n",
+	fmt.Printf("\nГотово! Успешно: %d, Ошибок: %d\n",
 		len(results), len(errors))
 
 	return results, errors

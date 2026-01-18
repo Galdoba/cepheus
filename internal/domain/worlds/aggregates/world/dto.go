@@ -13,6 +13,7 @@ type WorldDTO struct {
 	Name         string   `json:"name,omitempty"`
 	MainworldUWP string   `json:"mainworld_uwp,omitempty"`
 	TradeCodes   []string `json:"trade_codes,omitempty"`
+	Bases        []string `json:"bases,omitempty"`
 }
 
 func (w *World) ToDTO() WorldDTO {
@@ -20,6 +21,8 @@ func (w *World) ToDTO() WorldDTO {
 		Coordinates:  [2]int{w.coordinates.X(), w.coordinates.Y()},
 		MainworldUWP: string(w.UWP()),
 		TradeCodes:   classifications.Export(w.tradeCodes...),
+		Name:         w.name,
+		Bases:        w.bases,
 	}
 	return dto
 }
@@ -29,6 +32,8 @@ func FromDTO(id string, dto WorldDTO) *World {
 	w.id = id
 	w.coordinates = coordinates.NewGlobal(dto.Coordinates[0], dto.Coordinates[1])
 	w.mainworldUWP, _ = uwp.New(dto.MainworldUWP)
+	w.name = dto.Name
+	w.bases = dto.Bases
 	w.tradeCodes = classifications.Import(dto.TradeCodes...)
 	return &w
 }

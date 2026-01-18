@@ -8,7 +8,7 @@ import (
 
 // DestroyStorage permanently deletes the storage file from disk.
 // Returns an error if storage is closed, path is not set, or file removal fails.
-func (s *storage[T]) DestroyStorage() error {
+func (s *Storage[T]) DestroyStorage() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -37,7 +37,7 @@ func (s *storage[T]) DestroyStorage() error {
 
 // Close marks the storage as closed, preventing further operations.
 // Returns an error if storage is already closed.
-func (s *storage[T]) Close() error {
+func (s *Storage[T]) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.closed {
@@ -51,7 +51,7 @@ func (s *storage[T]) Close() error {
 // Commit synchronizes in-memory changes with the file on disk.
 // It updates only changed entries, adds new ones, and removes deleted ones.
 // Evicted entries (removed via Evict) are kept in the file.
-func (s *storage[T]) Commit() error {
+func (s *Storage[T]) Commit() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.commitUnsafe()
@@ -59,7 +59,7 @@ func (s *storage[T]) Commit() error {
 
 // CommitAndClose commits any pending changes and then closes the storage.
 // Returns an error if either commit or close operation fails.
-func (s *storage[T]) CommitAndClose() error {
+func (s *Storage[T]) CommitAndClose() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -75,7 +75,7 @@ func (s *storage[T]) CommitAndClose() error {
 
 // ReConnect reopens a closed storage connection and reloads data from disk.
 // Returns an error if storage is not closed, path is not set, or loading fails.
-func (s *storage[T]) ReConnect() error {
+func (s *Storage[T]) ReConnect() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -94,7 +94,7 @@ func (s *storage[T]) ReConnect() error {
 // Load reloads the storage data from the JSON file on disk.
 // This method is thread-safe and replaces all in-memory entries.
 // Note: This will clear any uncommitted changes.
-func (s *storage[T]) Load() error {
+func (s *Storage[T]) Load() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -106,7 +106,7 @@ func (s *storage[T]) Load() error {
 }
 
 // loadUnsafe performs the load operation without locking. Caller must hold the lock.
-func (s *storage[T]) loadUnsafe() error {
+func (s *Storage[T]) loadUnsafe() error {
 	fd, err := readFileData[T](s.path)
 	if err != nil {
 		return fmt.Errorf("failed to load data: %w", err)

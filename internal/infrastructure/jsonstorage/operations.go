@@ -6,7 +6,7 @@ import (
 
 // Create adds a new entry with the specified key.
 // Returns an error if the key is empty, already exists, or storage is closed.
-func (s *storage[T]) Create(key string, entry T) error {
+func (s *Storage[T]) Create(key string, entry T) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -27,7 +27,7 @@ func (s *storage[T]) Create(key string, entry T) error {
 
 // Read retrieves an entry by its key.
 // Returns the entry if found, otherwise returns a zero value and an error.
-func (s *storage[T]) Read(key string) (T, error) {
+func (s *Storage[T]) Read(key string) (T, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -42,12 +42,12 @@ func (s *storage[T]) Read(key string) (T, error) {
 	if val, ok := s.Entries[key]; ok {
 		return val, nil
 	}
-	return noValue, fmt.Errorf("%w: %v", ErrKeyNotFound, key)
+	return noValue, ErrKeyNotFound
 }
 
 // Update modifies an existing entry with the specified key.
 // Returns an error if the key is empty, doesn't exist, or storage is closed.
-func (s *storage[T]) Update(key string, newEntry T) error {
+func (s *Storage[T]) Update(key string, newEntry T) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -69,7 +69,7 @@ func (s *storage[T]) Update(key string, newEntry T) error {
 // Delete removes an entry with the specified key.
 // Deleted entries will be removed from the file on next commit.
 // Returns an error if the key is empty, doesn't exist, or storage is closed.
-func (s *storage[T]) Delete(key string) error {
+func (s *Storage[T]) Delete(key string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -90,7 +90,7 @@ func (s *storage[T]) Delete(key string) error {
 
 // AllKeys returns a slice containing all keys in the storage.
 // The order of keys is not guaranteed.
-func (s *storage[T]) AllKeys() []string {
+func (s *Storage[T]) AllKeys() []string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -103,7 +103,7 @@ func (s *storage[T]) AllKeys() []string {
 
 // AllEntries returns a slice containing all values in the storage.
 // The order of values is not guaranteed.
-func (s *storage[T]) AllEntries() []T {
+func (s *Storage[T]) AllEntries() []T {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -115,14 +115,14 @@ func (s *storage[T]) AllEntries() []T {
 }
 
 // Len returns the number of entries currently stored.
-func (s *storage[T]) Len() int {
+func (s *Storage[T]) Len() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return len(s.Entries)
 }
 
 // Path returns the file path where the JSON data is stored.
-func (s *storage[T]) Path() string {
+func (s *Storage[T]) Path() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.path
@@ -132,7 +132,7 @@ func (s *storage[T]) Path() string {
 // Evicted entries are removed from memory only and will not be changed on commit.
 // Returns a slice of keys that were evicted.
 // Returns an error if storage is closed.
-func (s *storage[T]) Evict(exceptions ...string) ([]string, error) {
+func (s *Storage[T]) Evict(exceptions ...string) ([]string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

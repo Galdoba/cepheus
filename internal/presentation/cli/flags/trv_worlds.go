@@ -14,6 +14,12 @@ func TrvWorlds_Import() []cli.Flag {
 	}
 }
 
+func TrvWorlds_Survey() []cli.Flag {
+	return []cli.Flag{
+		dryRun,
+	}
+}
+
 var dryRun = &cli.BoolFlag{
 	Name:     "dry-run",
 	Category: "",
@@ -33,21 +39,4 @@ var rings = &cli.IntFlag{
 	Local:       false,
 	Value:       13,
 	Aliases:     []string{"r"},
-}
-
-func TrvWorlds_Survey() []cli.Flag {
-	return []cli.Flag{
-		search_key,
-		dryRun,
-	}
-}
-
-var search_key = &cli.StringFlag{
-	Name:        "search",
-	Category:    "",
-	DefaultText: "",
-	HideDefault: false,
-	Usage:       "search field input",
-	Value:       "",
-	Aliases:     []string{"s"},
 }

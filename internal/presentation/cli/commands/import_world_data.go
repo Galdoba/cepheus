@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 
@@ -35,14 +34,14 @@ func ImportWorldData(app *app.TrvWorldsInfrastructure) *cli.Command {
 
 func importAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 	return func(ctx context.Context, c *cli.Command) error {
-		dbPath := cfg.Import.ImportDataPath
+		dbPath := cfg.Import.External_DB_File
 		rings := cfg.Import.CoordinatesRingSize
 		if c.Int(flags.RINGS) != 0 {
 			rings = c.Int(flags.RINGS)
 		}
 
 		//open db
-		db, err := openStorage(dbPath)
+		db, err := jsonstorage.OpenOrCreateStorage[t5ss.WorldData](dbPath)
 		if err != nil {
 			return err
 		}
@@ -94,29 +93,4 @@ func importAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 		}
 		return nil
 	}
-}
-
-type storage interface {
-	Create(string, t5ss.WorldData) error
-	Update(string, t5ss.WorldData) error
-	CommitAndClose() error
-}
-
-func openStorage(dbPath string) (storage, error) {
-	js, err := jsonstorage.OpenStorage[t5ss.WorldData](dbPath)
-	if err != nil {
-		switch errors.Is(err, os.ErrNotExist) {
-		case true:
-			fmt.Printf("import storage does not exits!\ncreate new: ")
-			js, err = jsonstorage.NewStorage[t5ss.WorldData](dbPath)
-			if err != nil {
-				fmt.Println("failed!")
-				fmt.Println("aborting program...")
-				return nil, err
-			}
-		case false:
-			return nil, fmt.Errorf("failed to create new storage: %v", err)
-		}
-	}
-	return js, nil
 }

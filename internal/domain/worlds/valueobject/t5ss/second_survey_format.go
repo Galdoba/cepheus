@@ -2,6 +2,7 @@ package t5ss
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 )
@@ -48,4 +49,43 @@ func (w WorldData) Details_DB_Key() string {
 
 func (w WorldData) Coordinates() coordinates.Global {
 	return coordinates.NewGlobal(w.WorldX, w.WorldY)
+}
+
+func (w WorldData) NormalizeName() string {
+	if w.Name != "" {
+		return w.Name
+	}
+	nameParts := []string{}
+	if w.SubsectorName != "" {
+		nameParts = append(nameParts, w.SubsectorName)
+	}
+	if w.Hex != "" {
+		part := w.Hex
+		if len(w.UWP) > 3 {
+			sah := ""
+			for i, u := range strings.Split(w.UWP, "") {
+				switch i {
+				case 1, 2, 3:
+					sah += u
+				}
+			}
+			part += "-" + sah
+		}
+		nameParts = append(nameParts, part)
+	}
+	return strings.Join(nameParts, " ")
+}
+
+func (w WorldData) ConfirmedBases() []string {
+	bases := []string{}
+	if strings.Contains(w.UWP, "?") {
+		return bases
+	}
+	for _, b := range strings.Split(w.Bases, "") {
+		bases = append(bases, b)
+	}
+	if len(bases) == 0 {
+		bases = append(bases, "no bases confirmed")
+	}
+	return bases
 }

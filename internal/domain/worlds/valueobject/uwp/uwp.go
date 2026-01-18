@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Galdoba/cepheus/internal/domain/support/entities/dice"
 	"github.com/Galdoba/cepheus/internal/domain/support/valueobject/ehex"
 )
 
@@ -68,33 +69,26 @@ func (u UWP) Description() string {
 }
 
 func New(s string) (UWP, error) {
-	issues := []string{}
 	codes := strings.Split(s, "")
-	if len(codes) < 9 {
-		issues = append(issues, fmt.Sprintf("string contains less than 9 characters (%v)", len(codes)))
+	if len(codes) != 9 {
+		return "", fmt.Errorf("string must contain 9 characters (contains %v)", len(s))
 	}
-	if len(codes) > 9 {
-		issues = append(issues, fmt.Sprintf("string contains more than 9 characters (%v)", len(codes)))
-	}
+	fieldsMissing := 0
 	for i, code := range codes {
 		switch i {
 		case separator:
 			if eh := ehex.FromCode(code); eh.Code() != "-" {
-				issues = append(issues, fmt.Sprintf("code %v is not a separator: %v", i, eh))
+				return "", fmt.Errorf("8-th character must be separator (%v)", eh.Code())
 			}
 		default:
 			if eh := ehex.FromCode(code); eh.Value() < 0 {
-				issues = append(issues, fmt.Sprintf("code %v is not defined: %v", i, eh.Description()))
+				fieldsMissing++
 			}
 		}
 	}
 	u := UWP(s)
-	if len(issues) != 0 {
-		errText := "uwp contains issues:"
-		for i, iss := range issues {
-			errText += fmt.Sprintf("\n%v: %v", i+1, iss)
-		}
-		return u, fmt.Errorf("%s", errText)
+	if fieldsMissing > 0 {
+		return u, fmt.Errorf("%v fields undefined", fieldsMissing)
 	}
 	return u, nil
 }
@@ -342,4 +336,177 @@ func describePort(code string) string {
 		d = descr[code]
 	}
 	return d
+}
+
+func Populate(u UWP, dice *dice.Dicepool) (UWP, error) {
+	profile := u.Profile()
+	if profile[size].Value() < 0 {
+		newSize := dice.Roll("2d6", -2)
+	increaseSizeLoop:
+		for newSize > 9 {
+			switch dice.Roll("1d2") {
+			case 1:
+				break increaseSizeLoop
+			case 2:
+				newSize++
+			}
+			if newSize == 15 {
+				break
+			}
+		}
+		profile[size] = ehex.FromValue(newSize)
+	}
+	if profile[atmo].Value() < 0 {
+		dm := 0
+		switch profile[size].Code() {
+		case "0", "1", "S":
+			dm = -999
+		case "2", "3", "4":
+			dm = -2
+		}
+		newAtmo := dice.Roll("2d6", -7, profile[size].Value(), dm)
+		profile[size] = ehex.FromValue(minmax(newAtmo, 0, 17))
+	}
+	if profile[hydr].Value() < 0 {
+		dm := 0
+		switch profile[size].Code() {
+		case "0", "1":
+			dm = -999
+		}
+		switch profile[atmo].Code() {
+		case "0", "1", "A", "B", "C", "D", "E", "F":
+			dm = -4
+		}
+		newHydr := dice.Roll("2d6", -7, profile[atmo].Value(), dm)
+		profile[size] = ehex.FromValue(minmax(newHydr, 0, 10))
+	}
+
+	if profile[pops].Value() < 0 {
+		newPops := dice.Roll("2d6", -2)
+		for newPops > 9 {
+		increasePopsLoop:
+			switch dice.Roll("1d2") {
+			case 1:
+				break increasePopsLoop
+			case 2:
+				newPops++
+			}
+			if newPops == 12 {
+				break
+			}
+		}
+		profile[pops] = ehex.FromValue(newPops)
+	}
+	if profile[govr].Value() < 0 {
+		newGovr := dice.Roll("2d6", -7, profile[pops].Value())
+		profile[govr] = ehex.FromValue(minmax(newGovr, 0, 15))
+	}
+	if profile[laws].Value() < 0 {
+		newLaws := dice.Roll("2d6", -7, profile[govr].Value())
+		profile[laws] = ehex.FromValue(minmax(newLaws, 0, 33))
+	}
+
+	if profile[port].Value() < 0 {
+		dm := 0
+		switch profile[pops].Value() {
+		case 0, 1, 2:
+			dm = -2
+		case 3, 4:
+			dm = -1
+		case 8, 9:
+			dm = 1
+		default:
+			if profile[pops].Value() >= 10 {
+				dm = 2
+			}
+		}
+		r := minmax(dice.Roll("2d6", dm), 2, 11)
+		code := ""
+		switch r {
+		case 2:
+			code = "X"
+		case 3, 4:
+			code = "E"
+		case 5, 6:
+			code = "D"
+		case 7, 8:
+			code = "C"
+		case 9, 10:
+			code = "B"
+		case 11:
+			code = "A"
+		}
+		profile[port] = ehex.FromCode(code)
+	}
+	if profile[tl].Value() < 0 {
+		dm := 0
+		switch profile[size].Value() {
+		case 0, 1:
+			dm += 2
+		case 2, 3, 4:
+			dm += 1
+		}
+		switch profile[atmo].Value() {
+		case 0, 1, 2, 3, 10, 11, 12, 13, 14, 15, 16, 17:
+			dm += 1
+		}
+		switch profile[hydr].Value() {
+		case 0, 9:
+			dm += 1
+		case 10:
+			dm += 2
+		}
+		switch profile[pops].Value() {
+		case 1, 2, 3, 4, 5, 8:
+			dm += 1
+		case 9:
+			dm += 2
+		case 10, 11, 12:
+			dm += 4
+		}
+		switch profile[govr].Value() {
+		case 1, 5:
+			dm += 1
+		case 7:
+			dm += 2
+		case 13, 14:
+			dm += -2
+		}
+		switch profile[port].Code() {
+		case "A":
+			dm += 6
+		case "B":
+			dm += 4
+		case "C":
+			dm += 2
+		case "F":
+			dm += 1
+		case "X":
+			dm += -4
+		}
+		newTl := dice.Roll("1d6", dm)
+		profile[tl] = ehex.FromValue(minmax(newTl, 0, 33))
+	}
+	newString := fmt.Sprintf("%v%v%v%v%v%v%v-%v",
+		profile[port].Code(), profile[size].Code(), profile[atmo].Code(), profile[hydr].Code(),
+		profile[pops].Code(), profile[govr].Code(), profile[laws].Code(), profile[tl].Code(),
+	)
+	newUWP, err := New(newString)
+	if err != nil {
+		return u, fmt.Errorf("failed to create uwp: %v", err)
+	}
+	return newUWP, nil
+}
+
+func minmax(v, min, max int) int {
+	if min > max {
+		min, max = max, min
+	}
+	if v < min {
+		return min
+	}
+	if v > max {
+		return max
+	}
+	return v
 }

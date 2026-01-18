@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/Galdoba/cepheus/internal/infrastructure/app"
+	"github.com/Galdoba/consolio/prompt"
 	"github.com/urfave/cli/v3"
 )
 
@@ -27,17 +28,31 @@ func Reset(app *app.TrvWorldsInfrastructure) *cli.Command {
 
 func resetAction(app *app.TrvWorldsInfrastructure) cli.ActionFunc {
 	return func(ctx context.Context, c *cli.Command) error {
-		paths := []string{
-			app.Config.World.WorldsDataPath,
-			app.Config.Import.ImportDataPath,
-			app.CfgPath,
+		objectsToDelete := make(map[string]string)
+		keys := []string{"Config File", "Derived Database", "External Database"}
+		objectsToDelete[keys[0]] = app.CfgPath
+		objectsToDelete[keys[1]] = app.Config.World.Derived_DB_File
+		objectsToDelete[keys[2]] = app.Config.Import.External_DB_File
+
+		paths := []*prompt.Item{}
+		for _, key := range keys {
+			paths = append(paths, prompt.NewItem(key, objectsToDelete[key]))
 		}
-		for _, path := range paths {
+		toBeDeleted, err := prompt.SelectMultiple(
+			prompt.WithTitle("select objects to delete:"),
+			prompt.FromItems(paths),
+		)
+		if err != nil {
+			return fmt.Errorf("selection failed: %v", err)
+		}
+
+		for _, item := range toBeDeleted {
+			path := item.Payload().(string)
 			switch err := os.Remove(path); err {
 			case nil:
-				fmt.Println("deleted: ", path)
+				fmt.Fprintf(os.Stderr, "deleted: %v (%v)\n", item.Key(), path)
 			default:
-				fmt.Printf("failed to delete %v:\n  %v\n", path, err)
+				fmt.Fprintf(os.Stderr, "failed to delete %v: %v\n", item.Key(), err)
 			}
 		}
 		return nil

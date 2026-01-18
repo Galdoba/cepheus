@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -119,6 +120,7 @@ func sum(mods ...int) int {
 }
 
 func parseDiceString(s string) (diceCount, faceCount, modifier int) {
+	s = strings.ToUpper(s)
 	re := regexp.MustCompile(`^(\d+)?D(\d+)?([+-]\d+)?$`)
 	matches := re.FindStringSubmatch(s)
 	if matches == nil {

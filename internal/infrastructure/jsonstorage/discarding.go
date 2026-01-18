@@ -9,14 +9,14 @@ import (
 // - If key exists in file: loads fresh copy into memory (overwrites any changes)
 // - If key doesn't exist in file: removes from memory (if present)
 // Returns an error if storage is closed or if file reading fails.
-func (s *storage[T]) SelectiveLoad(keys ...string) error {
+func (s *Storage[T]) SelectiveLoad(keys ...string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.selectiveLoadUnsafe(keys...)
 }
 
 // selectiveLoadUnsafe performs SelectiveLoad without locking. Caller must hold the lock.
-func (s *storage[T]) selectiveLoadUnsafe(keys ...string) error {
+func (s *Storage[T]) selectiveLoadUnsafe(keys ...string) error {
 	if s.closed {
 		return ErrStorageClosed
 	}
@@ -44,7 +44,7 @@ func (s *storage[T]) selectiveLoadUnsafe(keys ...string) error {
 // - If key has pending changes (created, updated, or deleted): reload from file (or remove if not in file)
 // - If key has no pending changes: do nothing
 // Returns an error if storage is closed or if file reading fails.
-func (s *storage[T]) Discard(keys ...string) error {
+func (s *Storage[T]) Discard(keys ...string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -69,7 +69,7 @@ func (s *storage[T]) Discard(keys ...string) error {
 // - If key has pending changes (created, updated, or deleted): reload from file (or remove if not in file)
 // - If key has no pending changes: do nothing (keep current in-memory value)
 // Returns an error if storage is closed or if file reading fails.
-func (s *storage[T]) DiscardAll() error {
+func (s *Storage[T]) DiscardAll() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

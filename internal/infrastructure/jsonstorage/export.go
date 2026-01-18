@@ -8,7 +8,7 @@ import (
 
 // Export writes a formatted JSON representation of the storage to the provided writer.
 // This is useful for backups or external inspection without saving to the original file.
-func (s *storage[T]) Export(w io.Writer) error {
+func (s *Storage[T]) Export(w io.Writer) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

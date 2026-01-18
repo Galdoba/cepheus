@@ -18,7 +18,7 @@ func TrvWorlds_Status(app *app.TrvWorldsInfrastructure) cli.ActionFunc {
 	return func(ctx context.Context, c *cli.Command) error {
 		fmt.Println("here be dragons...")
 		fmt.Println("config:", app.Config)
-		file, err := os.Stat(app.Config.Import.ImportDataPath)
+		file, err := os.Stat(app.Config.Import.External_DB_File)
 		if err != nil {
 			switch errors.Is(err, os.ErrNotExist) {
 			case true:
@@ -31,7 +31,7 @@ func TrvWorlds_Status(app *app.TrvWorldsInfrastructure) cli.ActionFunc {
 		}
 		fmt.Printf("database detected: %v bytes\n", file.Size())
 		fmt.Println("test read database...")
-		db, err := jsonstorage.OpenStorage[t5ss.WorldData](paths.ImportStoragePath())
+		db, err := jsonstorage.OpenStorage[t5ss.WorldData](paths.DefaultExternalDB_File())
 		if err != nil {
 			return fmt.Errorf("failed to open database: %v\n", err)
 		}
