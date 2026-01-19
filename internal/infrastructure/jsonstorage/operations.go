@@ -88,6 +88,10 @@ func (s *Storage[T]) Delete(key string) error {
 	return nil
 }
 
+func (s *Storage[T]) ReadAll() map[string]T {
+	return s.Entries
+}
+
 // AllKeys returns a slice containing all keys in the storage.
 // The order of keys is not guaranteed.
 func (s *Storage[T]) AllKeys() []string {

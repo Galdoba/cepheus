@@ -17,6 +17,7 @@ func TrvWorlds_Import() []cli.Flag {
 func TrvWorlds_Survey() []cli.Flag {
 	return []cli.Flag{
 		dryRun,
+		radius,
 	}
 }
 
@@ -30,13 +31,15 @@ var dryRun = &cli.BoolFlag{
 }
 
 var rings = &cli.IntFlag{
-	Name:        "rings",
-	Category:    "",
-	HideDefault: false,
-	Usage:       "calibration rings quantity [1-15]",
-	Required:    false,
-	Hidden:      false,
-	Local:       false,
-	Value:       13,
-	Aliases:     []string{"r"},
+	Name:    "rings",
+	Usage:   "calibration rings quantity [1-15]",
+	Value:   13,
+	Aliases: []string{"rn"},
+}
+
+var radius = &cli.IntFlag{
+	Name:    "radius",
+	Usage:   "set radius to survey worlds in",
+	Value:   6,
+	Aliases: []string{"r"},
 }

@@ -56,8 +56,8 @@ func (w WorldData) NormalizeName() string {
 		return w.Name
 	}
 	nameParts := []string{}
-	if w.SubsectorName != "" {
-		nameParts = append(nameParts, w.SubsectorName)
+	if w.Sector != "" {
+		nameParts = append(nameParts, w.Sector)
 	}
 	if w.Hex != "" {
 		part := w.Hex
@@ -76,16 +76,10 @@ func (w WorldData) NormalizeName() string {
 	return strings.Join(nameParts, " ")
 }
 
-func (w WorldData) ConfirmedBases() []string {
-	bases := []string{}
-	if strings.Contains(w.UWP, "?") {
-		return bases
-	}
-	for _, b := range strings.Split(w.Bases, "") {
-		bases = append(bases, b)
-	}
-	if len(bases) == 0 {
-		bases = append(bases, "no bases confirmed")
-	}
-	return bases
+func (w WorldData) SearchKey() string {
+	return fmt.Sprintf("%v %v/%v %v [%v]", w.Name, w.SubsectorName, w.Sector, w.Hex, w.UWP)
+}
+
+func (w WorldData) DatabaseKey() string {
+	return fmt.Sprintf("{%v,%v}", w.WorldX, w.WorldY)
 }

@@ -2,14 +2,10 @@ package commands
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/Galdoba/cepheus/internal/domain/worlds/aggregates/world"
 	"github.com/Galdoba/cepheus/internal/infrastructure/app"
 	"github.com/Galdoba/cepheus/internal/infrastructure/config"
-	"github.com/Galdoba/cepheus/internal/infrastructure/jsonstorage"
 	"github.com/Galdoba/cepheus/internal/presentation/cli/flags"
-	"github.com/Galdoba/consolio/prompt"
 	"github.com/urfave/cli/v3"
 )
 
@@ -32,30 +28,31 @@ func InspectWorld(app *app.TrvWorldsInfrastructure) *cli.Command {
 
 func inspectAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 	return func(ctx context.Context, c *cli.Command) error {
-		derived_db_path := cfg.World.Derived_DB_File
-		//open
-		fmt.Printf("open database... ")
-		workingDataStorage, err := jsonstorage.OpenOrCreateStorage[world.WorldDTO](derived_db_path)
-		if err != nil {
-			return fmt.Errorf("failed open working data storage: %v", err)
-		}
+		// derived_db_path := cfg.World.Derived_DB_File
+		// //open
+		// fmt.Printf("open database... ")
+		// workingDataStorage, err := jsonstorage.OpenOrCreateStorage[world.WorldDTO](derived_db_path)
+		// if err != nil {
+		// 	return fmt.Errorf("failed open working data storage: %v", err)
+		// }
 
-		// keyMap := make(map[string]string)
-		keys := []*prompt.Item{}
+		// // keyMap := make(map[string]string)
+		// keys := []*prompt.Item{}
 
-		for _, entry := range workingDataStorage.AllEntries() {
-			keys = append(keys, prompt.NewItem(entry.Key(), entry))
-		}
-		selected, err := prompt.SearchItem(
-			prompt.FromItems(keys),
-			prompt.WithTitle("search world:"),
-		)
-		if err != nil {
-			return err
-		}
-		dto := selected.Payload().(world.WorldDTO)
-		w := world.FromDTO(dto.Key(), dto)
-		fmt.Println(w)
+		// for _, entry := range workingDataStorage.AllEntries() {
+		// 	inspectKey := fmt.Sprintf("%v %v %v", entry.Name, entry.MainworldUWP, entry.Coordinates)
+		// 	keys = append(keys, prompt.NewItem(inspectKey, entry))
+		// }
+		// selected, err := prompt.SearchItem(
+		// 	prompt.FromItems(keys),
+		// 	prompt.WithTitle("search world:"),
+		// )
+		// if err != nil {
+		// 	return err
+		// }
+		// dto := selected.Payload().(world.WorldDTO)
+		// w := world.FromDTO(dto.Key(), dto)
+		// fmt.Println(w)
 		return nil
 	}
 }

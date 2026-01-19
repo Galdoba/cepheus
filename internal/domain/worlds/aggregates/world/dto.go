@@ -3,26 +3,21 @@ package world
 import (
 	"fmt"
 
-	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/classifications"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
-	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/uwp"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
 )
 
 type WorldDTO struct {
-	Coordinates  [2]int   `json:"coordinates"`
-	Name         string   `json:"name,omitempty"`
-	MainworldUWP string   `json:"mainworld_uwp,omitempty"`
-	TradeCodes   []string `json:"trade_codes,omitempty"`
-	Bases        []string `json:"bases,omitempty"`
+	Coordinates [2]int         `json:"coordinates"`
+	Name        string         `json:"name,omitempty"`
+	Imported    t5ss.WorldData `json:"imported"`
 }
 
 func (w *World) ToDTO() WorldDTO {
 	dto := WorldDTO{
-		Coordinates:  [2]int{w.coordinates.X(), w.coordinates.Y()},
-		MainworldUWP: string(w.UWP()),
-		TradeCodes:   classifications.Export(w.tradeCodes...),
-		Name:         w.name,
-		Bases:        w.bases,
+		Coordinates: [2]int{w.coordinates.X(), w.coordinates.Y()},
+		Name:        "",
+		Imported:    w.imported,
 	}
 	return dto
 }
@@ -31,13 +26,10 @@ func FromDTO(id string, dto WorldDTO) *World {
 	w := World{}
 	w.id = id
 	w.coordinates = coordinates.NewGlobal(dto.Coordinates[0], dto.Coordinates[1])
-	w.mainworldUWP, _ = uwp.New(dto.MainworldUWP)
-	w.name = dto.Name
-	w.bases = dto.Bases
-	w.tradeCodes = classifications.Import(dto.TradeCodes...)
+	w.imported = dto.Imported
 	return &w
 }
 
-func (dto WorldDTO) Key() string {
+func (dto WorldDTO) DatabaseKey() string {
 	return fmt.Sprintf("{%v,%v}", dto.Coordinates[0], dto.Coordinates[1])
 }

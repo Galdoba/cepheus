@@ -3,13 +3,17 @@ package commands
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Galdoba/cepheus/internal/domain/worlds/aggregates/world"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/entities/trade"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
 	"github.com/Galdoba/cepheus/internal/infrastructure/app"
 	"github.com/Galdoba/cepheus/internal/infrastructure/config"
 	"github.com/Galdoba/cepheus/internal/infrastructure/jsonstorage"
 	"github.com/Galdoba/cepheus/internal/presentation/cli/flags"
+	"github.com/Galdoba/consolio/prompt"
 	"github.com/urfave/cli/v3"
 )
 
@@ -44,20 +48,53 @@ func surveyAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 		if err != nil {
 			return fmt.Errorf("failed to open canonical data storage")
 		}
+		fmt.Println("success!!")
 
-		for _, key := range canonicalDataStorage.AllKeys() {
-			wd, err := canonicalDataStorage.Read(key)
-			if err != nil {
-				return fmt.Errorf("failed to read canonical data (%v): %v", wd.Import_DB_Key(), err)
-			}
-			w, err := world.Import(wd)
-			if err != nil {
-				return fmt.Errorf("failed to import (%v): %v", wd.Import_DB_Key(), err)
-			}
-			dto := w.ToDTO()
-			workingDataStorage.Update(dto.Key(), w.ToDTO())
-			workingDataStorage.Create(dto.Key(), w.ToDTO())
+		searcKeys := []string{}
+		items := []*prompt.Item{}
+
+		for _, entry := range canonicalDataStorage.AllEntries() {
+			sk := entry.SearchKey()
+			searcKeys = append(searcKeys, sk)
+			items = append(items, prompt.NewItem(sk, entry))
 		}
+
+		selected, err := prompt.SearchItem(
+			prompt.FromItems(items),
+			prompt.WithTitle("Select world to survey:"),
+		)
+
+		if err != nil {
+			return err
+		}
+
+		wd := selected.Payload().(t5ss.WorldData)
+
+		fmt.Printf("selected entry: %v\n", wd)
+
+		w, err := world.Import(wd)
+		if err != nil {
+			return err
+		}
+		fmt.Println("simulation hydration:")
+		fmt.Println("  ...sort of")
+		time.Sleep(time.Second)
+		crdList := coordinates.Spiral(wd.Coordinates().ToCube(), 4)
+		for _, crd := range crdList {
+			if ok, err := trade.Exists(wd.Coordinates(), crd.ToGlobal()); err == nil {
+				switch ok {
+				case true:
+					fmt.Println("trades with", crd)
+				case false:
+					fmt.Println("no trade with", crd)
+
+				}
+			}
+
+		}
+
+		workingDataStorage.Update(w.DatabaseKey(), w.ToDTO())
+		workingDataStorage.Create(w.DatabaseKey(), w.ToDTO())
 		canonicalDataStorage.Close()
 		workingDataStorage.CommitAndClose()
 
