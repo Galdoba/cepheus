@@ -62,6 +62,9 @@ const (
 	Va Classification = "Va"
 	Wa Classification = "Wa"
 
+	Amber Classification = "A"
+	Red   Classification = "R"
+
 	amberZoneGL = 20
 	redZoneGL   = 22
 )
@@ -381,12 +384,15 @@ func Classify(u uwp.UWP, opts ...classificationOptionFunc) []Classification {
 	}
 	if u.Govr().Value()+u.Laws().Value() >= redZoneGL || slices.Contains(options.requestedCodes, "R") {
 		confirmed = append(confirmed, Fo)
+		confirmed = append(confirmed, Red)
 	}
 	if match(u.Pops(), "789ABCDEF") && (u.Govr().Value()+u.Laws().Value() >= amberZoneGL) || slices.Contains(options.requestedCodes, "A") {
 		confirmed = append(confirmed, Pz)
+		confirmed = append(confirmed, Amber)
 	}
 	if match(u.Pops(), "0123456") && (u.Govr().Value()+u.Laws().Value() >= amberZoneGL) || slices.Contains(options.requestedCodes, "A") {
 		confirmed = append(confirmed, Da)
+		confirmed = append(confirmed, Amber)
 	}
 
 	//Direct Requested Codes:
@@ -495,7 +501,7 @@ func Export(cls ...Classification) []string {
 
 func Import(list ...string) []Classification {
 	confirmed := []Classification{}
-	for _, cl := range all() {
+	for _, cl := range All() {
 		if slices.Contains(list, string(cl)) {
 			confirmed = append(confirmed, cl)
 		}
@@ -503,7 +509,7 @@ func Import(list ...string) []Classification {
 	return confirmed
 }
 
-func all() []Classification {
+func All() []Classification {
 	return []Classification{
 		Ab, Ag, An, As,
 		Ba, Bo,
