@@ -1,6 +1,9 @@
 package tradegoods
 
 import (
+	"fmt"
+	"slices"
+
 	"github.com/Galdoba/cepheus/internal/domain/support/entities/dice"
 	tc "github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/classifications"
 )
@@ -19,11 +22,70 @@ type TradeGood struct {
 	IncrementMultiplier     []int                     `json:"increment_multiplier"`
 	IncrementAddition       []int                     `json:"increment_addition"`
 	BasePrice               []int                     `json:"base_price"`
+	PurchaseSkill           string                    `json:"purchase_skill,omitempty"`
+	PurchaseDifficulty      int                       `json:"purchase_difficulty,omitempty"`
+	SaleSkill               string                    `json:"sale_skill,omitempty"`
+	SaleDificulty           int                       `json:"sale_dificulty,omitempty"`
 }
 
 func NewRandom(d *dice.Dicepool) TradeGood {
-	code := d.D66()
+	return tradeGoods[d.D66()]
+}
 
+func New(code string) (TradeGood, error) {
+	if !validCode(code) {
+		return TradeGood{}, fmt.Errorf("invalid tradegoods code provided: '%v'", code)
+	}
+	return tradeGoods[code], nil
+}
+
+func validCode(code string) bool {
+	return slices.Contains([]string{
+		"11", "12", "13", "14", "15", "16",
+		"21", "22", "23", "24", "25", "26",
+		"31", "32", "33", "34", "35", "36",
+		"41", "42", "43", "44", "45", "46",
+		"51", "52", "53", "54", "55", "56",
+		"61", "62", "63", "64", "65", "66",
+	}, code)
+}
+
+var tradeGoods = map[string]TradeGood{
+	"11": TG_11,
+	"12": TG_12,
+	"13": TG_13,
+	"14": TG_14,
+	"15": TG_15,
+	"16": TG_16,
+	"21": TG_21,
+	"22": TG_22,
+	"23": TG_23,
+	"24": TG_24,
+	"25": TG_25,
+	"26": TG_26,
+	"31": TG_31,
+	"32": TG_32,
+	"33": TG_33,
+	"34": TG_34,
+	"35": TG_35,
+	"36": TG_36,
+	"41": TG_41,
+	"42": TG_42,
+	"43": TG_43,
+	"44": TG_44,
+	"45": TG_45,
+	"46": TG_46,
+	"51": TG_51,
+	"52": TG_52,
+	"53": TG_53,
+	"54": TG_54,
+	"55": TG_55,
+	"56": TG_56,
+	"61": TG_61,
+	"62": TG_62,
+	"63": TG_63,
+	"64": TG_64,
+	"65": TG_65,
 }
 
 var TG_11 = TradeGood{
@@ -634,9 +696,9 @@ var TG_53 = TradeGood{
 	MaximumRiskAssesmentDM: 2,
 	DangerousGoodsDM:       -2,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{14, 12, 10, 5, 2},
+	IncrementMultiplier:    []int{10, 10, 10, 5, 3},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{5000, 10000, 20000, 30000, 50000},
+	BasePrice:              []int{1000, 2500, 5000, 7500, 10000},
 }
 
 var TG_54 = TradeGood{
@@ -657,9 +719,9 @@ var TG_54 = TradeGood{
 	MaximumRiskAssesmentDM: 2,
 	DangerousGoodsDM:       -2,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{14, 12, 10, 5, 2},
+	IncrementMultiplier:    []int{14, 12, 10, 8, 3},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{5000, 10000, 20000, 30000, 50000},
+	BasePrice:              []int{5000, 10000, 20000, 35000, 50000},
 }
 
 var TG_55 = TradeGood{
@@ -679,9 +741,9 @@ var TG_55 = TradeGood{
 	MaximumRiskAssesmentDM: 1,
 	DangerousGoodsDM:       -4,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{14, 12, 10, 5, 2},
+	IncrementMultiplier:    []int{12, 10, 10, 6, 2},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{5000, 10000, 20000, 30000, 50000},
+	BasePrice:              []int{100, 500, 1000, 2000, 4000},
 }
 
 var TG_56 = TradeGood{
@@ -701,9 +763,9 @@ var TG_56 = TradeGood{
 	MaximumRiskAssesmentDM: 2,
 	DangerousGoodsDM:       -2,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{14, 12, 10, 5, 2},
+	IncrementMultiplier:    []int{14, 12, 10, 6, 2},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{5000, 10000, 20000, 30000, 50000},
+	BasePrice:              []int{5000, 10000, 15000, 20000, 30000},
 }
 
 var TG_61 = TradeGood{
@@ -722,9 +784,9 @@ var TG_61 = TradeGood{
 	MaximumRiskAssesmentDM: 4,
 	DangerousGoodsDM:       4,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{14, 12, 10, 5, 2},
-	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{5000, 10000, 20000, 30000, 50000},
+	IncrementMultiplier:    []int{6, 5, 5, 0, 0},
+	IncrementAddition:      []int{0, 0, 0, 2, 1},
+	BasePrice:              []int{10000, 25000, 50000, 100000, 200000},
 }
 
 var TG_62 = TradeGood{
@@ -746,9 +808,9 @@ var TG_62 = TradeGood{
 	MaximumRiskAssesmentDM: 5,
 	DangerousGoodsDM:       5,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{14, 12, 10, 5, 2},
-	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{5000, 10000, 20000, 30000, 50000},
+	IncrementMultiplier:    []int{2, 2, 1, 0, 0},
+	IncrementAddition:      []int{0, 0, 0, 2, 1},
+	BasePrice:              []int{100000, 150000, 250000, 400000, 650000},
 }
 
 var TG_63 = TradeGood{
@@ -770,9 +832,9 @@ var TG_63 = TradeGood{
 	MaximumRiskAssesmentDM: 4,
 	DangerousGoodsDM:       6,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{14, 12, 10, 5, 2},
-	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{5000, 10000, 20000, 30000, 50000},
+	IncrementMultiplier:    []int{1, 1, 1, 0, 0},
+	IncrementAddition:      []int{2, 1, 0, 2, 1},
+	BasePrice:              []int{25000, 50000, 100000, 200000, 300000},
 }
 
 var TG_64 = TradeGood{
@@ -793,9 +855,9 @@ var TG_64 = TradeGood{
 	MaximumRiskAssesmentDM: 4,
 	DangerousGoodsDM:       4,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{14, 12, 10, 5, 2},
-	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{5000, 10000, 20000, 30000, 50000},
+	IncrementMultiplier:    []int{1, 1, 1, 0, 0},
+	IncrementAddition:      []int{1, 0, 0, 2, 1},
+	BasePrice:              []int{10000, 25000, 50000, 100000, 200000},
 }
 
 var TG_65 = TradeGood{
@@ -816,9 +878,9 @@ var TG_65 = TradeGood{
 	MaximumRiskAssesmentDM: 5,
 	DangerousGoodsDM:       6,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{14, 12, 10, 5, 2},
+	IncrementMultiplier:    []int{6, 5, 5, 2, 1},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{5000, 10000, 20000, 30000, 50000},
+	BasePrice:              []int{50000, 100000, 150000, 300000, 450000},
 }
 
 var TG_66 = TradeGood{
@@ -880,6 +942,7 @@ func descriptions(code string) []string {
 	descrMap["63"] = []string{"Herbal Stimulants/Biological Hallucinogens", "Chemical Depressants/Natural Narcotics", "Chemical Stimulants and Hallucinogens", "Designer Narcotics", "Alien Synthetics/Psi-Drugs"}
 	descrMap["64"] = []string{"Anti-Governmental Propaganda/Endangered Animal Products", "Black-data Recordings/Slaving Gear", "Extinct Animal Products", "BTL Devices/Cloning Equipment", "Forbidden Pleasures"}
 	descrMap["65"] = []string{"Chain-drive Weaponry/Armour-Piercing Ammunition", "Protected Technologies/Explosive or Incendiary Ammunition", "Synthetic Poisons/Personal-scale Mass Trauma Explosives", "Arclight Weaponry/Biological or Chemical Weaponry/Naval Starship Weaponry", "Disintegrators/Psi-Weaponry/Weapons of Mass Destruction"}
+	descrMap["66"] = []string{"Exotics"}
 
 	return descrMap[code]
 }
