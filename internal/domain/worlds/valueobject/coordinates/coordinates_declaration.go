@@ -61,6 +61,10 @@ func (g Global) Y() int {
 	return g.y
 }
 
+func Equal(a, b Global) bool {
+	return a.x == b.x && a.y == b.y
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 
 type Local struct {

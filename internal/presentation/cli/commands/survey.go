@@ -9,6 +9,7 @@ import (
 	"github.com/Galdoba/cepheus/internal/domain/worlds/entities/trade"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/tradegoods"
 	"github.com/Galdoba/cepheus/internal/infrastructure/app"
 	"github.com/Galdoba/cepheus/internal/infrastructure/config"
 	"github.com/Galdoba/cepheus/internal/infrastructure/jsonstorage"
@@ -80,13 +81,26 @@ func surveyAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 		fmt.Println("  ...sort of")
 		time.Sleep(time.Second)
 		crdList := coordinates.Spiral(wd.Coordinates().ToCube(), 4)
+		// localUWP := uwp.UWP(wd.UWP)
+		// ours := tradegoods.Available(classifications.Classify(localUWP)...)
 		for _, crd := range crdList {
 			if ok, err := trade.Exists(wd.Coordinates(), crd.ToGlobal()); err == nil {
 				switch ok {
 				case true:
-					fmt.Println("trades with", crd)
+					partner, _ := canonicalDataStorage.Read(crd.ToGlobal().DatabaseKey())
+					fmt.Println("trades with", partner.SearchKey())
+					importing, err := trade.CalculateImport(wd.Coordinates(), partner.Coordinates())
+					if err != nil {
+						panic(err)
+					}
+					if len(importing) > 0 {
+						fmt.Println("importing:")
+						for _, good := range tradegoods.Types(importing...) {
+							fmt.Println(good)
+						}
+					}
+
 				case false:
-					fmt.Println("no trade with", crd)
 
 				}
 			}

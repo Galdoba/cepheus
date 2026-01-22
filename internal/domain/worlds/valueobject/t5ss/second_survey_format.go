@@ -77,7 +77,15 @@ func (w WorldData) NormalizeName() string {
 }
 
 func (w WorldData) SearchKey() string {
-	return fmt.Sprintf("%v %v/%v %v [%v]", w.Name, w.SubsectorName, w.Sector, w.Hex, w.UWP)
+	key := ""
+	if w.Name != "" {
+		key += w.Name + " "
+	}
+	key += w.Sector + " " + w.Hex
+	if w.UWP != "" {
+		key += ":" + w.UWP
+	}
+	return key
 }
 
 func (w WorldData) DatabaseKey() string {

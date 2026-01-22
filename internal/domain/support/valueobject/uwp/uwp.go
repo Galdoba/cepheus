@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Galdoba/cepheus/pkg/ehex"
+	"github.com/Galdoba/cepheus/internal/domain/generic/valueobject/ehex"
 )
 
 type UWP string

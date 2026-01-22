@@ -10,7 +10,7 @@ func WithHZCO(hzco float64) SizeDetails {
 	}
 }
 
-func WithRNG(dp *dice.Dicepool) SizeDetails {
+func WithRNG(dp *dice.Roller) SizeDetails {
 	return func(dg *DetailGenerator) {
 		dg.rng = dp
 	}

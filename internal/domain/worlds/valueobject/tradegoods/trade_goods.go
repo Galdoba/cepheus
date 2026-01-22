@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/Galdoba/cepheus/internal/domain/support/entities/dice"
 	tc "github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/classifications"
+	"github.com/Galdoba/cepheus/pkg/dice"
 )
 
 type TradeGood struct {
@@ -28,8 +28,8 @@ type TradeGood struct {
 	SaleDificulty           int                       `json:"sale_dificulty,omitempty"`
 }
 
-func NewRandom(d *dice.Dicepool) TradeGood {
-	return tradeGoods[d.D66()]
+func NewRandom(d *dice.Roller) TradeGood {
+	return tradeGoods[d.ConcatRoll("d66")]
 }
 
 func New(code string) (TradeGood, error) {
@@ -48,6 +48,39 @@ func validCode(code string) bool {
 		"51", "52", "53", "54", "55", "56",
 		"61", "62", "63", "64", "65", "66",
 	}, code)
+}
+
+func Available(codes ...tc.Classification) []string {
+	available := []string{}
+	for k, goods := range tradeGoods {
+		switch k {
+		case "11", "12", "13", "14", "15", "16":
+			continue
+		default:
+			for _, code := range codes {
+				for _, present := range goods.AvailableAt {
+					if code == present {
+						available = append(available, k)
+					}
+				}
+			}
+
+		}
+	}
+	return available
+}
+
+func Types(codes ...string) []string {
+	types := []string{}
+	for _, code := range codes {
+		tg, err := New(code)
+		if err != nil {
+			types = append(types, fmt.Sprintf("invalid code <%v>", code))
+			continue
+		}
+		types = append(types, tg.TradeGoodType)
+	}
+	return types
 }
 
 var tradeGoods = map[string]TradeGood{

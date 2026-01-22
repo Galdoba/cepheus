@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/Galdoba/cepheus/internal/domain/generic/valueobject/ehex"
+	"github.com/Galdoba/cepheus/internal/domain/support/services/float"
 	"github.com/Galdoba/cepheus/pkg/dice"
-	"github.com/Galdoba/cepheus/pkg/ehex"
-	"github.com/Galdoba/cepheus/pkg/float"
 )
 
 const (
@@ -32,7 +32,7 @@ type WorldSize struct {
 }
 
 type DetailGenerator struct {
-	rng               *dice.Dicepool
+	rng               *dice.Roller
 	hzco              float64
 	systemAge         float64
 	forcedSeed        string
@@ -45,7 +45,7 @@ type DetailGenerator struct {
 
 func newDetailGenerator() *DetailGenerator {
 	dg := DetailGenerator{}
-	dg.rng = dice.NewDicepool()
+	dg.rng = dice.New("")
 	dg.forcedGravity = -1
 	return &dg
 }
@@ -58,7 +58,7 @@ func New(code ehex.Ehex, details ...SizeDetails) WorldSize {
 	worldSize := WorldSize{}
 	worldSize.Code = code
 	if dg.forcedSeed != "" {
-		dg.rng = dice.NewDicepool(dice.WithSeedString(dg.forcedSeed))
+		dg.rng = dice.New(dg.forcedSeed)
 	}
 	switch worldSize.Code.Code() {
 	case "0":
@@ -137,13 +137,13 @@ func baseDiameter(code ehex.Ehex) int {
 	return -1
 }
 
-func diameterIncrease(rng *dice.Dicepool) int {
+func diameterIncrease(rng *dice.Roller) int {
 	done := false
 	increment := 0
 	for !done {
 		increment = 0
-		r1 := rng.Sum("1d3")
-		r2 := rng.Sum("1d6")
+		r1 := rng.Roll("1d3")
+		r2 := rng.Roll("1d6")
 		switch r1 {
 		case 1:
 			increment = 0
@@ -172,7 +172,7 @@ func diameterIncrease(rng *dice.Dicepool) int {
 			}
 			increment += 500
 		}
-		increment += rng.Sum("1d100") - 1
+		increment += rng.Roll("1d100") - 1
 		done = true
 	}
 	return increment
@@ -200,7 +200,8 @@ func (dg *DetailGenerator) terrestrialComposition(sizeCode ehex.Ehex) string {
 	if dg.systemAge > 10 {
 		dm += 1
 	}
-	r := bound(dg.rng.Sum("2d6")+dm, -4, 15)
+
+	r := dg.rng.Roll("2d6min-4max15") + dm
 	switch r {
 	case -4:
 		return ExoticIce
@@ -250,7 +251,7 @@ func (dg *DetailGenerator) terrestrialDencity(composition string) float64 {
 	case CompressedMetal:
 		array = dencityArray(1.5, 0.05)
 	}
-	return array[dg.rng.Sum("2d6")-2]
+	return array[dg.rng.Roll("2d6")-2]
 }
 
 func dencityArray(start, step float64) []float64 {

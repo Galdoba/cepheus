@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Galdoba/cepheus/internal/domain/support/entities/dice"
 	"github.com/Galdoba/cepheus/internal/domain/support/valueobject/ehex"
+	"github.com/Galdoba/cepheus/pkg/dice"
 )
 
 const (
@@ -338,10 +338,10 @@ func describePort(code string) string {
 	return d
 }
 
-func Populate(u UWP, dice *dice.Dicepool) (UWP, error) {
+func Populate(u UWP, dice *dice.Roller) (UWP, error) {
 	profile := u.Profile()
 	if profile[size].Value() < 0 {
-		newSize := dice.Roll("2d6", -2)
+		newSize := roll(dice, "2d6", -2)
 	increaseSizeLoop:
 		for newSize > 9 {
 			switch dice.Roll("1d2") {
@@ -364,7 +364,8 @@ func Populate(u UWP, dice *dice.Dicepool) (UWP, error) {
 		case "2", "3", "4":
 			dm = -2
 		}
-		newAtmo := dice.Roll("2d6", -7, profile[size].Value(), dm)
+
+		newAtmo := roll(dice, "2d6", -7, profile[size].Value(), dm)
 		profile[size] = ehex.FromValue(minmax(newAtmo, 0, 17))
 	}
 	if profile[hydr].Value() < 0 {
@@ -377,12 +378,12 @@ func Populate(u UWP, dice *dice.Dicepool) (UWP, error) {
 		case "0", "1", "A", "B", "C", "D", "E", "F":
 			dm = -4
 		}
-		newHydr := dice.Roll("2d6", -7, profile[atmo].Value(), dm)
+		newHydr := roll(dice, "2d6", -7, profile[atmo].Value(), dm)
 		profile[size] = ehex.FromValue(minmax(newHydr, 0, 10))
 	}
 
 	if profile[pops].Value() < 0 {
-		newPops := dice.Roll("2d6", -2)
+		newPops := roll(dice, "2d6", -2)
 		for newPops > 9 {
 		increasePopsLoop:
 			switch dice.Roll("1d2") {
@@ -398,11 +399,11 @@ func Populate(u UWP, dice *dice.Dicepool) (UWP, error) {
 		profile[pops] = ehex.FromValue(newPops)
 	}
 	if profile[govr].Value() < 0 {
-		newGovr := dice.Roll("2d6", -7, profile[pops].Value())
+		newGovr := roll(dice, "2d6", -7, profile[pops].Value())
 		profile[govr] = ehex.FromValue(minmax(newGovr, 0, 15))
 	}
 	if profile[laws].Value() < 0 {
-		newLaws := dice.Roll("2d6", -7, profile[govr].Value())
+		newLaws := roll(dice, "2d6", -7, profile[govr].Value())
 		profile[laws] = ehex.FromValue(minmax(newLaws, 0, 33))
 	}
 
@@ -420,7 +421,7 @@ func Populate(u UWP, dice *dice.Dicepool) (UWP, error) {
 				dm = 2
 			}
 		}
-		r := minmax(dice.Roll("2d6", dm), 2, 11)
+		r := minmax(roll(dice, "2d6", dm), 2, 11)
 		code := ""
 		switch r {
 		case 2:
@@ -484,7 +485,7 @@ func Populate(u UWP, dice *dice.Dicepool) (UWP, error) {
 		case "X":
 			dm += -4
 		}
-		newTl := dice.Roll("1d6", dm)
+		newTl := roll(dice, "1d6", dm)
 		profile[tl] = ehex.FromValue(minmax(newTl, 0, 33))
 	}
 	newString := fmt.Sprintf("%v%v%v%v%v%v%v-%v",
@@ -509,4 +510,16 @@ func minmax(v, min, max int) int {
 		return max
 	}
 	return v
+}
+
+func roll(r *dice.Roller, base string, mods ...int) int {
+	s := base
+	for _, mod := range mods {
+		if mod >= 0 {
+			s += fmt.Sprintf("+%v", mod)
+		} else {
+			s += fmt.Sprintf("%v", mod)
+		}
+	}
+	return r.Roll(s)
 }

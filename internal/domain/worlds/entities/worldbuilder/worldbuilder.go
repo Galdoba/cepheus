@@ -1,6 +1,6 @@
 package worldbuilder
 
-import "github.com/Galdoba/cepheus/internal/domain/support/entities/dice"
+import "github.com/Galdoba/cepheus/pkg/dice"
 
 const (
 	randomSeed = ""
@@ -11,9 +11,9 @@ const (
 // It maintains an identifier and a random number generator (dice pool)
 // for procedural content generation.
 type WorldBuilder struct {
-	id   string         // Unique identifier for this builder instance
-	seed string         // RNG seed
-	dice *dice.Dicepool // Random number generator for procedural generation
+	id   string       // Unique identifier for this builder instance
+	seed string       // RNG seed
+	dice *dice.Roller // Random number generator for procedural generation
 }
 
 // WorldBuilderOption defines a function type for configuring WorldBuilder

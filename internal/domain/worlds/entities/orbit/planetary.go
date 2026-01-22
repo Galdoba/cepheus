@@ -3,9 +3,9 @@ package orbit
 import (
 	"math"
 
-	"github.com/Galdoba/cepheus/internal/domain/core/values/au"
+	"github.com/Galdoba/cepheus/internal/domain/support/services/float"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/au"
 	"github.com/Galdoba/cepheus/pkg/dice"
-	"github.com/Galdoba/cepheus/pkg/float"
 )
 
 type Planetary struct {
@@ -14,7 +14,7 @@ type Planetary struct {
 }
 
 type planetaryOrbitGenerator struct {
-	rng              *dice.Dicepool
+	rng              *dice.Roller
 	forcedPosition   float64
 	forcedPeriod     float64
 	forcedCenterMass float64
@@ -22,7 +22,7 @@ type planetaryOrbitGenerator struct {
 
 func newPlanetaryOrbitGenerator() *planetaryOrbitGenerator {
 	pog := planetaryOrbitGenerator{}
-	pog.rng = dice.NewDicepool()
+	pog.rng = dice.New("")
 	pog.forcedPeriod = -1
 	pog.forcedCenterMass = 1
 	return &pog
@@ -46,7 +46,7 @@ func (pog *planetaryOrbitGenerator) orbitN() float64 {
 	if pog.forcedPosition > 0 {
 		return pog.forcedPosition
 	}
-	return float64(pog.rng.Sum("1d6")) + (float64(pog.rng.Flux()) * 0.1)
+	return float64(pog.rng.Roll("1d6")) + (float64(pog.rng.Flux()) * 0.1)
 }
 
 func (pog *planetaryOrbitGenerator) period(orbitN float64) float64 {
