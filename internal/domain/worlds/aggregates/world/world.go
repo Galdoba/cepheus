@@ -12,6 +12,7 @@ type World struct {
 	id          string
 	imported    t5ss.WorldData
 	coordinates coordinates.Global
+	trade       *tradeConnections
 }
 
 func Import(wd t5ss.WorldData) (*World, error) {
@@ -19,7 +20,7 @@ func Import(wd t5ss.WorldData) (*World, error) {
 	w.id = fmt.Sprintf("{%v,%v}", wd.WorldX, wd.WorldY)
 	w.imported = wd
 	w.coordinates = wd.Coordinates()
-	fmt.Println(w.imported)
+	w.trade = newTradeConnections(wd.TradeCodes()...)
 	return &w, nil
 }
 

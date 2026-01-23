@@ -7,9 +7,9 @@ import (
 
 	"github.com/Galdoba/cepheus/internal/domain/worlds/aggregates/world"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/entities/trade"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/services/traderoute"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
-	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/tradegoods"
 	"github.com/Galdoba/cepheus/internal/infrastructure/app"
 	"github.com/Galdoba/cepheus/internal/infrastructure/config"
 	"github.com/Galdoba/cepheus/internal/infrastructure/jsonstorage"
@@ -88,17 +88,25 @@ func surveyAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 				switch ok {
 				case true:
 					partner, _ := canonicalDataStorage.Read(crd.ToGlobal().DatabaseKey())
-					fmt.Println("trades with", partner.SearchKey())
-					importing, err := trade.CalculateImport(wd.Coordinates(), partner.Coordinates())
-					if err != nil {
-						panic(err)
+					imp, exp := traderoute.Calculate(wd, partner)
+					if len(imp)+len(exp) == 0 {
+						continue
 					}
-					if len(importing) > 0 {
-						fmt.Println("importing:")
-						for _, good := range tradegoods.Types(importing...) {
-							fmt.Println(good)
+					fmt.Println("\ntrades with", partner.SearchKey(), ":")
+					for i, goods := range imp {
+						if i == 0 {
+							fmt.Println("importing:")
 						}
+						fmt.Println("  ", goods.TradeGoodType)
+
 					}
+					for i, goods := range exp {
+						if i == 0 {
+							fmt.Println("exporting:")
+						}
+						fmt.Println("  ", goods.TradeGoodType)
+					}
+					w.CreateTradeConnection(crd.ToGlobal(), imp, exp)
 
 				case false:
 

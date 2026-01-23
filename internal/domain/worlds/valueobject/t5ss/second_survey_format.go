@@ -3,8 +3,6 @@ package t5ss
 import (
 	"fmt"
 	"strings"
-
-	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 )
 
 type WorldData struct {
@@ -39,17 +37,13 @@ type WorldBatch struct {
 	List []WorldData `json:"Worlds,omitempty"`
 }
 
-func (w WorldData) Import_DB_Key() string {
-	return fmt.Sprintf("{%v, %v}", w.WorldX, w.WorldY)
-}
+// func (w WorldData) Import_DB_Key() string {
+// 	return fmt.Sprintf("{%v, %v}", w.WorldX, w.WorldY)
+// }
 
-func (w WorldData) Details_DB_Key() string {
-	return fmt.Sprintf("%v [%v/%v %v] %v", w.Name, w.SubsectorName, w.Sector, w.Hex, w.Import_DB_Key())
-}
-
-func (w WorldData) Coordinates() coordinates.Global {
-	return coordinates.NewGlobal(w.WorldX, w.WorldY)
-}
+// func (w WorldData) Details_DB_Key() string {
+// 	return fmt.Sprintf("%v [%v/%v %v] %v", w.Name, w.SubsectorName, w.Sector, w.Hex, w.Import_DB_Key())
+// }
 
 func (w WorldData) NormalizeName() string {
 	if w.Name != "" {

@@ -1,6 +1,10 @@
 package coordinates
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 func (g Global) ToCube() Cube {
 	q := g.x
@@ -39,6 +43,24 @@ func (g Global) ToLocal() Local {
 
 func (g Global) DatabaseKey() string {
 	return fmt.Sprintf("{%v,%v}", g.x, g.y)
+}
+
+func GlobalFromDatabaseKey(key string) (Global, error) {
+	keyCopy := key
+	keyParts := strings.Split(keyCopy, ",")
+	if len(keyParts) != 2 {
+		return Global{}, fmt.Errorf("bad key provided: '%v'", key)
+	}
+	x, err := strconv.Atoi(strings.TrimPrefix(keyParts[0], "{"))
+	if err != nil {
+		return Global{}, fmt.Errorf("failed to get X coordinate from '%v': %v", key, err)
+	}
+	y, err := strconv.Atoi(strings.TrimSuffix(keyParts[1], "}"))
+	if err != nil {
+		return Global{}, fmt.Errorf("failed to get Y coordinate from '%v': %v", key, err)
+	}
+	return NewGlobal(x, y), nil
+
 }
 
 func (g Global) OutOfReach() bool {

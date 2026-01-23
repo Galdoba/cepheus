@@ -2,7 +2,7 @@ package astrogation
 
 import "github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 
-func (as *AstrogationBasic) TradePathExist(source, destination coordinates.Cube) bool {
+func (as *Astrogation) TradePathExist(source, destination coordinates.Cube) bool {
 	if coordinates.Distance(source, destination) > 4 {
 		return false
 	}
@@ -16,7 +16,7 @@ func (as *AstrogationBasic) TradePathExist(source, destination coordinates.Cube)
 	}
 
 	for _, midPoint := range midpoints {
-		if _, err := as.db.Read(midPoint.ToGlobal().DatabaseKey()); err == nil {
+		if _, err := as.basic.Read(midPoint.ToGlobal().DatabaseKey()); err == nil {
 			return true
 		}
 	}

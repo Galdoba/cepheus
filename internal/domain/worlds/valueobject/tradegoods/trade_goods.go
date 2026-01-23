@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/classifications"
 	tc "github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/classifications"
 	"github.com/Galdoba/cepheus/pkg/dice"
 )
@@ -50,8 +51,9 @@ func validCode(code string) bool {
 	}, code)
 }
 
-func Available(codes ...tc.Classification) []string {
-	available := []string{}
+func Available(codes ...tc.Classification) []TradeGood {
+	goodsAvailable := []TradeGood{}
+goods_loop:
 	for k, goods := range tradeGoods {
 		switch k {
 		case "11", "12", "13", "14", "15", "16":
@@ -60,14 +62,39 @@ func Available(codes ...tc.Classification) []string {
 			for _, code := range codes {
 				for _, present := range goods.AvailableAt {
 					if code == present {
-						available = append(available, k)
+						goodsAvailable = append(goodsAvailable, goods)
+						continue goods_loop
 					}
 				}
 			}
 
 		}
 	}
-	return available
+	return goodsAvailable
+}
+
+func SaleFactor(tg TradeGood, tcPool ...classifications.Classification) (int, bool) {
+	sf := -999
+	present := false
+	for _, tc := range tcPool {
+		if val, ok := tg.SaleDM[tc]; ok {
+			sf = max(sf, val)
+			present = true
+		}
+	}
+	return sf, present
+}
+
+func PurchseFactor(tg TradeGood, tcPool ...classifications.Classification) (int, bool) {
+	pf := -999
+	present := false
+	for _, tc := range tcPool {
+		if val, ok := tg.PurchaseDM[tc]; ok {
+			pf = max(pf, val)
+			present = true
+		}
+	}
+	return pf, present
 }
 
 func Types(codes ...string) []string {
@@ -259,9 +286,9 @@ var TG_16 = TradeGood{
 }
 
 var TG_21 = TradeGood{
-	Code:                    "16",
-	TradeGoodType:           goodsType("16"),
-	Descriptions:            descriptions("16"),
+	Code:                    "21",
+	TradeGoodType:           goodsType("21"),
+	Descriptions:            descriptions("21"),
 	AvailableAt:             []tc.Classification{tc.In, tc.Ht},
 	MaximumSupplyMultiplier: 5,
 	PurchaseDM: map[tc.Classification]int{

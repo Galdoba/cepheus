@@ -37,7 +37,11 @@ func Read(key string) (*World, error) {
 	if err := storage.CommitAndClose(); err != nil {
 		return nil, fmt.Errorf("failed to close storage: %v", err)
 	}
-	return FromDTO(key, dto), nil
+	w, err := FromDTO(key, dto)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract world data: %v", err)
+	}
+	return w, nil
 }
 
 func (w *World) Update() error {
