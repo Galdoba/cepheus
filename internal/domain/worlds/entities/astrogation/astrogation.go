@@ -12,11 +12,11 @@ import (
 )
 
 type SpaceHex struct {
-	crd              coordinates.Cube
-	jumpspaceMod_IN  int
-	jumpspaceMod_OUT int
-	hasGasGigant     int
-	attraction       int
+	Crd          coordinates.Cube
+	Cost_IN      int
+	Cost_OUT     int
+	hasGasGigant int
+	attraction   int
 }
 
 type Astrogation struct {
@@ -58,31 +58,27 @@ func New() (*Astrogation, error) {
 	return &as, nil
 }
 
-func Coordinates(entry t5ss.WorldData) coordinates.Cube {
-	return coordinates.NewGlobal(entry.WorldX, entry.WorldY).ToCube()
-}
+// func Coordinates(entry t5ss.WorldData) coordinates.Cube {
+// 	return coordinates.NewGlobal(entry.WorldX, entry.WorldY).ToCube()
+// }
 
 func (as *Astrogation) DistanceBasic(source t5ss.WorldData, target t5ss.WorldData) int {
-	from := Coordinates(source)
-	to := Coordinates(target)
+	from := source.Coordinates().ToCube()
+	to := target.Coordinates().ToCube()
 	return coordinates.Distance(from, to)
 }
 
-func (as *Astrogation) JumpMap(source t5ss.WorldData, radius int) []t5ss.WorldData {
-	worlds := []t5ss.WorldData{}
-	center := Coordinates(source)
+func (as *Astrogation) JumpPoints(center coordinates.Cube, radius int) []coordinates.Cube {
 	coords := coordinates.Spiral(center, radius)
+	points := []coordinates.Cube{}
 	for _, crd := range coords {
 		gc := crd.ToGlobal()
 		key := fmt.Sprintf("%v", gc.DatabaseKey())
-		if wd, err := as.basic.Read(key); err == nil {
-			worlds = append(worlds, wd)
-		} else {
-			fmt.Println(err)
+		if _, err := as.basic.Read(key); err == nil {
+			points = append(points, crd)
 		}
 	}
-	return worlds
-
+	return points
 }
 
 func (as *Astrogation) World(key string) (t5ss.WorldData, error) {
@@ -101,6 +97,23 @@ func (as *Astrogation) ClosestNavyBase(crd coordinates.Global) int {
 		}
 	}
 	return -1
+}
+
+func (as *Astrogation) TradeRoutePossible(source, target coordinates.Cube) bool {
+	if coordinates.Distance(source, target) > 4 || coordinates.Distance(source, target) == 0 {
+		return false
+	}
+	if coordinates.Distance(source, target) <= 2 {
+		return true
+	}
+	jumpPoints := as.JumpPoints(source, 2)[0:]
+	jumpPoints = append(jumpPoints, as.JumpPoints(target, 2)[0:]...)
+	for _, midJump := range jumpPoints {
+		if coordinates.Distance(midJump, target) <= 2 && coordinates.Distance(midJump, source) <= 2 {
+			return true
+		}
+	}
+	return false
 }
 
 // func (as *AstrogationBasic) TradeRoutes(source )

@@ -3,10 +3,9 @@ package commands
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/Galdoba/cepheus/internal/domain/worlds/aggregates/world"
-	"github.com/Galdoba/cepheus/internal/domain/worlds/entities/trade"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/entities/astrogation"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/services/traderoute"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
@@ -78,41 +77,39 @@ func surveyAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 			return err
 		}
 		fmt.Println("simulation hydration:")
-		fmt.Println("  ...sort of")
-		time.Sleep(time.Second)
+		fmt.Println("Trade Routes:")
+		as, err := astrogation.New()
+		if err != nil {
+			return err
+		}
 		crdList := coordinates.Spiral(wd.Coordinates().ToCube(), 4)
-		// localUWP := uwp.UWP(wd.UWP)
-		// ours := tradegoods.Available(classifications.Classify(localUWP)...)
 		for _, crd := range crdList {
-			if ok, err := trade.Exists(wd.Coordinates(), crd.ToGlobal()); err == nil {
-				switch ok {
-				case true:
-					partner, _ := canonicalDataStorage.Read(crd.ToGlobal().DatabaseKey())
-					imp, exp := traderoute.Calculate(wd, partner)
-					if len(imp)+len(exp) == 0 {
-						continue
-					}
-					fmt.Println("\ntrades with", partner.SearchKey(), ":")
-					for i, goods := range imp {
-						if i == 0 {
-							fmt.Println("importing:")
-						}
-						fmt.Println("  ", goods.TradeGoodType)
-
-					}
-					for i, goods := range exp {
-						if i == 0 {
-							fmt.Println("exporting:")
-						}
-						fmt.Println("  ", goods.TradeGoodType)
-					}
-					w.CreateTradeConnection(crd.ToGlobal(), imp, exp)
-
-				case false:
-
-				}
+			if !as.TradePathExist(w.Coordinates(), crd) {
+				continue
 			}
+			partner, _ := canonicalDataStorage.Read(crd.ToGlobal().DatabaseKey())
+			if !traderoute.HasLink(wd, partner) {
+				continue
+			}
+			imp, exp := traderoute.Calculate(wd, partner)
+			if len(imp)+len(exp) == 0 {
+				continue
+			}
+			fmt.Println("\ntrades with", partner.SearchKey(), ":")
+			for i, goods := range imp {
+				if i == 0 {
+					fmt.Println("importing:")
+				}
+				fmt.Println("  ", goods.TradeGoodType)
 
+			}
+			for i, goods := range exp {
+				if i == 0 {
+					fmt.Println("exporting:")
+				}
+				fmt.Println("  ", goods.TradeGoodType)
+			}
+			w.CreateTradeConnection(crd.ToGlobal(), imp, exp)
 		}
 
 		workingDataStorage.Update(w.DatabaseKey(), w.ToDTO())

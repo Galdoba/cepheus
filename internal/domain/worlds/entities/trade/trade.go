@@ -6,32 +6,13 @@ import (
 	"github.com/Galdoba/cepheus/internal/domain/worlds/entities/astrogation"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/classifications"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/uwp"
 )
 
-func Exists(source, destination coordinates.Global) (bool, error) {
-	fmt.Println(source, destination, "exists?")
-	if source.DatabaseKey() == destination.DatabaseKey() {
-		return false, nil
-	}
-	as, err := astrogation.New()
-	if err != nil {
-		return false, err
-	}
-
-	sourceWorld, err := as.World(source.DatabaseKey())
-	if err != nil {
-		return false, err
-	}
-	destinationWorld, err := as.World(destination.DatabaseKey())
-	if err != nil {
-		return false, err
-	}
+func Exists(sourceWorld, destinationWorld t5ss.WorldData) (bool, error) {
 	if sourceWorld.Zone == "R" || destinationWorld.Zone == "R" {
 		return false, nil
-	}
-	if !as.TradePathExist(source.ToCube(), destination.ToCube()) {
-		return false, err
 	}
 	stc := classifications.Classify(uwp.UWP(sourceWorld.UWP))
 	dtc := classifications.Classify(uwp.UWP(destinationWorld.UWP))

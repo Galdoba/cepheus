@@ -1,6 +1,8 @@
 package traderoute
 
 import (
+	"slices"
+
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/classifications"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/tradegoods"
@@ -12,49 +14,6 @@ type Market interface {
 	TradeCodes() []classifications.Classification
 	TravelZone() travelzone.Zone
 }
-
-// func CalculateImport(local, distant Market) []tradegoods.TradeGood {
-// 	importing := []tradegoods.TradeGood{}
-// 	if coordinates.Equal(local.Coordinates(), distant.Coordinates()) {
-// 		return importing
-// 	}
-// 	localTC := local.TradeCodes()
-// 	if local.TravelZone() == travelzone.Amber {
-// 		localTC = append(localTC, classifications.Amber)
-// 	}
-// 	if local.TravelZone() == travelzone.Red {
-// 		localTC = append(localTC, classifications.Red)
-// 	}
-// 	for _, goods := range tradegoods.Available(distant.TradeCodes()...) {
-// 		sf, ok := tradegoods.SaleFactor(goods, localTC...)
-// 		if ok && sf >= 0 {
-// 			importing = append(importing, goods)
-// 		}
-// 	}
-// 	return importing
-// }
-
-// func CalculateExport(local, distant Market) []tradegoods.TradeGood {
-// 	exporting := []tradegoods.TradeGood{}
-// 	if coordinates.Equal(local.Coordinates(), distant.Coordinates()) {
-// 		return exporting
-// 	}
-// 	distantTC := distant.TradeCodes()
-// 	if distant.TravelZone() == travelzone.Amber {
-// 		distantTC = append(distantTC, classifications.Amber)
-// 	}
-// 	if distant.TravelZone() == travelzone.Red {
-// 		distantTC = append(distantTC, classifications.Red)
-// 	}
-// 	for _, goods := range tradegoods.Available(distant.TradeCodes()...) {
-// 		// sf, wantSale := tradegoods.SaleFactor(goods, distantTC...)
-// 		// pf, wantPurchase := tradegoods.PurchseFactor(goods, local.TradeCodes()...)
-// 		// if ok && sf >= 0 {
-// 		// 	exporting = append(exporting, goods)
-// 		// }
-// 	}
-// 	return exporting
-// }
 
 func Calculate(source, target Market) ([]tradegoods.TradeGood, []tradegoods.TradeGood) {
 	importing, exporting := []tradegoods.TradeGood{}, []tradegoods.TradeGood{}
@@ -77,6 +36,55 @@ func Calculate(source, target Market) ([]tradegoods.TradeGood, []tradegoods.Trad
 		}
 	}
 	return clearDuplicated(importing, exporting)
+}
+
+func HasLink(source, target Market) bool {
+	for _, tc1 := range source.TradeCodes() {
+		switch tc1 {
+		case classifications.In, classifications.Ht:
+			for _, tc2 := range target.TradeCodes() {
+				switch tc2 {
+				case classifications.As, classifications.De, classifications.Ic, classifications.Ni:
+					return true
+				}
+			}
+		case classifications.Hi, classifications.Ri:
+			for _, tc2 := range target.TradeCodes() {
+				switch tc2 {
+				case classifications.Ag, classifications.Ga, classifications.Wa:
+					return true
+				}
+			}
+		}
+	}
+	for _, tc1 := range target.TradeCodes() {
+		switch tc1 {
+		case classifications.In, classifications.Ht:
+			for _, tc2 := range source.TradeCodes() {
+				switch tc2 {
+				case classifications.As, classifications.De, classifications.Ic, classifications.Ni:
+					return true
+				}
+			}
+		case classifications.Hi, classifications.Ri:
+			for _, tc2 := range source.TradeCodes() {
+				switch tc2 {
+				case classifications.Ag, classifications.Ga, classifications.Wa:
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func containsAnyTradeCode(pool []classifications.Classification, codes ...classifications.Classification) bool {
+	for _, tc := range codes {
+		if slices.Contains(pool, tc) {
+			return true
+		}
+	}
+	return false
 }
 
 func clearDuplicated(imp, exp []tradegoods.TradeGood) ([]tradegoods.TradeGood, []tradegoods.TradeGood) {
