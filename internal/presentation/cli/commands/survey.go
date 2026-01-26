@@ -83,7 +83,11 @@ func surveyAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 			return err
 		}
 		crdList := coordinates.Spiral(wd.Coordinates().ToCube(), 4)
+		wtn := 0
 		for _, crd := range crdList {
+			if coordinates.Equal(wd.Coordinates(), crd.ToGlobal()) {
+				continue
+			}
 			if !as.TradePathExist(w.Coordinates(), crd) {
 				continue
 			}
@@ -99,18 +103,21 @@ func surveyAction(cfg config.TrvWorldsCfg) cli.ActionFunc {
 			for i, goods := range imp {
 				if i == 0 {
 					fmt.Println("importing:")
+					wtn++
 				}
 				fmt.Println("  ", goods.TradeGoodType)
 
 			}
 			for i, goods := range exp {
 				if i == 0 {
+					wtn++
 					fmt.Println("exporting:")
 				}
 				fmt.Println("  ", goods.TradeGoodType)
 			}
 			w.CreateTradeConnection(crd.ToGlobal(), imp, exp)
 		}
+		fmt.Println("world trade number", w.UWP().WorldTradeNumber())
 
 		workingDataStorage.Update(w.DatabaseKey(), w.ToDTO())
 		workingDataStorage.Create(w.DatabaseKey(), w.ToDTO())

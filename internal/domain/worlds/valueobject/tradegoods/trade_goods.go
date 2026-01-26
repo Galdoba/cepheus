@@ -51,23 +51,44 @@ func validCode(code string) bool {
 	}, code)
 }
 
-func Available(codes ...tc.Classification) []TradeGood {
+func Available(cls ...tc.Classification) []TradeGood {
 	goodsAvailable := []TradeGood{}
 goods_loop:
-	for k, goods := range tradeGoods {
-		switch k {
-		case "11", "12", "13", "14", "15", "16":
-			continue
+	for _, goods := range List(true, true, true) {
+		switch goods.Code {
+		case "11", "12", "13", "14", "15", "16", "66":
+			goodsAvailable = append(goodsAvailable, goods)
 		default:
-			for _, code := range codes {
-				for _, present := range goods.AvailableAt {
-					if code == present {
-						goodsAvailable = append(goodsAvailable, goods)
-						continue goods_loop
-					}
+			for _, cl := range cls {
+				if slices.Contains(goods.AvailableAt, cl) {
+					goodsAvailable = append(goodsAvailable, goods)
+					continue goods_loop
 				}
 			}
 
+		}
+	}
+	return goodsAvailable
+}
+
+func List(common, special, illegal bool) []TradeGood {
+	goodsAvailable := []TradeGood{}
+	for k, goods := range tradeGoods {
+		switch k {
+		case "11", "12", "13", "14", "15", "16":
+			if common {
+				goodsAvailable = append(goodsAvailable, goods)
+			}
+		case "61", "62", "63", "64", "65":
+			if illegal {
+				goodsAvailable = append(goodsAvailable, goods)
+			}
+		case "66":
+			goodsAvailable = append(goodsAvailable, goods)
+		default:
+			if special {
+				goodsAvailable = append(goodsAvailable, goods)
+			}
 		}
 	}
 	return goodsAvailable
@@ -169,7 +190,7 @@ var TG_11 = TradeGood{
 	IncrementBase:          []int{1, 1, 1, 1, 1},
 	IncrementMultiplier:    []int{12, 10, 10, 4, 2},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{6000, 8000, 10000, 12000, 14000},
+	BasePrice:              []int{12000, 16000, 20000, 24000, 28000},
 }
 
 var TG_12 = TradeGood{
@@ -213,7 +234,7 @@ var TG_13 = TradeGood{
 	IncrementBase:          []int{1, 1, 1, 1, 1},
 	IncrementMultiplier:    []int{12, 10, 10, 5, 3},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{8000, 9000, 10000, 11000, 12000},
+	BasePrice:              []int{16000, 18000, 20000, 22000, 24000},
 }
 var TG_14 = TradeGood{
 	Code:                    "14",
@@ -232,7 +253,7 @@ var TG_14 = TradeGood{
 	MaximumRiskAssesmentDM: 0,
 	DangerousGoodsDM:       -6,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{14, 12, 10, 5, 3},
+	IncrementMultiplier:    []int{28, 24, 20, 10, 6},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
 	BasePrice:              []int{1000, 3000, 5000, 7000, 9000},
 }
@@ -258,9 +279,9 @@ var TG_15 = TradeGood{
 	MaximumRiskAssesmentDM: 0,
 	DangerousGoodsDM:       -6,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{12, 10, 10, 8, 4},
+	IncrementMultiplier:    []int{24, 20, 20, 16, 8},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{500, 1000, 2000, 3000, 5000},
+	BasePrice:              []int{125, 250, 500, 750, 1250},
 }
 
 var TG_16 = TradeGood{
@@ -271,7 +292,7 @@ var TG_16 = TradeGood{
 	MaximumSupplyMultiplier: 10,
 	PurchaseDM: map[tc.Classification]int{
 		tc.As: 4,
-		tc.Ic: 0,
+		// tc.Ic: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.In: 3,
@@ -280,7 +301,7 @@ var TG_16 = TradeGood{
 	MaximumRiskAssesmentDM: 0,
 	DangerousGoodsDM:       -6,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{14, 12, 10, 8, 4},
+	IncrementMultiplier:    []int{28, 24, 20, 16, 8},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
 	BasePrice:              []int{250, 500, 1000, 1500, 2000},
 }
@@ -338,7 +359,7 @@ var TG_23 = TradeGood{
 	MaximumSupplyMultiplier: 5,
 	PurchaseDM: map[tc.Classification]int{
 		tc.In: 1,
-		tc.Ht: 0,
+		// tc.Ht: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Hi: 1,
@@ -349,7 +370,7 @@ var TG_23 = TradeGood{
 	IncrementBase:          []int{1, 1, 1, 1, 1},
 	IncrementMultiplier:    []int{6, 5, 5, 2, 1},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
-	BasePrice:              []int{25000, 50000, 75000, 100000, 125000},
+	BasePrice:              []int{50000, 75000, 100000, 125000, 150000},
 }
 
 var TG_24 = TradeGood{
@@ -359,7 +380,7 @@ var TG_24 = TradeGood{
 	AvailableAt:             []tc.Classification{tc.In, tc.Ht},
 	MaximumSupplyMultiplier: 5,
 	PurchaseDM: map[tc.Classification]int{
-		tc.In: 0,
+		// tc.In: 0,
 		tc.Ht: 2,
 	},
 	SaleDM: map[tc.Classification]int{
@@ -382,7 +403,7 @@ var TG_25 = TradeGood{
 	AvailableAt:             []tc.Classification{tc.In, tc.Ht},
 	MaximumSupplyMultiplier: 5,
 	PurchaseDM: map[tc.Classification]int{
-		tc.In: 0,
+		// tc.In: 0,
 		tc.Ht: 2,
 	},
 	SaleDM: map[tc.Classification]int{
@@ -471,7 +492,7 @@ var TG_33 = TradeGood{
 	MaximumSupplyMultiplier: 10,
 	PurchaseDM: map[tc.Classification]int{
 		tc.Ag: 2,
-		tc.Ga: 0,
+		// tc.Ga: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Lo: 3,
@@ -492,7 +513,7 @@ var TG_34 = TradeGood{
 	MaximumSupplyMultiplier: 10,
 	PurchaseDM: map[tc.Classification]int{
 		tc.Ag: 2,
-		tc.Ga: 0,
+		// tc.Ga: 0,
 		tc.Wa: 1,
 	},
 	SaleDM: map[tc.Classification]int{
@@ -535,7 +556,7 @@ var TG_36 = TradeGood{
 	MaximumSupplyMultiplier: 1,
 	PurchaseDM: map[tc.Classification]int{
 		tc.Ht: 2,
-		tc.Hi: 0,
+		// tc.Hi: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.In: 2,
@@ -558,9 +579,9 @@ var TG_41 = TradeGood{
 	MaximumSupplyMultiplier: 5,
 	PurchaseDM: map[tc.Classification]int{
 		tc.De: 2,
-		tc.Fl: 0,
-		tc.Ic: 0,
-		tc.Wa: 0,
+		// tc.Fl: 0,
+		// tc.Ic: 0,
+		// tc.Wa: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.In: 2,
@@ -583,9 +604,9 @@ var TG_42 = TradeGood{
 	MaximumSupplyMultiplier: 1,
 	PurchaseDM: map[tc.Classification]int{
 		tc.As: 2,
-		tc.De: 0,
+		// tc.De: 0,
 		tc.Hi: 1,
-		tc.Wa: 0,
+		// tc.Wa: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Ri: 2,
@@ -606,7 +627,7 @@ var TG_43 = TradeGood{
 	AvailableAt:             []tc.Classification{tc.In},
 	MaximumSupplyMultiplier: 10,
 	PurchaseDM: map[tc.Classification]int{
-		tc.In: 0,
+		tc.In: 1,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Ri: 2,
@@ -630,7 +651,7 @@ var TG_44 = TradeGood{
 		tc.As: 3,
 		tc.De: 1,
 		tc.Ic: 2,
-		tc.Fl: 0,
+		// tc.Fl: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Ri: 3,
@@ -653,7 +674,7 @@ var TG_45 = TradeGood{
 	MaximumSupplyMultiplier: 1,
 	PurchaseDM: map[tc.Classification]int{
 		tc.As: 2,
-		tc.De: 0,
+		// tc.De: 0,
 		tc.Lo: 2,
 	},
 	SaleDM: map[tc.Classification]int{
@@ -677,7 +698,7 @@ var TG_46 = TradeGood{
 	AvailableAt:             []tc.Classification{tc.In},
 	MaximumSupplyMultiplier: 5,
 	PurchaseDM: map[tc.Classification]int{
-		tc.In: 0,
+		tc.In: 1,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Ag: 2,
@@ -698,9 +719,9 @@ var TG_51 = TradeGood{
 	AvailableAt:             []tc.Classification{tc.Ga, tc.De, tc.Wa},
 	MaximumSupplyMultiplier: 5,
 	PurchaseDM: map[tc.Classification]int{
-		tc.Ga: 0,
+		// tc.Ga: 0,
 		tc.De: 2,
-		tc.Wa: 0,
+		// tc.Wa: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Hi: 2,
@@ -710,7 +731,7 @@ var TG_51 = TradeGood{
 	MaximumRiskAssesmentDM: 2,
 	DangerousGoodsDM:       -1,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{6, 5, 5, 3, 1},
+	IncrementMultiplier:    []int{12, 10, 10, 6, 2},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
 	BasePrice:              []int{1000, 3000, 6000, 9000, 12000},
 }
@@ -723,7 +744,7 @@ var TG_52 = TradeGood{
 	MaximumSupplyMultiplier: 10,
 	PurchaseDM: map[tc.Classification]int{
 		tc.Ag: 7,
-		tc.Ni: 0,
+		// tc.Ni: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Hi: 3,
@@ -732,12 +753,10 @@ var TG_52 = TradeGood{
 	MaximumRiskAssesmentDM: 1,
 	DangerousGoodsDM:       -2,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{12, 10, 10, 6, 3},
+	IncrementMultiplier:    []int{24, 20, 20, 12, 6},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
 	BasePrice:              []int{1000, 2000, 3000, 4000, 5000},
 }
-
-//TODO: ADD DETAILS
 
 var TG_53 = TradeGood{
 	Code:                    "53",
@@ -747,7 +766,7 @@ var TG_53 = TradeGood{
 	MaximumSupplyMultiplier: 10,
 	PurchaseDM: map[tc.Classification]int{
 		tc.As: 4,
-		tc.Ic: 0,
+		// tc.Ic: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.In: 3,
@@ -756,7 +775,7 @@ var TG_53 = TradeGood{
 	MaximumRiskAssesmentDM: 2,
 	DangerousGoodsDM:       -2,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{10, 10, 10, 5, 3},
+	IncrementMultiplier:    []int{20, 20, 20, 10, 6},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
 	BasePrice:              []int{1000, 2500, 5000, 7500, 10000},
 }
@@ -769,7 +788,7 @@ var TG_54 = TradeGood{
 	MaximumSupplyMultiplier: 10,
 	PurchaseDM: map[tc.Classification]int{
 		tc.Ag: 2,
-		tc.De: 0,
+		// tc.De: 0,
 		tc.Wa: 1,
 	},
 	SaleDM: map[tc.Classification]int{
@@ -792,7 +811,7 @@ var TG_55 = TradeGood{
 	MaximumSupplyMultiplier: 10,
 	PurchaseDM: map[tc.Classification]int{
 		tc.Ag: 6,
-		tc.Ga: 0,
+		// tc.Ga: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Ri: 2,
@@ -801,7 +820,7 @@ var TG_55 = TradeGood{
 	MaximumRiskAssesmentDM: 1,
 	DangerousGoodsDM:       -4,
 	IncrementBase:          []int{1, 1, 1, 1, 1},
-	IncrementMultiplier:    []int{12, 10, 10, 6, 2},
+	IncrementMultiplier:    []int{24, 20, 20, 12, 4},
 	IncrementAddition:      []int{0, 0, 0, 0, 0},
 	BasePrice:              []int{100, 500, 1000, 2000, 4000},
 }
@@ -814,7 +833,7 @@ var TG_56 = TradeGood{
 	MaximumSupplyMultiplier: 10,
 	PurchaseDM: map[tc.Classification]int{
 		tc.In: 2,
-		tc.Ht: 0,
+		tc.Ht: 1,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Ni: 2,
@@ -835,7 +854,7 @@ var TG_61 = TradeGood{
 	AvailableAt:             []tc.Classification{tc.Ag, tc.Wa},
 	MaximumSupplyMultiplier: 5,
 	PurchaseDM: map[tc.Classification]int{
-		tc.Ag: 0,
+		// tc.Ag: 0,
 		tc.Wa: 2,
 	},
 	SaleDM: map[tc.Classification]int{
@@ -856,7 +875,7 @@ var TG_62 = TradeGood{
 	AvailableAt:             []tc.Classification{tc.Ht},
 	MaximumSupplyMultiplier: 1,
 	PurchaseDM: map[tc.Classification]int{
-		tc.Ht: 0,
+		tc.Ht: 1,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.As:    4,
@@ -880,10 +899,10 @@ var TG_63 = TradeGood{
 	AvailableAt:             []tc.Classification{tc.As, tc.De, tc.Ga, tc.Wa},
 	MaximumSupplyMultiplier: 1,
 	PurchaseDM: map[tc.Classification]int{
-		tc.As: 0,
-		tc.De: 0,
-		tc.Ga: 0,
-		tc.Wa: 0,
+		tc.As: 1,
+		tc.De: 1,
+		tc.Ga: 1,
+		tc.Wa: 1,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Ri: 6,
@@ -905,7 +924,7 @@ var TG_64 = TradeGood{
 	MaximumSupplyMultiplier: 1,
 	PurchaseDM: map[tc.Classification]int{
 		tc.Ag: 2,
-		tc.Ga: 0,
+		// tc.Ga: 0,
 		tc.Wa: 1,
 	},
 	SaleDM: map[tc.Classification]int{
@@ -928,7 +947,7 @@ var TG_65 = TradeGood{
 	MaximumSupplyMultiplier: 5,
 	PurchaseDM: map[tc.Classification]int{
 		tc.In: 2,
-		tc.Ht: 0,
+		// tc.Ht: 0,
 	},
 	SaleDM: map[tc.Classification]int{
 		tc.Po:    6,

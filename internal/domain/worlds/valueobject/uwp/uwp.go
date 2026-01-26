@@ -523,3 +523,82 @@ func roll(r *dice.Roller, base string, mods ...int) int {
 	}
 	return r.Roll(s)
 }
+
+func (u UWP) WorldTradeNumber() int {
+	baseWTN := u.Pops().Value()
+	switch tl := u.TL().Value(); tl {
+	case 0, 1:
+		baseWTN += -1
+	case 5, 6, 7, 8:
+		baseWTN += 1
+	case 9, 10, 11, 12, 13, 14:
+		baseWTN += 2
+	default:
+		if tl >= 15 {
+			baseWTN += 3
+		}
+	}
+	wtn := baseWTN
+	starportDM := make(map[string]int)
+	switch baseWTN {
+	case 0, 1:
+		starportDM["A"] = 3
+		starportDM["B"] = 2
+		starportDM["C"] = 2
+		starportDM["D"] = 1
+		starportDM["E"] = 1
+		starportDM["X"] = 0
+	case 2, 3:
+		starportDM["A"] = 2
+		starportDM["B"] = 2
+		starportDM["C"] = 1
+		starportDM["D"] = 1
+		starportDM["E"] = 0
+		starportDM["X"] = 0
+	case 4, 5:
+		starportDM["A"] = 2
+		starportDM["B"] = 1
+		starportDM["C"] = 1
+		starportDM["D"] = 0
+		starportDM["E"] = 0
+		starportDM["X"] = -5
+	case 6, 7:
+		starportDM["A"] = 1
+		starportDM["B"] = 1
+		starportDM["C"] = 0
+		starportDM["D"] = 0
+		starportDM["E"] = -1
+		starportDM["X"] = -6
+	case 8, 9:
+		starportDM["A"] = 1
+		starportDM["B"] = 0
+		starportDM["C"] = 0
+		starportDM["D"] = -1
+		starportDM["E"] = -2
+		starportDM["X"] = -7
+	case 10, 11:
+		starportDM["A"] = 0
+		starportDM["B"] = 0
+		starportDM["C"] = -1
+		starportDM["D"] = -2
+		starportDM["E"] = -3
+		starportDM["X"] = -8
+	case 12, 13:
+		starportDM["A"] = 0
+		starportDM["B"] = -1
+		starportDM["C"] = -2
+		starportDM["D"] = -3
+		starportDM["E"] = -4
+		starportDM["X"] = -9
+	default:
+		if tl >= 14 {
+			starportDM["A"] = 0
+			starportDM["B"] = -2
+			starportDM["C"] = -3
+			starportDM["D"] = -4
+			starportDM["E"] = -5
+			starportDM["X"] = -10
+		}
+	}
+	return max(0, wtn)
+}

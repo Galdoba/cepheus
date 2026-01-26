@@ -16,26 +16,42 @@ type Market interface {
 }
 
 func Calculate(source, target Market) ([]tradegoods.TradeGood, []tradegoods.TradeGood) {
-	importing, exporting := []tradegoods.TradeGood{}, []tradegoods.TradeGood{}
-	if coordinates.Equal(source.Coordinates(), target.Coordinates()) {
-		return importing, exporting
-	}
-	sourceTC := append(source.TradeCodes(), classifications.Classification(string(source.TravelZone())))
-	targetTC := append(target.TradeCodes(), classifications.Classification(string(target.TravelZone())))
-	for _, goods := range tradegoods.Available(targetTC...) {
-		saleDM, wantSale := tradegoods.SaleFactor(goods, targetTC...)
-		purchDM, wantPurchse := tradegoods.PurchseFactor(goods, sourceTC...)
-		if wantSale && wantPurchse && (saleDM+purchDM) > 0 {
+	tgList := tradegoods.List(false, true, false)
+	producedAtSource := Available(source, tgList...)
+	producedAtTarget := Available(target, tgList...)
+	requestedAtSource := Importing(source, producedAtTarget...)
+	requestedAtTarget := Importing(target, producedAtSource...)
+	return clearDuplicated(requestedAtSource, requestedAtTarget)
+}
+
+func Importing(m Market, tgList ...tradegoods.TradeGood) []tradegoods.TradeGood {
+	importing := []tradegoods.TradeGood{}
+	for _, goods := range tgList {
+		dm := 0
+		for _, mcl := range m.TradeCodes() {
+			if val, ok := goods.SaleDM[mcl]; ok {
+				dm += val
+			}
+		}
+		if dm > 0 {
 			importing = append(importing, goods)
 		}
+	}
+	return importing
+}
 
-		saleDM, wantSale = tradegoods.SaleFactor(goods, sourceTC...)
-		purchDM, wantPurchse = tradegoods.PurchseFactor(goods, targetTC...)
-		if wantSale && wantPurchse && (saleDM+purchDM) > 0 {
-			exporting = append(exporting, goods)
+func Available(m Market, tgList ...tradegoods.TradeGood) []tradegoods.TradeGood {
+	available := []tradegoods.TradeGood{}
+goods:
+	for _, tg := range tgList {
+		for _, mcl := range m.TradeCodes() {
+			if slices.Contains(tg.AvailableAt, mcl) {
+				available = append(available, tg)
+				continue goods
+			}
 		}
 	}
-	return clearDuplicated(importing, exporting)
+	return available
 }
 
 func HasLink(source, target Market) bool {
@@ -110,4 +126,19 @@ func clearDuplicated(imp, exp []tradegoods.TradeGood) ([]tradegoods.TradeGood, [
 		newExp = append(newExp, e)
 	}
 	return newImp, newExp
+}
+
+func filterImport(m Market, importingProposal ...tradegoods.TradeGood) []tradegoods.TradeGood {
+	local := make(map[string]bool)
+	for _, ltg := range Available(m, importingProposal...) {
+		local[ltg.Code] = true
+	}
+	filtered := []tradegoods.TradeGood{}
+	for _, goods := range importingProposal {
+		if local[goods.Code] {
+			continue
+		}
+		filtered = append(filtered, goods)
+	}
+	return filtered
 }
