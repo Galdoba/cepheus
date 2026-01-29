@@ -1,9 +1,7 @@
 package rtg
 
 import (
-	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -11,19 +9,24 @@ import (
 )
 
 type RandomTableGenerator interface {
-	Roll(string, ...string) (string, error)
+	Roll(string, ...string) (int, string, error)
+	FindByIndex(string, int) (string, error)
 }
 
 type randomTableGenerator struct {
 	tableCollection *tttable.TableCollection
 }
 
-func (rg *randomTableGenerator) Roll(name string, mods ...string) (string, error) {
-	outcome, err := rg.tableCollection.Roll(name, mods...)
+func (rg *randomTableGenerator) Roll(name string, mods ...string) (int, string, error) {
+	index, outcome, err := rg.tableCollection.Roll(name, mods...)
 	if err != nil {
-		return "", fmt.Errorf("failed to roll RTG: %v", err)
+		return tttable.AndLess, "", fmt.Errorf("failed to roll RTG: %v", err)
 	}
-	return outcome, nil
+	return index, outcome, nil
+}
+
+func (rg *randomTableGenerator) FindByIndex(tableName string, index int) (string, error) {
+	return rg.tableCollection.FindByIndex(tableName, index)
 }
 
 func tableFileName(tableName string) string {

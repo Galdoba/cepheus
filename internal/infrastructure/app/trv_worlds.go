@@ -8,6 +8,7 @@ import (
 	"github.com/Galdoba/appcontext/configmanager"
 	"github.com/Galdoba/cepheus/internal/declare"
 	"github.com/Galdoba/cepheus/internal/infrastructure/config"
+	"github.com/Galdoba/cepheus/internal/infrastructure/rtg"
 )
 
 type TrvWorldsInfrastructure struct {
@@ -37,6 +38,9 @@ func InitTrvWorlds() (*TrvWorldsInfrastructure, error) {
 	}
 	inf.Config = cfgman.Config()
 	inf.CfgPath = cfgman.Path()
+	if err := rtg.InitStarSystemDeterminationTables(); err != nil {
+		return nil, err
+	}
 	return &inf, nil
 }
 

@@ -15,11 +15,12 @@ const (
 	starSystemSubfolder = "star_system"
 
 	MOD_NonMainSequenceClass = "non main sequence class determined"
+	MOD_ProtostarSystem      = "protostar system determined class determined"
 
 	TableVariant_Type_Realistic = "realistic types"
 )
 
-func NewStarTypeDeterminationGenerator(seed string, opts ...string) (RandomTableGenerator, error) {
+func NewStarTypeDeterminationGenerator(roller *dice.Roller, opts ...string) (RandomTableGenerator, error) {
 	options := make(map[string]bool)
 	for _, o := range opts {
 		options[o] = true
@@ -30,17 +31,12 @@ func NewStarTypeDeterminationGenerator(seed string, opts ...string) (RandomTable
 		if err != nil {
 			return nil, fmt.Errorf("failed to load table %v: %v", name, err)
 		}
-		switch name {
-		case "Type":
-			if options[TableVariant_Type_Realistic] {
-			}
-		}
 		tables = append(tables, table)
 	}
 	tc, err := tttable.NewTableCollection(
-		tttable.WithRoller(dice.New(seed)),
 		tttable.WithTables(tables...),
 	)
+	tc.SetRoller(roller)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create random tables colection: %v", err)
 	}
@@ -61,9 +57,19 @@ func starTypeDeterminationTableNames() []string {
 	}
 }
 
+func starSybtypeDeterminationTableNames() []string {
+	return []string{
+		"Numeric",
+		"M Type Primary",
+	}
+}
+
 func StarSystemTablesMap() map[string]string {
 	tableMap := make(map[string]string)
 	for _, name := range starTypeDeterminationTableNames() {
+		tableMap[name] = filepath.Join(filepaths.RandomTablesDirectory(), starSystemSubfolder, tableFileName(name))
+	}
+	for _, name := range starSybtypeDeterminationTableNames() {
 		tableMap[name] = filepath.Join(filepaths.RandomTablesDirectory(), starSystemSubfolder, tableFileName(name))
 	}
 	return tableMap
@@ -71,20 +77,32 @@ func StarSystemTablesMap() map[string]string {
 
 func InitStarSystemDeterminationTables() error {
 	for name, path := range StarSystemTablesMap() {
+		dir := filepath.Dir(path)
+		fmt.Fprintf(os.Stderr, "init table: %v                \r", name)
 		err := AssertTable(path)
+		if err == nil {
+			continue
+		}
 		if errors.Is(err, os.ErrNotExist) {
+			if err := os.MkdirAll(dir, 0775); err != nil {
+				return fmt.Errorf("failed to create random tables directory: %v", err)
+			}
+			path = dir
 			switch name {
 			case "Type":
 				err = CreateRandomTable(path, name, "2d6",
 					map[string]string{
-						"2-":   "Special/Unusual",
+						"2-":   "Unusual",
 						"3-6":  "M",
 						"7-8":  "K",
 						"9-10": "G",
 						"11":   "F",
 						"12+":  "Hot",
 					},
-					map[string]int{MOD_NonMainSequenceClass: 1},
+					map[string]int{
+						MOD_NonMainSequenceClass: 1,
+						MOD_ProtostarSystem:      1,
+					},
 				)
 			case "Hot":
 				err = CreateRandomTable(path, name, "2d6",
@@ -141,70 +159,49 @@ func InitStarSystemDeterminationTables() error {
 					},
 					map[string]int{},
 				)
+			case "Numeric":
+				err = CreateRandomTable(path, name, "2d6",
+					map[string]string{
+						"2":  "0",
+						"3":  "1",
+						"4":  "3",
+						"5":  "5",
+						"6":  "7",
+						"7":  "9",
+						"8":  "8",
+						"9":  "6",
+						"10": "4",
+						"11": "2",
+						"12": "0",
+					},
+					map[string]int{},
+				)
+			case "M Type Primary":
+				err = CreateRandomTable(path, name, "2d6",
+					map[string]string{
+						"2":  "8",
+						"3":  "6",
+						"4":  "5",
+						"5":  "4",
+						"6":  "0",
+						"7":  "2",
+						"8":  "1",
+						"9":  "3",
+						"10": "5",
+						"11": "7",
+						"12": "9",
+					},
+					map[string]int{},
+				)
 			}
 			if err != nil {
+				fmt.Fprintf(os.Stderr, "\n")
 				return fmt.Errorf("failed to initiate table: %v", err)
 			}
-
+		} else {
+			fmt.Fprintf(os.Stderr, "\n")
+			return fmt.Errorf("failed to initiate table %v: %v", name, err)
 		}
 	}
 	return nil
 }
-
-// 	HotTable, err := tttable.NewTable("Hot",
-// 		tttable.WithDiceExpression("2d6"),
-// 		tttable.WithRows(
-// 			tttable.NewRow("9-", "A"),
-// 			tttable.NewRow(tttable.MustIndex(10, 11), "B"),
-// 			tttable.NewRow("12+", "O"),
-// 		),
-// 	)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return
-// 	}
-
-// 	UnusualTable, err := tttable.NewTable("Unusual",
-// 		tttable.WithDiceExpression("2d6"),
-// 		tttable.WithRows(
-// 			tttable.NewRow("2-", "Peculiar"),
-// 			tttable.NewRow("3", "VI"),
-// 			tttable.NewRow("4", "IV"),
-// 			tttable.NewRow("5-7", "BD"),
-// 			tttable.NewRow("8-10", "D"),
-// 			tttable.NewRow("11", "III"),
-// 			tttable.NewRow("12+", "Giants"),
-// 		),
-// 	)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return
-// 	}
-
-// 	PeculiarTable, err := tttable.NewTable("Peculiar",
-// 		tttable.WithDiceExpression("2d6"),
-// 		tttable.WithRows(
-// 			tttable.NewRow("2-", "BH"),
-// 			tttable.NewRow("3", "PSR"),
-// 			tttable.NewRow("4", "NS"),
-// 			tttable.NewRow("5-6", "NB"),
-// 			tttable.NewRow("7-9", "Protostar"),
-// 			tttable.NewRow("10", "Star Cluster"),
-// 			tttable.NewRow("11+", "Anomaly"),
-// 		),
-// 	)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return
-// 	}
-
-// 	GiantsTable, _ := tttable.NewTable("Giants",
-// 		tttable.WithDiceExpression("2d6"),
-// 		tttable.WithRows(
-// 			tttable.NewRow(tttable.MustIndex(8, tttable.AndLess), "III"),
-// 			tttable.NewRow(tttable.MustIndex(9, 10), "II"),
-// 			tttable.NewRow(tttable.MustIndex(11), "Ib"),
-// 			tttable.NewRow(tttable.MustIndex(12, tttable.AndMore), "Ia"),
-// 		),
-// 	)
-// }

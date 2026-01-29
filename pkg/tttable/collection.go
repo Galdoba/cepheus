@@ -99,31 +99,39 @@ func (tc *TableCollection) RemoveTable(name string) {
 // If the result matches another table name, it continues rolling
 // Any mods provided will substitute own table mods globally
 // Returns the final result and any error encountered
-func (tc *TableCollection) Roll(tableName string, mods ...string) (string, error) {
-	results, err := tc.rollCascadeInternal(tableName, nil, 0, mods...)
+func (tc *TableCollection) Roll(tableName string, mods ...string) (int, string, error) {
+	indexes, results, err := tc.rollCascadeInternal(tableName, nil, 0, mods...)
 	if err != nil {
-		return "", err
+		return AndLess, "", err
 	}
 
 	// Return the last result
 	if len(results) == 0 {
-		return "", fmt.Errorf("no results generated")
+		return AndLess, "", fmt.Errorf("no results generated")
 	}
-	return results[len(results)-1], nil
+	return indexes[len(indexes)-1], results[len(results)-1], nil
 }
 
 // RollCascade performs a cascade roll and returns all intermediate results
-func (tc *TableCollection) RollCascade(tableName string, mods ...string) ([]string, error) {
+func (tc *TableCollection) RollCascade(tableName string, mods ...string) ([]int, []string, error) {
 	return tc.rollCascadeInternal(tableName, nil, 0, mods...)
+}
+
+// FindByIndex return result from specified table by index
+func (tc *TableCollection) FindByIndex(tableName string, index int) (string, error) {
+	if tab, ok := tc.Tables[tableName]; ok {
+		return tab.FindByRoll(index)
+	}
+	return "", fmt.Errorf("no table %v in collection", tableName)
 }
 
 // rollCascadeInternal is the internal implementation for cascade rolls
 // visited is a map to detect cycles, depth is current recursion depth
 // Any mods provided will substitute own table mods globally
-func (tc *TableCollection) rollCascadeInternal(tableName string, visited map[string]bool, depth int, mods ...string) ([]string, error) {
+func (tc *TableCollection) rollCascadeInternal(tableName string, visited map[string]bool, depth int, mods ...string) ([]int, []string, error) {
 	// Check recursion depth to prevent infinite loops
 	if depth > 100 {
-		return nil, ErrCascadeTooDeep
+		return nil, nil, ErrCascadeTooDeep
 	}
 
 	// Initialize visited map on first call
@@ -133,19 +141,19 @@ func (tc *TableCollection) rollCascadeInternal(tableName string, visited map[str
 
 	// Check for cycles
 	if visited[tableName] {
-		return nil, fmt.Errorf("cycle detected: table %s already visited", tableName)
+		return nil, nil, fmt.Errorf("cycle detected: table %s already visited", tableName)
 	}
 	visited[tableName] = true
 
 	// Get the table
 	table, ok := tc.GetTable(tableName)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrTableNotFound, tableName)
+		return nil, nil, fmt.Errorf("%w: %s", ErrTableNotFound, tableName)
 	}
 
 	// Check if roller is set
 	if tc.roller == nil {
-		return nil, ErrRollerNotSet
+		return nil, nil, ErrRollerNotSet
 	}
 
 	if tc.writer != nil {
@@ -153,44 +161,49 @@ func (tc *TableCollection) rollCascadeInternal(tableName string, visited map[str
 	}
 
 	// Roll on the table
-	result, err := table.roll(tc.roller, mods...)
+	index, result, err := table.roll(tc.roller, mods...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to roll on table %s: %w", tableName, err)
+		return nil, nil, fmt.Errorf("failed to roll on table %s: %w", tableName, err)
 	}
 
 	// If the result is another table in the collection, continue cascading
 	if _, ok := tc.GetTable(result); ok {
 		// Recursively roll on the next table
-		nextResults, err := tc.rollCascadeInternal(result, visited, depth+1, mods...)
+		nextIndexes, nextResults, err := tc.rollCascadeInternal(result, visited, depth+1, mods...)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		// Combine results: current result (which is a table name) + all next results
 		allResults := make([]string, 0, len(nextResults)+1)
 		allResults = append(allResults, result)
 		allResults = append(allResults, nextResults...)
+		allIndexes := make([]int, 0, len(nextIndexes)+1)
+		allIndexes = append(allIndexes, index)
+		allIndexes = append(allIndexes, nextIndexes...)
 
-		return allResults, nil
+		return allIndexes, allResults, nil
 	}
 
 	// Result is not a table name, return it as the final result
-	return []string{result}, nil
+	return []int{index}, []string{result}, nil
 }
 
 // BulkRoll performs multiple cascade rolls and returns all results
-func (tc *TableCollection) BulkRoll(tableNames ...string) (map[string]string, error) {
+func (tc *TableCollection) BulkRoll(tableNames ...string) (map[string]int, map[string]string, error) {
 	results := make(map[string]string)
+	indexes := make(map[string]int)
 
 	for _, tableName := range tableNames {
-		result, err := tc.Roll(tableName)
+		index, result, err := tc.Roll(tableName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to roll table %s: %w", tableName, err)
+			return nil, nil, fmt.Errorf("failed to roll table %s: %w", tableName, err)
 		}
 		results[tableName] = result
+		indexes[tableName] = index
 	}
 
-	return results, nil
+	return indexes, results, nil
 }
 
 // GetTableNames returns all table names in the collection

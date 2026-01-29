@@ -161,12 +161,12 @@ func (t *Table) RemoveRow(key string) {
 
 // Roll performs a dice roll and returns the corresponding result
 // If mods are provided they will substitute own table mods for this roll
-func (t *Table) roll(roller Roller, mods ...string) (string, error) {
+func (t *Table) roll(roller Roller, mods ...string) (int, string, error) {
 	if roller == nil {
-		return "", ErrRollerNotSet
+		return AndLess, "", ErrRollerNotSet
 	}
 	if t.DiceExpression == "" {
-		return "", ErrRollerExpressionNotSet
+		return AndLess, "", ErrRollerExpressionNotSet
 	}
 
 	// Calculate total modifier
@@ -202,17 +202,17 @@ func (t *Table) roll(roller Roller, mods ...string) (string, error) {
 
 	result, err := roller.RollSafe(expr)
 	if err != nil {
-		return "", fmt.Errorf("roll failed: %w", err)
+		return AndLess, "", fmt.Errorf("roll failed: %w", err)
 	}
 	outcome, err := t.FindByRoll(result)
 	if err != nil {
-		return "", fmt.Errorf("failed to produce outcome for result %v: %v", result, err)
+		return AndLess, "", fmt.Errorf("failed to produce outcome for result %v: %v", result, err)
 	}
 
 	if t.writer != nil {
 		_ = t.logRoll(expr, outcome, result, modsUsed)
 	}
-	return outcome, nil
+	return result, outcome, nil
 }
 
 // logRoll writes roll details if writer is set
