@@ -1,6 +1,6 @@
 package config
 
-import "github.com/Galdoba/cepheus/internal/domain/support/entities/paths"
+import "github.com/Galdoba/cepheus/internal/infrastructure/filepaths"
 
 type TrvWorldsCfg struct {
 	Import TrvWorldsImport `toml:"import" comment:"import command configurations"`
@@ -20,12 +20,12 @@ type Worlds struct {
 func DefaultTrvWorldsConfig() TrvWorldsCfg {
 	return TrvWorldsCfg{
 		Import: TrvWorldsImport{
-			External_DB_File:      paths.DefaultExternalDB_File(),
+			External_DB_File:      filepaths.DefaultExternalDB_File(),
 			DownloadRetryAttempts: 3,
 			CoordinatesRingSize:   2,
 		},
 		World: Worlds{
-			Derived_DB_File: paths.DefaultDerivedDB_File(),
+			Derived_DB_File: filepaths.DefaultDerivedDB_File(),
 		},
 	}
 }

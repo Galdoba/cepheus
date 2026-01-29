@@ -1,8 +1,8 @@
 package port
 
 import (
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/uwp"
 	"github.com/Galdoba/cepheus/pkg/dice"
-	"github.com/Galdoba/cepheus/pkg/uwp"
 )
 
 type Port struct {

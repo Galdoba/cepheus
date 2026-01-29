@@ -28,7 +28,7 @@ func SurveyWorld(app *app.TrvWorldsInfrastructure) *cli.Command {
 		Usage:       "fil derived_db with external_db data",
 		UsageText:   "trv_worlds [global options] inspect [options]",
 		Description: "Transfer world data to working database\nAdditional data will be calculated and stored.",
-		Action:      surveyAction(*app.Config),
+		Action:      surveyAction(app.Config),
 		Flags:       flags.TrvWorlds_Survey(),
 	}
 	return &add

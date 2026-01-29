@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/Galdoba/cepheus/internal/domain/support/entities/paths"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
 	"github.com/Galdoba/cepheus/internal/infrastructure/app"
+	"github.com/Galdoba/cepheus/internal/infrastructure/filepaths"
 	"github.com/Galdoba/cepheus/internal/infrastructure/jsonstorage"
 	"github.com/urfave/cli/v3"
 )
@@ -31,7 +31,7 @@ func TrvWorlds_Status(app *app.TrvWorldsInfrastructure) cli.ActionFunc {
 		}
 		fmt.Printf("database detected: %v bytes\n", file.Size())
 		fmt.Println("test read database...")
-		db, err := jsonstorage.OpenStorage[t5ss.WorldData](paths.DefaultExternalDB_File())
+		db, err := jsonstorage.OpenStorage[t5ss.WorldData](filepaths.DefaultExternalDB_File())
 		if err != nil {
 			return fmt.Errorf("failed to open database: %v\n", err)
 		}

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Galdoba/cepheus/internal/domain/support/entities/paths"
+	"github.com/Galdoba/cepheus/internal/infrastructure/filepaths"
 	"github.com/Galdoba/cepheus/internal/infrastructure/jsonstorage"
 )
 
-var dbPath = paths.DefaultDerivedDB_File()
+var dbPath = filepaths.DefaultDerivedDB_File()
 
 func (w *World) Create() error {
 	storage, err := openStorage()

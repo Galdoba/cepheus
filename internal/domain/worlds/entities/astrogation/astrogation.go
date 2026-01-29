@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Galdoba/cepheus/internal/domain/support/entities/paths"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/aggregates/world"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
+	"github.com/Galdoba/cepheus/internal/infrastructure/filepaths"
 	"github.com/Galdoba/cepheus/internal/infrastructure/jsonstorage"
 )
 
@@ -34,8 +34,8 @@ type astroCfg struct {
 func defaultCfg() astroCfg {
 	return astroCfg{
 		id:          "generic",
-		external_DB: paths.DefaultExternalDB_File(),
-		derived_DB:  paths.DefaultDerivedDB_File(),
+		external_DB: filepaths.DefaultExternalDB_File(),
+		derived_DB:  filepaths.DefaultDerivedDB_File(),
 	}
 }
 

@@ -26,7 +26,7 @@ func ImportWorldData(app *app.TrvWorldsInfrastructure) *cli.Command {
 		Usage:       "download world data in t5ss format",
 		UsageText:   "trv_worlds [global options] import [options]",
 		Description: "Download jumpmaps with t5ss data from https://travellermap.com",
-		Action:      importAction(*app.Config),
+		Action:      importAction(app.Config),
 		Flags:       flags.TrvWorlds_Import(),
 	}
 	return &add

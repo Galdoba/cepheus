@@ -1,6 +1,6 @@
 package au
 
-import "github.com/Galdoba/cepheus/pkg/float"
+import "github.com/Galdoba/cepheus/internal/domain/support/services/float"
 
 const (
 	AU_to_Km = 149597870.9

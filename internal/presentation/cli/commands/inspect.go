@@ -24,7 +24,7 @@ func InspectWorld(app *app.TrvWorldsInfrastructure) *cli.Command {
 		Usage:       "show detailed information on selected world",
 		UsageText:   "trv_worlds [global options] inspect [options]",
 		Description: "Print available information on selected world.",
-		Action:      inspectAction(*app.Config),
+		Action:      inspectAction(app.Config),
 		Flags:       flags.TrvWorlds_Survey(),
 	}
 	return &add

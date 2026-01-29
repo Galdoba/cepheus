@@ -310,6 +310,16 @@ func (r *Roller) Roll(expression string) int {
 	return s
 }
 
+// RollSafe uses the Roller instance to parse and roll a dice expression.
+// Returns an error if parsing fails or if the roll encounters issues.
+func (r *Roller) RollSafe(expression string) (int, error) {
+	rd, err := DiceExpression(expression).ParseRoll()
+	if err != nil {
+		panic(err)
+	}
+	return r.rollSafe(rd)
+}
+
 // ConcatRoll uses the Roller instance to parse and roll a concatenated dice expression.
 // Panics if there's an error during parsing.
 func (r *Roller) ConcatRoll(expression string) string {

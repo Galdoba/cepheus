@@ -8,7 +8,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	dp := dice.NewDicepool()
+	dp := dice.New("")
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.
