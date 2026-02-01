@@ -99,17 +99,17 @@ func (tc *TableCollection) RemoveTable(name string) {
 // If the result matches another table name, it continues rolling
 // Any mods provided will substitute own table mods globally
 // Returns the final result and any error encountered
-func (tc *TableCollection) Roll(tableName string, mods ...string) (int, string, error) {
-	indexes, results, err := tc.rollCascadeInternal(tableName, nil, 0, mods...)
+func (tc *TableCollection) Roll(tableName string, mods ...string) (string, error) {
+	_, results, err := tc.rollCascadeInternal(tableName, nil, 0, mods...)
 	if err != nil {
-		return AndLess, "", err
+		return "", err
 	}
 
 	// Return the last result
 	if len(results) == 0 {
-		return AndLess, "", fmt.Errorf("no results generated")
+		return "", fmt.Errorf("no results generated")
 	}
-	return indexes[len(indexes)-1], results[len(results)-1], nil
+	return results[len(results)-1], nil
 }
 
 // RollCascade performs a cascade roll and returns all intermediate results
@@ -187,23 +187,6 @@ func (tc *TableCollection) rollCascadeInternal(tableName string, visited map[str
 
 	// Result is not a table name, return it as the final result
 	return []int{index}, []string{result}, nil
-}
-
-// BulkRoll performs multiple cascade rolls and returns all results
-func (tc *TableCollection) BulkRoll(tableNames ...string) (map[string]int, map[string]string, error) {
-	results := make(map[string]string)
-	indexes := make(map[string]int)
-
-	for _, tableName := range tableNames {
-		index, result, err := tc.Roll(tableName)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to roll table %s: %w", tableName, err)
-		}
-		results[tableName] = result
-		indexes[tableName] = index
-	}
-
-	return indexes, results, nil
 }
 
 // GetTableNames returns all table names in the collection

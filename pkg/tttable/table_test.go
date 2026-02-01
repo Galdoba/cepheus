@@ -161,7 +161,6 @@ func TestParseKey(t *testing.T) {
 
 // TestNewTable тестирует создание таблицы
 func TestNewTable(t *testing.T) {
-	roller := dice.New("42")
 
 	tests := []struct {
 		name      string
@@ -184,7 +183,6 @@ func TestNewTable(t *testing.T) {
 			name:      "Table with roller",
 			tableName: "TestTable2",
 			opts: []TableOption{
-				WithRoller(roller),
 				WithRow(NewRow("1-10", "Event")),
 			},
 			wantErr: false,
@@ -277,75 +275,6 @@ func TestTableAddRow(t *testing.T) {
 	// Проверка количества строк
 	if len(table.Rows) != 1 {
 		t.Errorf("Expected 1 row, got %d", len(table.Rows))
-	}
-}
-
-// TestTableRoll тестирует броски на таблице
-func TestTableRoll(t *testing.T) {
-	roller := newMockRoller(3, 7, 12, 18)
-
-	table, err := NewTable("TestTable",
-		WithRoller(roller),
-		WithDiceExpression("2d6"),
-		WithRows(
-			NewRow("1-5", "Low"),
-			NewRow("6-10", "Medium"),
-			NewRow("11+", "High"),
-		),
-	)
-	table.roller = roller
-
-	if err != nil {
-		t.Fatalf("Failed to create table: %v", err)
-	}
-
-	tests := []struct {
-		name     string
-		rollCode string // Не используется в MockRoller
-		expected string
-		wantErr  bool
-	}{
-		{"Roll 3", "3d1", "Low", false},
-		{"Roll 7", "1d1+6", "Medium", false},
-		{"Roll 12", "12d1", "High", false},
-		{"Roll 18", "18d1", "High", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := table.Roll()
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Roll() error = %v, wantErr = %v", err, tt.wantErr)
-				return
-			}
-
-			if !tt.wantErr && result != tt.expected {
-				t.Errorf("Roll() = %v, want %v", result, tt.expected)
-			}
-		})
-	}
-
-	// Тест с отсутствующим роллером
-	tableNoRoller, _ := NewTable("NoRollerTable",
-		WithRows(NewRow("1-10", "Event")),
-	)
-
-	_, err = tableNoRoller.Roll("1d20")
-	if err == nil {
-		t.Error("Roll() should have returned error when roller is not set")
-	}
-
-	// Тест с неверным кодом броска
-	badRoller := dice.New("42")
-	tableBadRoller, _ := NewTable("BadRollerTable",
-		WithRoller(badRoller),
-		WithRows(NewRow("1-10", "Event")),
-	)
-
-	_, err = tableBadRoller.Roll("1d20")
-	if err == nil {
-		t.Error("Roll() should have returned error when roller fails")
 	}
 }
 
@@ -475,15 +404,15 @@ func TestNewTableCollection(t *testing.T) {
 		{
 			name: "Valid collection with roller",
 			opts: []CollectionOption{
-				WithCollectionRoller(roller),
-				WithTable(table1),
+				WithRoller(roller),
+				WithTables(table1),
 			},
 			wantErr: false,
 		},
 		{
 			name: "Collection with multiple tables",
 			opts: []CollectionOption{
-				WithCollectionRoller(roller),
+				WithRoller(roller),
 				WithTables(table1, table2),
 			},
 			wantErr: false,
@@ -496,8 +425,8 @@ func TestNewTableCollection(t *testing.T) {
 		{
 			name: "Duplicate table names",
 			opts: []CollectionOption{
-				WithTable(table1),
-				WithTable(table1), // Дубликат
+				WithTables(table1),
+				WithTables(table1), // Дубликат
 			},
 			wantErr: true,
 		},
@@ -549,7 +478,7 @@ func TestCollectionRoll(t *testing.T) {
 	)
 
 	collection, err := NewTableCollection(
-		WithCollectionRoller(roller),
+		WithRoller(roller),
 		WithTables(table1, table2, table3),
 	)
 
@@ -568,7 +497,7 @@ func TestCollectionRoll(t *testing.T) {
 
 	// Тест каскадного броска с полной последовательностью
 
-	results, err := collection.RollCascade("Table1")
+	_, results, err := collection.RollCascade("Table1")
 	if err != nil {
 		t.Errorf("RollCascade() error = %v", err)
 	}
@@ -591,7 +520,7 @@ func TestCollectionRoll(t *testing.T) {
 	}
 
 	// Тест без роллера
-	collectionNoRoller, _ := NewTableCollection(WithTable(table1))
+	collectionNoRoller, _ := NewTableCollection(WithTables(table1))
 	_, err = collectionNoRoller.Roll("Table1")
 	if err == nil {
 		t.Error("Roll() should have returned error when roller is not set")
@@ -619,7 +548,7 @@ func TestCollectionCycleDetection(t *testing.T) {
 	)
 
 	collection, err := NewTableCollection(
-		WithCollectionRoller(roller),
+		WithRoller(roller),
 		WithTables(tableA, tableB),
 	)
 
@@ -674,7 +603,6 @@ func TestRandomRolls(t *testing.T) {
 	realRoller := dice.New("42")
 
 	table, err := NewTable("RandomTable",
-		WithRoller(realRoller),
 		WithDiceExpression("2d6"),
 		WithRows(
 			NewRow("1-5", "Low"),
@@ -689,7 +617,7 @@ func TestRandomRolls(t *testing.T) {
 
 	// Выполняем несколько бросков, проверяем что они не падают
 	for i := 0; i < 100; i++ {
-		result, err := table.Roll()
+		_, result, err := table.roll(realRoller)
 		if err != nil {
 			t.Errorf("Roll() failed on iteration %d: %v", i, err)
 			break
@@ -808,7 +736,7 @@ func TestClearMethods(t *testing.T) {
 	// Тест очистки коллекции
 	roller := dice.New("42")
 	collection, err := NewTableCollection(
-		WithCollectionRoller(roller),
+		WithRoller(roller),
 		WithTables(table),
 	)
 
@@ -861,7 +789,7 @@ func TestGetMethods(t *testing.T) {
 	}
 
 	// Test collection GetTableNames
-	collection, err := NewTableCollection(WithTable(table))
+	collection, err := NewTableCollection(WithTables(table))
 	if err != nil {
 		t.Fatalf("Failed to create collection: %v", err)
 	}

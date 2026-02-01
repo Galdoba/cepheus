@@ -209,42 +209,7 @@ func (t *Table) roll(roller Roller, mods ...string) (int, string, error) {
 		return AndLess, "", fmt.Errorf("failed to produce outcome for result %v: %v", result, err)
 	}
 
-	if t.writer != nil {
-		_ = t.logRoll(expr, outcome, result, modsUsed)
-	}
 	return result, outcome, nil
-}
-
-// logRoll writes roll details if writer is set
-// Format: "roll 2d6+1 with mods: 'strength': +2, 'dexterity': -1 → result: 12 (Success)"
-func (t *Table) logRoll(expr, outcome string, result int, modsUsed []string) error {
-	if t.writer == nil {
-		return nil
-	}
-
-	var buf strings.Builder
-
-	// msg base
-	buf.WriteString("roll ")
-	buf.WriteString(expr + "\n")
-
-	// mods (if used)
-	if len(modsUsed) > 0 {
-		buf.WriteString("| with mods:\n")
-		for i, modKey := range modsUsed {
-			if i > 0 {
-				buf.WriteByte(',')
-			}
-			modVal := t.Mods[modKey]
-			fmt.Fprintf(&buf, "| '%s': %+d\n", modKey, modVal)
-		}
-	}
-
-	// result
-	fmt.Fprintf(&buf, "result: '%s' (%d)\n", outcome, result)
-
-	_, err := t.writer.Write([]byte(buf.String()))
-	return err
 }
 
 // FindByRoll finds an event by roll result
