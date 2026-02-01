@@ -2,7 +2,6 @@ package tttable
 
 import (
 	"fmt"
-	"os"
 	"testing"
 )
 
@@ -32,7 +31,6 @@ func TestLiveAction(t *testing.T) {
 		return
 	}
 	table, err = Load(`/home/galdoba/workspace/test_tab.json`)
-	table.SetWriter(os.Stderr)
 
 	if err != nil {
 		fmt.Println(err)

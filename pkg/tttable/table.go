@@ -2,9 +2,8 @@ package tttable
 
 import (
 	"fmt"
-	"io"
 	"maps"
-	"strings"
+	"strconv"
 )
 
 // Constants for bounds
@@ -27,11 +26,6 @@ var (
 	ErrCascadeTooDeep         = fmt.Errorf("cascade too deep (possible loop)")
 )
 
-// Roller interface for random number generation
-type Roller interface {
-	RollSafe(string) (int, error)
-}
-
 // Table represents a random event table
 type Table struct {
 	Name           string               `json:"name" toml:"name" yaml:"name"`
@@ -40,8 +34,31 @@ type Table struct {
 	Mods           map[string]int       `json:"mods,omitempty" toml:"mods,omitempty" yaml:"mods,omitempty"`     // Available modifiers for this table
 	modsToApply    []string             `json:"-" toml:"-" yaml:"-"`                                            // Modifiers to apply automatically
 	parsed         map[string]*RangeKey `json:"-" toml:"-" yaml:"-"`                                            // Cache for parsed keys
-	writer         io.Writer            `json:"-" toml:"-" yaml:"-"`                                            // if not nil, will write roll details to it
 	path           string               `json:"-" toml:"-" yaml:"-"`                                            // Path to file
+}
+
+func (t *Table) GetName() string {
+	return t.Name
+}
+
+func (t *Table) Roll(r Roller, mods ...string) (string, string, error) {
+	index, value, err := t.roll(r, mods...)
+	key := strconv.Itoa(index)
+	return key, value, err
+}
+
+func (t *Table) Find(key string) (string, error) {
+	n, err := strconv.Atoi(key)
+	if err != nil {
+		return "", fmt.Errorf("key is not a number: %v", key)
+	}
+	return t.FindByRoll(n)
+}
+
+func (t *Table) GetAll() map[string]string {
+	events := make(map[string]string)
+	maps.Copy(events, t.Rows)
+	return events
 }
 
 // TableOption is a functional option for configuring a Table
@@ -68,6 +85,7 @@ func WithRows(rows ...Row) TableOption {
 
 // WithDiceExpression sets the dice expression for table rolls
 // Example: "2d6", "1d20+5", "3d10-2"
+// Mandatory for Table
 func WithDiceExpression(dexpr string) TableOption {
 	return func(t *Table) error {
 		if t.DiceExpression != "" {
@@ -130,11 +148,6 @@ func NewTable(name string, opts ...TableOption) (*Table, error) {
 	}
 
 	return t, nil
-}
-
-// SetWriter sets writer for the table
-func (t *Table) SetWriter(w io.Writer) {
-	t.writer = w
 }
 
 // AddRow adds a new row to the table
@@ -240,13 +253,6 @@ func (t *Table) Validate() error {
 	return t.checkOverlaps()
 }
 
-// GetEvents returns all events in the table
-func (t *Table) GetEvents() map[string]string {
-	events := make(map[string]string)
-	maps.Copy(events, t.Rows)
-	return events
-}
-
 // GetKeys returns all keys in the table
 func (t *Table) GetKeys() []string {
 	keys := make([]string, 0, len(t.Rows))
@@ -254,25 +260,6 @@ func (t *Table) GetKeys() []string {
 		keys = append(keys, k)
 	}
 	return keys
-}
-
-// Clear removes all rows from the table
-func (t *Table) Clear() {
-	t.Rows = make(map[string]string)
-	t.parsed = make(map[string]*RangeKey)
-}
-
-// String returns a string representation of the table
-func (t *Table) String() string {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Table: %s\n", t.Name))
-	sb.WriteString(strings.Repeat("-", len(t.Name)+7) + "\n")
-
-	for key, value := range t.Rows {
-		sb.WriteString(fmt.Sprintf("%s: %s\n", key, value))
-	}
-
-	return sb.String()
 }
 
 // matchKey checks if a roll matches a given key

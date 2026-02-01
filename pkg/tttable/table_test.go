@@ -568,35 +568,6 @@ func TestCollectionCycleDetection(t *testing.T) {
 	}
 }
 
-// TestTableString тестирует строковое представление таблицы
-func TestTableString(t *testing.T) {
-	table, err := NewTable("TestTable",
-		WithRows(
-			NewRow("1-5", "Event A"),
-			NewRow("6-10", "Event B"),
-		),
-	)
-
-	if err != nil {
-		t.Fatalf("Failed to create table: %v", err)
-	}
-
-	str := table.String()
-
-	// Проверяем базовое содержимое
-	if !contains(str, "TestTable") {
-		t.Error("String representation should contain table name")
-	}
-
-	if !contains(str, "1-5") || !contains(str, "Event A") {
-		t.Error("String representation should contain first row")
-	}
-
-	if !contains(str, "6-10") || !contains(str, "Event B") {
-		t.Error("String representation should contain second row")
-	}
-}
-
 // TestRandomRolls тестирует случайные броски
 func TestRandomRolls(t *testing.T) {
 	// Используем настоящий случайный генератор
@@ -709,52 +680,6 @@ func TestEdgeCases(t *testing.T) {
 	}
 }
 
-// TestClearMethods тестирует методы очистки
-func TestClearMethods(t *testing.T) {
-	// Тест очистки таблицы
-	table, err := NewTable("TestTable",
-		WithRows(
-			NewRow("1-5", "A"),
-			NewRow("6-10", "B"),
-		),
-	)
-
-	if err != nil {
-		t.Fatalf("Failed to create table: %v", err)
-	}
-
-	if len(table.Rows) != 2 {
-		t.Errorf("Expected 2 rows, got %d", len(table.Rows))
-	}
-
-	table.Clear()
-
-	if len(table.Rows) != 0 {
-		t.Errorf("Clear() should remove all rows, got %d", len(table.Rows))
-	}
-
-	// Тест очистки коллекции
-	roller := dice.New("42")
-	collection, err := NewTableCollection(
-		WithRoller(roller),
-		WithTables(table),
-	)
-
-	if err != nil {
-		t.Fatalf("Failed to create collection: %v", err)
-	}
-
-	if len(collection.Tables) != 1 {
-		t.Errorf("Expected 1 table in collection, got %d", len(collection.Tables))
-	}
-
-	collection.Clear()
-
-	if len(collection.Tables) != 0 {
-		t.Errorf("Clear() should remove all tables, got %d", len(collection.Tables))
-	}
-}
-
 // TestGetMethods тестирует getter-методы
 func TestGetMethods(t *testing.T) {
 	table, err := NewTable("TestTable",
@@ -769,7 +694,7 @@ func TestGetMethods(t *testing.T) {
 	}
 
 	// GetEvents
-	events := table.GetEvents()
+	events := table.GetAll()
 	if len(events) != 2 {
 		t.Errorf("GetEvents() should return 2 events, got %d", len(events))
 	}

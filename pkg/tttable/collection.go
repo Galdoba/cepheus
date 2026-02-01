@@ -7,7 +7,7 @@ import (
 
 // TableCollection manages multiple tables
 type TableCollection struct {
-	Tables map[string]*Table
+	Tables map[string]RollableTable
 	roller Roller
 	writer io.Writer
 }
@@ -16,7 +16,7 @@ type TableCollection struct {
 type CollectionOption func(*TableCollection) error
 
 // WithTables adds multiple tables to the collection
-func WithTables(tables ...*Table) CollectionOption {
+func WithTables(tables ...RollableTable) CollectionOption {
 	return func(tc *TableCollection) error {
 		for _, table := range tables {
 			if err := tc.AddTable(table); err != nil {
@@ -52,7 +52,7 @@ func WithWriter(w io.Writer) CollectionOption {
 // NewTableCollection creates a new table collection with options
 func NewTableCollection(opts ...CollectionOption) (*TableCollection, error) {
 	tc := &TableCollection{
-		Tables: make(map[string]*Table),
+		Tables: make(map[string]RollableTable),
 	}
 
 	// Apply all options
@@ -76,16 +76,16 @@ func (tc *TableCollection) SetWriter(w io.Writer) {
 }
 
 // AddTable adds a table to the collection
-func (tc *TableCollection) AddTable(table *Table) error {
-	if _, exists := tc.Tables[table.Name]; exists {
-		return fmt.Errorf("table with name %s already exists", table.Name)
+func (tc *TableCollection) AddTable(table RollableTable) error {
+	if _, exists := tc.Tables[table.GetName()]; exists {
+		return fmt.Errorf("table with name %s already exists", table.GetName())
 	}
-	tc.Tables[table.Name] = table
+	tc.Tables[table.GetName()] = table
 	return nil
 }
 
 // GetTable retrieves a table by name
-func (tc *TableCollection) GetTable(name string) (*Table, bool) {
+func (tc *TableCollection) GetTable(name string) (RollableTable, bool) {
 	table, exists := tc.Tables[name]
 	return table, exists
 }
@@ -113,14 +113,14 @@ func (tc *TableCollection) Roll(tableName string, mods ...string) (string, error
 }
 
 // RollCascade performs a cascade roll and returns all intermediate results
-func (tc *TableCollection) RollCascade(tableName string, mods ...string) ([]int, []string, error) {
+func (tc *TableCollection) RollCascade(tableName string, mods ...string) ([]string, []string, error) {
 	return tc.rollCascadeInternal(tableName, nil, 0, mods...)
 }
 
 // FindByIndex return result from specified table by index
-func (tc *TableCollection) FindByIndex(tableName string, index int) (string, error) {
+func (tc *TableCollection) Find(tableName string, key string) (string, error) {
 	if tab, ok := tc.Tables[tableName]; ok {
-		return tab.FindByRoll(index)
+		return tab.Find(key)
 	}
 	return "", fmt.Errorf("no table %v in collection", tableName)
 }
@@ -128,7 +128,7 @@ func (tc *TableCollection) FindByIndex(tableName string, index int) (string, err
 // rollCascadeInternal is the internal implementation for cascade rolls
 // visited is a map to detect cycles, depth is current recursion depth
 // Any mods provided will substitute own table mods globally
-func (tc *TableCollection) rollCascadeInternal(tableName string, visited map[string]bool, depth int, mods ...string) ([]int, []string, error) {
+func (tc *TableCollection) rollCascadeInternal(tableName string, visited map[string]bool, depth int, mods ...string) ([]string, []string, error) {
 	// Check recursion depth to prevent infinite loops
 	if depth > 100 {
 		return nil, nil, ErrCascadeTooDeep
@@ -156,12 +156,8 @@ func (tc *TableCollection) rollCascadeInternal(tableName string, visited map[str
 		return nil, nil, ErrRollerNotSet
 	}
 
-	if tc.writer != nil {
-		table.SetWriter(tc.writer)
-	}
-
 	// Roll on the table
-	index, result, err := table.roll(tc.roller, mods...)
+	index, result, err := table.Roll(tc.roller, mods...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to roll on table %s: %w", tableName, err)
 	}
@@ -178,7 +174,7 @@ func (tc *TableCollection) rollCascadeInternal(tableName string, visited map[str
 		allResults := make([]string, 0, len(nextResults)+1)
 		allResults = append(allResults, result)
 		allResults = append(allResults, nextResults...)
-		allIndexes := make([]int, 0, len(nextIndexes)+1)
+		allIndexes := make([]string, 0, len(nextIndexes)+1)
 		allIndexes = append(allIndexes, index)
 		allIndexes = append(allIndexes, nextIndexes...)
 
@@ -186,7 +182,7 @@ func (tc *TableCollection) rollCascadeInternal(tableName string, visited map[str
 	}
 
 	// Result is not a table name, return it as the final result
-	return []int{index}, []string{result}, nil
+	return []string{index}, []string{result}, nil
 }
 
 // GetTableNames returns all table names in the collection
@@ -200,5 +196,5 @@ func (tc *TableCollection) GetTableNames() []string {
 
 // Clear removes all tables from the collection
 func (tc *TableCollection) Clear() {
-	tc.Tables = make(map[string]*Table)
+	tc.Tables = make(map[string]RollableTable)
 }

@@ -1,10 +1,19 @@
 package tttable
 
-import "io"
+import "fmt"
 
 type RollableTable interface {
-	Roll(Roller, ...string) (string, error)
-	SetWriter(io.Writer)
+	Roll(Roller, ...string) (string, string, error)
 	GetName() string
-	FindBykey(string) (string, error)
+	Find(string) (string, error)
+	GetAll() map[string]string
+}
+
+func AsTable(rt RollableTable) (*Table, error) {
+	switch rt := rt.(type) {
+	case *Table:
+		return rt, nil
+	default:
+		return nil, fmt.Errorf("not a type 'Table'")
+	}
 }
