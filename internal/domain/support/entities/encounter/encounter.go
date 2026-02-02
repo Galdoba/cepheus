@@ -35,12 +35,11 @@ func New(etype string) (*Encounter, error) {
 		return nil, fmt.Errorf("failed to setup %v encounter tables: %v", etype, err)
 	}
 	for _, start := range startPoints(etype) {
-		val, result, err := tc.Roll(start)
+		result, err := tc.Roll(start)
 		if err != nil {
 			return nil, err
 		}
 		e.Rolls[start] = TableRollResult{
-			TableRoll:   val,
 			TableResult: result,
 		}
 	}
