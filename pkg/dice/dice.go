@@ -315,7 +315,7 @@ func (r *Roller) Roll(expression string) int {
 func (r *Roller) RollSafe(expression string) (int, error) {
 	rd, err := DiceExpression(expression).ParseRoll()
 	if err != nil {
-		panic(err)
+		return 0, fmt.Errorf("failed to parse dice expression '%v': %v", expression, err)
 	}
 	return r.rollSafe(rd)
 }
@@ -328,6 +328,16 @@ func (r *Roller) ConcatRoll(expression string) string {
 		panic(err)
 	}
 	return r.concat(rd)
+}
+
+// ConcatRollSafe uses the Roller instance to parse and roll a concatenated dice expression.
+// Return error if there's an error during parsing.
+func (r *Roller) ConcatRollSafe(expression string) (string, error) {
+	rd, err := DiceExpression(expression).ParseConcatRoll()
+	if err != nil {
+		return "", fmt.Errorf("failed to parse dice expression '%v': %v", expression, err)
+	}
+	return r.concat(rd), nil
 }
 
 // LastRoll returns the last modified sum from the most recent roll.

@@ -82,7 +82,7 @@ func (b *Builder) determinePrimaryStarTypeAndClass(ss *StarSystem) error {
 	activeMods1 := []string{}
 primary_star_class_generation:
 	for {
-		i, res, err := b.step1.tablesStarType.Roll("Type")
+		res, err := b.step1.tablesStarType.Roll("Type")
 		if err != nil {
 			return fmt.Errorf("failed to roll on RTG1: %v", err)
 		}
@@ -92,11 +92,11 @@ primary_star_class_generation:
 			case "":
 				ss.PrimaryStar.Class = "V"
 			case "IV":
-				if res == "M" {
-					res, err = b.step1.tablesStarType.FindByIndex("Type", i+classIV_MTypeBump)
-				}
-				if res == "O" {
+				switch res {
+				case "O":
 					res = "B"
+				case "M":
+					continue
 				}
 			case "VI":
 				if res == "F" {
@@ -156,13 +156,13 @@ primary_star_class_generation:
 func (b *Builder) determinePrimaryStarSubtype(ss *StarSystem) error {
 	switch ss.PrimaryStar.Type {
 	case "M":
-		_, res, err := b.step1.tablesStarType.Roll("M Type Primary")
+		res, err := b.step1.tablesStarType.Roll("M Type Primary")
 		if err != nil {
 			return fmt.Errorf("failed to roll on RTG1: %v", err)
 		}
 		ss.PrimaryStar.SubType = res
 	case "O", "B", "A", "F", "G", "K":
-		_, res, err := b.step1.tablesStarType.Roll("M Type Primary")
+		res, err := b.step1.tablesStarType.Roll("M Type Primary")
 		if err != nil {
 			return fmt.Errorf("failed to roll on RTG1: %v", err)
 		}

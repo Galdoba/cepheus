@@ -6,7 +6,8 @@ type RollableTable interface {
 	Roll(Roller, ...string) (string, string, error)
 	GetName() string
 	Find(string) (string, error)
-	GetAll() map[string]string
+	GetAll() map[string]TableEntry
+	Validate() error
 }
 
 func AsTable(rt RollableTable) (*Table, error) {

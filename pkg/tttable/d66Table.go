@@ -7,18 +7,23 @@ import (
 	"strings"
 )
 
+const (
+	First  ModType = "first"
+	Second ModType = "second"
+)
+
 // D66Table represents a special type of Table with keys are strings (concateneated rolls of 2d6)
 // It has mandatory keys 36 keys "11"-"66"
 // Each dice modified separatly and it's value is locked between "0" and "9" (with 100 keys max: "00"-"99")
 type D66Table struct {
-	Name           string               `json:"name" toml:"name" yaml:"name"`
-	DiceExpression string               `json:"dice_expression" toml:"dice_expression" yaml:"dice_expression" ` // Default dice expression for rolls
-	Rows           map[string]string    `json:"rows" toml:"rows" yaml:"rows" `                                  // Key-Value pairs for table events
-	ModsFirst      map[string]int       `json:"mods,omitempty" toml:"mods,omitempty" yaml:"mods,omitempty"`     // Available modifiers for this table
-	ModsSecond     map[string]int       `json:"mods,omitempty" toml:"mods,omitempty" yaml:"mods,omitempty"`     // Available modifiers for this table
-	modsToApply    []string             `json:"-" toml:"-" yaml:"-"`                                            // Modifiers to apply automatically
-	parsed         map[string]*RangeKey `json:"-" toml:"-" yaml:"-"`                                            // Cache for parsed keys
-	path           string               `json:"-" toml:"-" yaml:"-"`                                            // Path to file
+	Name           string                `json:"name" toml:"name" yaml:"name"`
+	DiceExpression string                `json:"dice_expression" toml:"dice_expression" yaml:"dice_expression" ` // Default dice expression for rolls
+	Rows           map[string]TableEntry `json:"rows" toml:"rows" yaml:"rows" `                                  // Key-Value pairs for table events
+	ModsFirst      map[string]int        `json:"mods,omitempty" toml:"mods,omitempty" yaml:"mods,omitempty"`     // Available modifiers for this table
+	ModsSecond     map[string]int        `json:"mods,omitempty" toml:"mods,omitempty" yaml:"mods,omitempty"`     // Available modifiers for this table
+	modsToApply    []string              `json:"-" toml:"-" yaml:"-"`                                            // Modifiers to apply automatically
+	parsed         map[string]*RangeKey  `json:"-" toml:"-" yaml:"-"`                                            // Cache for parsed keys
+	path           string                `json:"-" toml:"-" yaml:"-"`                                            // Path to file
 }
 
 func (t *D66Table) GetName() string {
@@ -34,70 +39,62 @@ func (t *D66Table) Find(key string) (string, error) {
 	return t.FindByCode(key)
 }
 
-func (t *D66Table) GetAll() map[string]string {
-	events := make(map[string]string)
+func (t *D66Table) GetAll() map[string]TableEntry {
+	events := make(map[string]TableEntry)
 	maps.Copy(events, t.Rows)
 	return events
+}
+
+// FindByRoll finds an event by roll result
+func (t *D66Table) FindByCode(roll string) (string, error) {
+	for key, value := range t.Rows {
+		if t.matchCode(key, roll) {
+			return value.Value, nil
+		}
+	}
+	return "", fmt.Errorf("no event found for roll %s", roll)
 }
 
 // D66TableOption is a functional option for configuring a D66Table
 type D66TableOption func(*D66Table) error
 
-// WithRow adds a row to the table
-func WithRow(row Row) D66TableOption {
-	return func(t *D66Table) error {
-		return t.AddRow(row.Key, row.Value)
-	}
-}
+// // WithRow adds a row to the table
+// func WithRow(row Row) D66TableOption {
+// 	return func(t *D66Table) error {
+// 		return t.AddRow(row.Key, row.Value)
+// 	}
+// }
 
 // WithRows adds multiple rows to the table
-func WithRows(rows ...Row) D66TableOption {
+func WithD66Entries(rows ...TableEntry) D66TableOption {
 	return func(t *D66Table) error {
 		for _, row := range rows {
-			if err := t.AddRow(row.Key, row.Value); err != nil {
-				return err
-			}
+			t.Rows[row.Key] = row
 		}
-		return nil
-	}
-}
-
-// WithDiceExpression sets the dice expression for table rolls
-// Example: "2d6", "1d20+5", "3d10-2"
-// Mandatory for D66Table
-func WithDiceExpression(dexpr string) D66TableOption {
-	return func(t *D66Table) error {
-		if t.DiceExpression != "" {
-			return fmt.Errorf("duplicated option: dice expression")
-		}
-		t.DiceExpression = dexpr
 		return nil
 	}
 }
 
 // WithMods sets the modifier values available for this table
 // Keys are modifier names, values are integer bonuses/penalties
-func WithMods(mods map[string]int) D66TableOption {
+func WithMods(mType ModType, mods map[string]int) D66TableOption {
 	return func(t *D66Table) error {
-		if len(t.Mods) != 0 {
-			return fmt.Errorf("duplicated option: mods")
+		switch mType {
+		case First:
+			if len(t.ModsFirst) != 0 {
+				return fmt.Errorf("duplicated option: mods")
+			}
+			t.ModsFirst = make(map[string]int)
+			t.ModsFirst = mods
+		case Second:
+			if len(t.ModsSecond) != 0 {
+				return fmt.Errorf("duplicated option: mods")
+			}
+			t.ModsSecond = make(map[string]int)
+			t.ModsSecond = mods
+		default:
+			return fmt.Errorf("d66 table does not support %v modtype", mType)
 		}
-		t.Mods = mods
-		return nil
-	}
-}
-
-// WithModsToApply specifies which modifiers should be applied automatically
-// during rolls. Modifiers are summed together before applying to dice roll.
-func WithModsToApply(mods ...string) D66TableOption {
-	return func(t *D66Table) error {
-		if len(mods) == 0 {
-			return fmt.Errorf("no auto mods provided")
-		}
-		if len(t.modsToApply) != 0 {
-			return fmt.Errorf("duplicated option: mods")
-		}
-		t.modsToApply = mods
 		return nil
 	}
 }
@@ -109,7 +106,7 @@ func NewD66Table(name string, opts ...D66TableOption) (*D66Table, error) {
 	}
 	t := &D66Table{
 		Name:       name,
-		Rows:       make(map[string]string),
+		Rows:       make(map[string]TableEntry),
 		ModsFirst:  make(map[string]int),
 		ModsSecond: make(map[string]int),
 		parsed:     make(map[string]*RangeKey),
@@ -171,7 +168,7 @@ func (t *D66Table) roll(roller Roller, mods ...string) (string, string, error) {
 	}
 
 	// Build dice expression with modifier
-	expr := fmt.Sprintf("2d6cm1:%vcm2:%v", dm1, dm2)
+	expr := fmt.Sprintf("d66cm1:%vcm2:%v", dm1, dm2)
 
 	result, err := roller.ConcatRollSafe(expr)
 	if err != nil {
@@ -183,16 +180,6 @@ func (t *D66Table) roll(roller Roller, mods ...string) (string, string, error) {
 	}
 
 	return result, outcome, nil
-}
-
-// FindByRoll finds an event by roll result
-func (t *D66Table) FindByCode(roll string) (string, error) {
-	for key, value := range t.Rows {
-		if t.matchCode(key, roll) {
-			return value, nil
-		}
-	}
-	return "", fmt.Errorf("no event found for roll %d", roll)
 }
 
 // Validate validates the table structure and keys
@@ -210,16 +197,7 @@ func (t *D66Table) Validate() error {
 	}
 
 	// Check for range overlaps
-	return t.checkOverlaps()
-}
-
-// GetKeys returns all keys in the table
-func (t *D66Table) GetKeys() []string {
-	keys := make([]string, 0, len(t.Rows))
-	for k := range t.Rows {
-		keys = append(keys, k)
-	}
-	return keys
+	return nil
 }
 
 // matchKey checks if a roll matches a given key
@@ -287,31 +265,31 @@ func (t *D66Table) validateKey(key string) error {
 	return err
 }
 
-// checkOverlaps checks for overlapping ranges in the table
-func (t *D66Table) checkOverlaps() error {
-	var ranges []*RangeKey
+// // checkOverlaps checks for overlapping ranges in the table
+// func (t *D66Table) checkOverlaps() error {
+// 	var ranges []*RangeKey
 
-	// Parse all keys
-	for key := range t.Rows {
-		rng, err := ParseKey(key)
-		if err != nil {
-			return err
-		}
-		ranges = append(ranges, rng)
-	}
+// 	// Parse all keys
+// 	for key := range t.Rows {
+// 		rng, err := ParseKey(key)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		ranges = append(ranges, rng)
+// 	}
 
-	// Check for overlaps
-	for i, r1 := range ranges {
-		for j, r2 := range ranges {
-			if i >= j {
-				continue
-			}
+// 	// Check for overlaps
+// 	for i, r1 := range ranges {
+// 		for j, r2 := range ranges {
+// 			if i >= j {
+// 				continue
+// 			}
 
-			if rangesOverlap(r1, r2) {
-				return fmt.Errorf("overlapping ranges detected: %s and %s", r1.Original, r2.Original)
-			}
-		}
-	}
+// 			if rangesOverlap(r1, r2) {
+// 				return fmt.Errorf("overlapping ranges detected: %s and %s", r1.Original, r2.Original)
+// 			}
+// 		}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }

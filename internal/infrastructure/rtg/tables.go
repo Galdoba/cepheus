@@ -9,24 +9,24 @@ import (
 )
 
 type RandomTableGenerator interface {
-	Roll(string, ...string) (int, string, error)
-	FindByIndex(string, int) (string, error)
+	Roll(string, ...string) (string, error)
+	Find(string, string) (string, error)
 }
 
 type randomTableGenerator struct {
 	tableCollection *tttable.TableCollection
 }
 
-func (rg *randomTableGenerator) Roll(name string, mods ...string) (int, string, error) {
-	index, outcome, err := rg.tableCollection.Roll(name, mods...)
+func (rg *randomTableGenerator) Roll(name string, mods ...string) (string, error) {
+	outcome, err := rg.tableCollection.Roll(name, mods...)
 	if err != nil {
-		return tttable.AndLess, "", fmt.Errorf("failed to roll RTG: %v", err)
+		return "", fmt.Errorf("failed to roll RTG: %v", err)
 	}
-	return index, outcome, nil
+	return outcome, nil
 }
 
-func (rg *randomTableGenerator) FindByIndex(tableName string, index int) (string, error) {
-	return rg.tableCollection.FindByIndex(tableName, index)
+func (rg *randomTableGenerator) Find(tableName string, index string) (string, error) {
+	return rg.tableCollection.Find(tableName, index)
 }
 
 func tableFileName(tableName string) string {
@@ -35,20 +35,20 @@ func tableFileName(tableName string) string {
 	return name + ".json"
 }
 
-func CreateRandomTable(dir, name, diceExpr string, rows map[string]string, mods map[string]int) error {
-	rowList := []tttable.Row{}
+func CreateRandomIndexTable(dir, name, diceExpr string, rows map[string]string, mods map[string]int) error {
+	rowList := []tttable.TableEntry{}
 	for key, val := range rows {
-		rowList = append(rowList, tttable.NewRow(key, val))
+		rowList = append(rowList, tttable.NewTableEntry(key, val))
 	}
 	tab, err := tttable.NewTable(name,
 		tttable.WithDiceExpression(diceExpr),
-		tttable.WithRows(rowList...),
-		tttable.WithMods(mods),
+		tttable.WithIndexEntries(rowList...),
+		tttable.WithIndexMods(tttable.Flat, mods),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create table %v: %v", name, err)
 	}
-	if err := tab.SaveAs(filepath.Join(dir, tableFileName(name))); err != nil {
+	if err := tttable.SaveAs(tab, filepath.Join(dir, tableFileName(name))); err != nil {
 		return fmt.Errorf("failed to save table %v: %v", name, err)
 	}
 	return nil

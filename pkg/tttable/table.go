@@ -8,11 +8,17 @@ import (
 
 // Constants for bounds
 const (
-	MinRollBound = -10000
-	MaxRollBound = 10000
-	AndLess      = -10001
-	AndMore      = 10001
+	MinRollBound         = -10000
+	MaxRollBound         = 10000
+	AndLess              = -10001
+	AndMore              = 10001
+	Flat         ModType = "flat"
+	Cumulative   ModType = "cumulative"
+	Max          ModType = "max"
+	Min          ModType = "min"
 )
+
+type ModType string
 
 // Predefined errors
 var (
@@ -28,13 +34,16 @@ var (
 
 // Table represents a random event table
 type Table struct {
-	Name           string               `json:"name" toml:"name" yaml:"name"`
-	DiceExpression string               `json:"dice_expression" toml:"dice_expression" yaml:"dice_expression" ` // Default dice expression for rolls
-	Rows           map[string]string    `json:"rows" toml:"rows" yaml:"rows" `                                  // Key-Value pairs for table events
-	Mods           map[string]int       `json:"mods,omitempty" toml:"mods,omitempty" yaml:"mods,omitempty"`     // Available modifiers for this table
-	modsToApply    []string             `json:"-" toml:"-" yaml:"-"`                                            // Modifiers to apply automatically
-	parsed         map[string]*RangeKey `json:"-" toml:"-" yaml:"-"`                                            // Cache for parsed keys
-	path           string               `json:"-" toml:"-" yaml:"-"`                                            // Path to file
+	Name           string                `json:"name" toml:"name" yaml:"name"`
+	DiceExpression string                `json:"dice_expression" toml:"dice_expression" yaml:"dice_expression" ` // Default dice expression for rolls
+	Rows           map[string]TableEntry `json:"rows" toml:"rows" yaml:"rows" `                                  // Key-Value pairs for table events
+	ModsFlat       map[string]int        `json:"mods_flat,omitempty" toml:"mods_flat,omitempty" yaml:"mods_flat,omitempty"`
+	ModsCumulative map[string]int        `json:"mods_cumulative,omitempty" toml:"mods_cumulative,omitempty" yaml:"mods_cumulative,omitempty"`
+	ModsMax        map[string]int        `json:"mods_max,omitempty" toml:"mods_max,omitempty" yaml:"mods_max,omitempty"`
+	ModsMin        map[string]int        `json:"mods_min,omitempty" toml:"mods_min,omitempty" yaml:"mods_min,omitempty"`
+	modsToApply    []string              `json:"-" toml:"-" yaml:"-"` // Modifiers to apply automatically
+	parsed         map[string]*RangeKey  `json:"-" toml:"-" yaml:"-"` // Cache for parsed keys
+	path           string                `json:"-" toml:"-" yaml:"-"` // Path to file
 }
 
 func (t *Table) GetName() string {
@@ -55,8 +64,8 @@ func (t *Table) Find(key string) (string, error) {
 	return t.FindByRoll(n)
 }
 
-func (t *Table) GetAll() map[string]string {
-	events := make(map[string]string)
+func (t *Table) GetAll() map[string]TableEntry {
+	events := make(map[string]TableEntry)
 	maps.Copy(events, t.Rows)
 	return events
 }
@@ -65,18 +74,23 @@ func (t *Table) GetAll() map[string]string {
 type TableOption func(*Table) error
 
 // WithRow adds a row to the table
-func WithRow(row Row) TableOption {
-	return func(t *Table) error {
-		return t.AddRow(row.Key, row.Value)
-	}
-}
+// func WithIndexEntry(row TableEntry) TableOption {
+// 	return func(t *Table) error {
+// 		return t.AddRow(row.Key, row)
+// 	}
+// }
 
 // WithRows adds multiple rows to the table
-func WithRows(rows ...Row) TableOption {
+func WithIndexEntries(rows ...TableEntry) TableOption {
 	return func(t *Table) error {
+		if len(t.Rows) > 0 {
+			return fmt.Errorf("duplicated option: entries")
+		}
 		for _, row := range rows {
-			if err := t.AddRow(row.Key, row.Value); err != nil {
-				return err
+			if _, present := t.Rows[row.Key]; present {
+				return fmt.Errorf("duplicated entriy key provided: %v", row.Key)
+			} else {
+				t.Rows[row.Key] = row
 			}
 		}
 		return nil
@@ -98,19 +112,42 @@ func WithDiceExpression(dexpr string) TableOption {
 
 // WithMods sets the modifier values available for this table
 // Keys are modifier names, values are integer bonuses/penalties
-func WithMods(mods map[string]int) TableOption {
+func WithIndexMods(mtype ModType, mods map[string]int) TableOption {
 	return func(t *Table) error {
-		if len(t.Mods) != 0 {
-			return fmt.Errorf("duplicated option: mods")
+		err := fmt.Errorf("duplicated option")
+		switch mtype {
+		case Flat:
+			if t.ModsFlat != nil {
+				return fmt.Errorf("%v: flat mods", err)
+			}
+			t.ModsFlat = make(map[string]int)
+			t.ModsFlat = mods
+		case Cumulative:
+			if t.ModsFlat != nil {
+				return fmt.Errorf("%v: cumulative mods", err)
+			}
+			t.ModsCumulative = make(map[string]int)
+			t.ModsCumulative = mods
+		case Max:
+			if t.ModsFlat != nil {
+				return fmt.Errorf("%v: max mods", err)
+			}
+			t.ModsMax = make(map[string]int)
+			t.ModsMax = mods
+		case Min:
+			if t.ModsFlat != nil {
+				return fmt.Errorf("%v: min mods", err)
+			}
+			t.ModsMin = make(map[string]int)
+			t.ModsMin = mods
 		}
-		t.Mods = mods
 		return nil
 	}
 }
 
 // WithModsToApply specifies which modifiers should be applied automatically
 // during rolls. Modifiers are summed together before applying to dice roll.
-func WithModsToApply(mods ...string) TableOption {
+func WithIndexModsToApply(mods ...string) TableOption {
 	return func(t *Table) error {
 		if len(mods) == 0 {
 			return fmt.Errorf("no auto mods provided")
@@ -130,8 +167,7 @@ func NewTable(name string, opts ...TableOption) (*Table, error) {
 	}
 	t := &Table{
 		Name:   name,
-		Rows:   make(map[string]string),
-		Mods:   make(map[string]int),
+		Rows:   make(map[string]TableEntry),
 		parsed: make(map[string]*RangeKey),
 	}
 
@@ -148,22 +184,6 @@ func NewTable(name string, opts ...TableOption) (*Table, error) {
 	}
 
 	return t, nil
-}
-
-// AddRow adds a new row to the table
-func (t *Table) AddRow(key, value string) error {
-	if err := t.validateKey(key); err != nil {
-		return err
-	}
-
-	// Check for duplicates
-	if _, exists := t.Rows[key]; exists {
-		return fmt.Errorf("duplicate key: %s", key)
-	}
-
-	t.Rows[key] = value
-	delete(t.parsed, key) // Clear cache for this key
-	return nil
 }
 
 // RemoveRow removes a row from the table
@@ -184,24 +204,13 @@ func (t *Table) roll(roller Roller, mods ...string) (int, string, error) {
 
 	// Calculate total modifier
 	dm := 0
-	modsUsed := []string{}
 	switch len(mods) {
 	case 0:
 		// Use automatic mods if no specific mods provided
-		for _, mod := range t.modsToApply {
-			if v, ok := t.Mods[mod]; ok {
-				dm += v
-				modsUsed = append(modsUsed, mod)
-			}
-		}
+		dm = t.combineMods(t.modsToApply...)
 	default:
 		// Use provided mods
-		for _, mod := range mods {
-			if v, ok := t.Mods[mod]; ok {
-				dm += v
-				modsUsed = append(modsUsed, mod)
-			}
-		}
+		dm = t.combineMods(mods...)
 	}
 
 	// Build dice expression with modifier
@@ -225,11 +234,88 @@ func (t *Table) roll(roller Roller, mods ...string) (int, string, error) {
 	return result, outcome, nil
 }
 
+func (t *Table) combineMods(mods ...string) int {
+	flat := make(map[string]bool)
+	cumulative := []string{}
+	maxs := []string{}
+	mins := []string{}
+	for _, mod := range mods {
+		if _, ok := t.ModsFlat[mod]; ok {
+			flat[mod] = true
+		}
+		if _, ok := t.ModsCumulative[mod]; ok {
+			cumulative = append(cumulative, mod)
+		}
+		if _, ok := t.ModsMin[mod]; ok {
+			maxs = append(maxs, mod)
+		}
+		if _, ok := t.ModsMax[mod]; ok {
+			mins = append(mins, mod)
+		}
+	}
+	dm := 0
+	for mod := range flat {
+		if val, ok := t.ModsFlat[mod]; ok {
+			dm += val
+		}
+	}
+	for _, mod := range cumulative {
+		if val, ok := t.ModsCumulative[mod]; ok {
+			dm += val
+		}
+	}
+	maxSlice := []int{}
+	for _, mod := range maxs {
+		if val, ok := t.ModsMax[mod]; ok {
+			maxSlice = append(maxSlice, val)
+		}
+	}
+	maxVal, detectedMax := maxOf(maxSlice)
+	if detectedMax {
+		dm += maxVal
+	}
+
+	minSlice := []int{}
+	for _, mod := range mins {
+		if val, ok := t.ModsMin[mod]; ok {
+			minSlice = append(minSlice, val)
+		}
+	}
+	minVal, detectedMin := minOf(minSlice)
+	if detectedMin {
+		dm += minVal
+	}
+	return dm
+
+}
+
+func minOf(slice []int) (int, bool) {
+	if len(slice) < 1 {
+		return 0, false
+	}
+	val := slice[0]
+	for _, next := range slice {
+		val = min(val, next)
+	}
+	return val, true
+}
+
+func maxOf(slice []int) (int, bool) {
+	if len(slice) < 1 {
+		return 0, false
+	}
+	val := slice[0]
+	for _, next := range slice {
+		val = max(val, next)
+	}
+	return val, true
+}
+
 // FindByRoll finds an event by roll result
 func (t *Table) FindByRoll(roll int) (string, error) {
 	for key, value := range t.Rows {
 		if t.matchKey(key, roll) {
-			return value, nil
+			return value.Value, nil
 		}
 	}
 	return "", fmt.Errorf("no event found for roll %d", roll)

@@ -25,7 +25,7 @@ func NewStarTypeDeterminationGenerator(roller *dice.Roller, opts ...string) (Ran
 	for _, o := range opts {
 		options[o] = true
 	}
-	tables := []*tttable.Table{}
+	tables := []tttable.RollableTable{}
 	for name, path := range StarSystemTablesMap() {
 		table, err := tttable.Load(path)
 		if err != nil {
@@ -90,7 +90,7 @@ func InitStarSystemDeterminationTables() error {
 			path = dir
 			switch name {
 			case "Type":
-				err = CreateRandomTable(path, name, "2d6",
+				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"2-":   "Unusual",
 						"3-6":  "M",
@@ -105,7 +105,7 @@ func InitStarSystemDeterminationTables() error {
 					},
 				)
 			case "Hot":
-				err = CreateRandomTable(path, name, "2d6",
+				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"9-":    "A",
 						"10-11": "B",
@@ -114,7 +114,7 @@ func InitStarSystemDeterminationTables() error {
 					map[string]int{},
 				)
 			case "Special":
-				err = CreateRandomTable(path, name, "2d6",
+				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"5-":   "VI",
 						"6-8":  "IV",
@@ -124,7 +124,7 @@ func InitStarSystemDeterminationTables() error {
 					map[string]int{},
 				)
 			case "Unusual":
-				err = CreateRandomTable(path, name, "2d6",
+				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"2-":   "Peculiar",
 						"3":    "VI",
@@ -137,7 +137,7 @@ func InitStarSystemDeterminationTables() error {
 					map[string]int{},
 				)
 			case "Giants":
-				err = CreateRandomTable(path, name, "2d6",
+				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"8-":   "III",
 						"9-10": "II",
@@ -147,7 +147,7 @@ func InitStarSystemDeterminationTables() error {
 					map[string]int{},
 				)
 			case "Peculiar":
-				err = CreateRandomTable(path, name, "2d6",
+				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"2-":  "BH",
 						"3":   "PSR",
@@ -160,7 +160,7 @@ func InitStarSystemDeterminationTables() error {
 					map[string]int{},
 				)
 			case "Numeric":
-				err = CreateRandomTable(path, name, "2d6",
+				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"2":  "0",
 						"3":  "1",
@@ -177,7 +177,7 @@ func InitStarSystemDeterminationTables() error {
 					map[string]int{},
 				)
 			case "M Type Primary":
-				err = CreateRandomTable(path, name, "2d6",
+				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"2":  "8",
 						"3":  "6",
