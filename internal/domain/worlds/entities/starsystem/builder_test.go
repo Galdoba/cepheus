@@ -17,13 +17,6 @@ func TestBuilder(t *testing.T) {
 			fmt.Println(err)
 			return
 		}
-		// if ss.PrimaryStar.Class == "IV" {
-		fmt.Println(i, ss.PrimaryStar)
 		fmt.Println(ss)
-		// }
-		if ss.PrimaryStar.Class == "IV" && ss.PrimaryStar.Type == "O" {
-			panic(1)
-
-		}
 	}
 }

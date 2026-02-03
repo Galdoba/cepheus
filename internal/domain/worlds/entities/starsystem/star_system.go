@@ -2,6 +2,7 @@ package starsystem
 
 import (
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/orbit"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
 	"github.com/Galdoba/cepheus/pkg/dice"
 )
@@ -29,6 +30,7 @@ type StarSystem struct {
 	Anomaly      bool
 	PrimaryStar  *Star
 	Age          float64
+	Stars        map[orbit.Orbit]*Star
 }
 
 type Star struct {

@@ -18,6 +18,19 @@ const (
 	MOD_ProtostarSystem      = "protostar system determined class determined"
 
 	TableVariant_Type_Realistic = "realistic types"
+
+	TableType         = "Type"
+	TableHot          = "Hot"
+	TableSpecial      = "Special"
+	TableUnusual      = "Unusual"
+	TableGiants       = "Giants"
+	TablePeculiar     = "Peculiar"
+	TableNumeric      = "Numeric"
+	TableMTypePrimary = "M Type Primary"
+	TableSecondary    = "Secondary"
+	TableCompanion    = "Companion"
+	TablePostStelar   = "Post-Stelar"
+	TableOther        = "Other"
 )
 
 func NewStarTypeDeterminationGenerator(roller *dice.Roller, opts ...string) (RandomTableGenerator, error) {
@@ -48,19 +61,28 @@ func NewStarTypeDeterminationGenerator(roller *dice.Roller, opts ...string) (Ran
 
 func starTypeDeterminationTableNames() []string {
 	return []string{
-		"Type",
-		"Hot",
-		"Special",
-		"Unusual",
-		"Giants",
-		"Peculiar",
+		TableType,
+		TableHot,
+		TableSpecial,
+		TableUnusual,
+		TableGiants,
+		TablePeculiar,
 	}
 }
 
 func starSybtypeDeterminationTableNames() []string {
 	return []string{
-		"Numeric",
-		"M Type Primary",
+		TableNumeric,
+		TableMTypePrimary,
+	}
+}
+
+func secondaryStarsDeterminationTableNames() []string {
+	return []string{
+		TableSecondary,
+		TableCompanion,
+		TablePostStelar,
+		TableOther,
 	}
 }
 
@@ -70,6 +92,9 @@ func StarSystemTablesMap() map[string]string {
 		tableMap[name] = filepath.Join(filepaths.RandomTablesDirectory(), starSystemSubfolder, tableFileName(name))
 	}
 	for _, name := range starSybtypeDeterminationTableNames() {
+		tableMap[name] = filepath.Join(filepaths.RandomTablesDirectory(), starSystemSubfolder, tableFileName(name))
+	}
+	for _, name := range secondaryStarsDeterminationTableNames() {
 		tableMap[name] = filepath.Join(filepaths.RandomTablesDirectory(), starSystemSubfolder, tableFileName(name))
 	}
 	return tableMap
@@ -89,7 +114,7 @@ func InitStarSystemDeterminationTables() error {
 			}
 			path = dir
 			switch name {
-			case "Type":
+			case TableType:
 				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"2-":   "Unusual",
@@ -104,7 +129,7 @@ func InitStarSystemDeterminationTables() error {
 						MOD_ProtostarSystem:      1,
 					},
 				)
-			case "Hot":
+			case TableHot:
 				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"9-":    "A",
@@ -113,7 +138,7 @@ func InitStarSystemDeterminationTables() error {
 					},
 					map[string]int{},
 				)
-			case "Special":
+			case TableSpecial:
 				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"5-":   "VI",
@@ -123,7 +148,7 @@ func InitStarSystemDeterminationTables() error {
 					},
 					map[string]int{},
 				)
-			case "Unusual":
+			case TableUnusual:
 				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"2-":   "Peculiar",
@@ -136,7 +161,7 @@ func InitStarSystemDeterminationTables() error {
 					},
 					map[string]int{},
 				)
-			case "Giants":
+			case TableGiants:
 				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"8-":   "III",
@@ -146,7 +171,7 @@ func InitStarSystemDeterminationTables() error {
 					},
 					map[string]int{},
 				)
-			case "Peculiar":
+			case TablePeculiar:
 				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"2-":  "BH",
@@ -159,7 +184,7 @@ func InitStarSystemDeterminationTables() error {
 					},
 					map[string]int{},
 				)
-			case "Numeric":
+			case TableNumeric:
 				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"2":  "0",
@@ -176,7 +201,7 @@ func InitStarSystemDeterminationTables() error {
 					},
 					map[string]int{},
 				)
-			case "M Type Primary":
+			case TableMTypePrimary:
 				err = CreateRandomIndexTable(path, name, "2d6",
 					map[string]string{
 						"2":  "8",
@@ -192,6 +217,59 @@ func InitStarSystemDeterminationTables() error {
 						"12": "9",
 					},
 					map[string]int{},
+				)
+			case TableSecondary:
+				err = CreateRandomIndexTable(path, name, "2d6",
+					map[string]string{
+						"3-":   "Other",
+						"4-6":  "Random",
+						"7-8":  "Lesser",
+						"9-10": "Sibling",
+						"11+":  "Twin",
+					},
+					map[string]int{
+						"III": -1,
+						"IV":  -1,
+					},
+				)
+			case TableCompanion:
+				err = CreateRandomIndexTable(path, name, "2d6",
+					map[string]string{
+						"3-":  "Other",
+						"4-5": "Random",
+						"6-7": "Lesser",
+						"8-9": "Sibling",
+						"10+": "Twin",
+					},
+					map[string]int{
+						"III": -1,
+						"IV":  -1,
+					},
+				)
+			case TablePostStelar:
+				err = CreateRandomIndexTable(path, name, "2d6",
+					map[string]string{
+						"3-":   "Other",
+						"4-8":  "Random",
+						"9-10": "Lesser",
+						"11+":  "Twin",
+					},
+					map[string]int{
+						"III": -1,
+						"IV":  -1,
+					},
+				)
+			case TableOther:
+				err = CreateRandomIndexTable(path, name, "2d6",
+					map[string]string{
+						"2-":  "NS",
+						"3-7": "D",
+						"8+":  "BD",
+					},
+					map[string]int{
+						"III": -1,
+						"IV":  -1,
+					},
 				)
 			}
 			if err != nil {
