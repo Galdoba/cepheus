@@ -47,7 +47,7 @@ func (b *Builder) runStep2(ss *StarSystem) error {
 	}
 	//   - [ ] d. Adjust system age to account for post-stellar objects (if any)
 	//   - [ ] e. Determine star orbital periods
-	if err := b.determineMassOfSecondaryStars(ss); err != nil {
+	if err := b.determineSecondaryStarsDetails(ss); err != nil {
 		return err
 	}
 	if err := b.determineStarsOrbitalPeriods(ss); err != nil {
@@ -83,15 +83,13 @@ func step2Validation(ss *StarSystem) error {
 			if star.Designation != stellar.Primary && star.Period == 0 {
 				return fmt.Errorf("no period for: %v", star)
 			}
-			// fmt.Printf("star: %v; orbit:= %v\n", star, o)
 		}
 	}
-	PrintStarPositions(ss)
 
 	return nil
 }
 
-func (b *Builder) determineMassOfSecondaryStars(ss *StarSystem) error {
+func (b *Builder) determineSecondaryStarsDetails(ss *StarSystem) error {
 	si := newStarIterator(ss.Stars)
 	for si.next() {
 		o, star, err := si.getValues()
@@ -101,6 +99,17 @@ func (b *Builder) determineMassOfSecondaryStars(ss *StarSystem) error {
 		if star.Mass == 0 {
 			if err := determineMassDiameterAgeTemperature(b.rng, star); err != nil {
 				return err
+			}
+		}
+		if star.Mass == 0 {
+			return fmt.Errorf("failed to calcaulate mass for %v", star)
+		} else {
+			ss.Stars[o] = star
+		}
+		if star.Luminocity == 0 {
+			star.Luminocity = float.RoundN(luminocity(star.Diameter, star.Temperature), 3)
+			if star.Luminocity < 0.001 {
+				star.Luminocity = 0.001
 			}
 		}
 		if star.Mass == 0 {
@@ -155,7 +164,7 @@ func (b *Builder) determineEccentricityOfSecondaryStars(ss *StarSystem) error {
 			}
 		}
 		updatedOrbit := o
-		updatedOrbit.Eccentricity = orbit.RollStarEccentricity(b.rng, dm)
+		updatedOrbit.Eccentricity = float.RoundN(orbit.RollStarEccentricity(b.rng, dm), 3)
 		ss.Stars[updatedOrbit] = star
 		delete(ss.Stars, o)
 	}
@@ -206,7 +215,6 @@ func (b *Builder) determineSecondaryTypeAndClass(ss *StarSystem) error {
 			star.SubType = ""
 			star.Class = ""
 		}
-		fmt.Println(star)
 		if err := validateTSC(star); err != nil {
 			return err
 		}
@@ -282,7 +290,6 @@ func makeLesser(r stellar.Roller, parent, child *Star) error {
 	if child == nil {
 		return fmt.Errorf("no child provided")
 	}
-	fmt.Println(parent)
 	child.Class = parent.Class
 	child.Type = coolerType(parent.Type)
 	n := r.Roll("1d10-1")

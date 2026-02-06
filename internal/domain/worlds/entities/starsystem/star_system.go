@@ -1,6 +1,9 @@
 package starsystem
 
 import (
+	"fmt"
+
+	"github.com/Galdoba/cepheus/internal/domain/support/services/float"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/orbit"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/stellar"
@@ -46,4 +49,43 @@ func rollNebula(r *dice.Roller) int {
 	default:
 		return 2
 	}
+}
+
+func (ss *StarSystem) Profile() string {
+	p := ""
+	si := newStarIterator(ss.Stars)
+	starPos := 0
+	for si.next() {
+		starPos++
+		o, s, err := si.getValues()
+		if err != nil {
+			panic(err)
+		}
+		switch starPos {
+		case 1:
+			p += fmt.Sprintf("%v-", len(ss.Stars))
+			p += fmt.Sprintf("%v%v", s.Type, s.SubType)
+			if s.Class != "" {
+				p += fmt.Sprintf(" %v", s.Class)
+			}
+			p += fmt.Sprintf("-%v", float.RoundN(s.Mass, 3))
+			p += fmt.Sprintf("-%v", float.RoundN(s.Diameter, 3))
+			p += fmt.Sprintf("-%v", float.RoundN(s.Luminocity, 3))
+			p += fmt.Sprintf("-%v", float.RoundN(ss.Age, 3))
+		default:
+			p += fmt.Sprintf(":%v", s.Designation)
+			p += fmt.Sprintf("-%v", o.Distance)
+			p += fmt.Sprintf("-%v", o.Eccentricity)
+			p += fmt.Sprintf("-%v%v", s.Type, s.SubType)
+			if s.Class != "" {
+				p += fmt.Sprintf(" %v", s.Class)
+			}
+			p += fmt.Sprintf("-%v", float.RoundN(s.Mass, 3))
+			p += fmt.Sprintf("-%v", float.RoundN(s.Diameter, 3))
+			p += fmt.Sprintf("-%v", s.Luminocity)
+		}
+
+	}
+
+	return p
 }

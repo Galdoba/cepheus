@@ -368,10 +368,16 @@ func validateTSC(s *Star) error {
 			// return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
 		}
 		if s.Type == "K" && !strings.Contains("01234", s.SubType) {
-			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
+			s.Class = "V"
 		}
 	case "VI":
-		if !strings.Contains("OBGKMF", s.Type) {
+		if s.Type == "F" {
+			s.Type = "G"
+		}
+		if s.Type == "A" {
+			s.Type = "B"
+		}
+		if !strings.Contains("OBGKM", s.Type) {
 			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
 		}
 		if s.Type == "F" && !strings.Contains("56789", s.SubType) {

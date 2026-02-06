@@ -6,6 +6,7 @@ import (
 )
 
 func TestBuilder(t *testing.T) {
+	lastPr := ""
 	for i := 160000; i < 1000000; i++ {
 		b, err := NewBuilder(fmt.Sprintf("%v", i))
 		if err != nil {
@@ -17,6 +18,10 @@ func TestBuilder(t *testing.T) {
 			fmt.Println(err)
 			return
 		}
-		fmt.Println(ss)
+		if ss.Profile() != lastPr {
+			fmt.Println(ss.Profile())
+			lastPr = ss.Profile()
+
+		}
 	}
 }
