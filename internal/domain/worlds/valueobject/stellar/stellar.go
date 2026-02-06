@@ -132,3 +132,7 @@ func RollDesignations(r Roller) []StarDesignation {
 	}
 	return result
 }
+
+func AllDesignations() []StarDesignation {
+	return []StarDesignation{Primary, PrimaryComp, Close, CloseComp, Near, NearComp, Far, FarComp}
+}

@@ -4,25 +4,35 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 
 	"github.com/Galdoba/cepheus/internal/domain/support/services/float"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/services/interpolate"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/stellar"
 	"github.com/Galdoba/cepheus/internal/infrastructure/rtg"
 	"github.com/Galdoba/cepheus/pkg/dice"
 )
 
 func (b *Builder) runStep1(ss *StarSystem) error {
-	ss.PrimaryStar = &Star{Designation: Primary}
+	ss.PrimaryStar = &Star{Designation: stellar.Primary}
 	if err := b.determinePrimaryStarTypeAndClass(ss); err != nil {
 		return fmt.Errorf("failed to determine primary star type and class: %v", err)
 	}
 
 	//step 1a
-	if err := b.determinePrimaryStarSubtype(ss); err != nil {
-		return fmt.Errorf("failed to determine primary star subtype: %v", err)
+	// if err := b.determinePrimaryStarSubtype(ss); err != nil {
+	// 	return fmt.Errorf("failed to determine primary star subtype: %v", err)
+	// }
+	// ss.Dead = ss.PrimaryStar.Dead
+	// ss.Primordial = ss.PrimaryStar.Protostar
+	star, err := b.determineStarTSC(true)
+	if err != nil {
+		return err
 	}
-	ss.Dead = ss.PrimaryStar.Dead
-	ss.Primordial = ss.PrimaryStar.Protostar
+	if err := validateTSC(star); err != nil {
+		return err
+	}
+	ss.PrimaryStar = star
 
 	//step 1b
 	if err := determineMassDiameterAgeTemperature(b.rng, ss.PrimaryStar); err != nil {
@@ -34,6 +44,7 @@ func (b *Builder) runStep1(ss *StarSystem) error {
 
 	//step 1d
 	ss.Age = ss.PrimaryStar.Age
+	ss.PrimaryStar.Designation = stellar.Primary
 	return nil
 }
 
@@ -78,7 +89,7 @@ primary_star_class_generation:
 			}
 			ss.PrimaryStar.Class = res
 		case "BD":
-			ss.PrimaryStar.Class = res
+			ss.PrimaryStar.Type = res
 			ss.Empty = true
 			break primary_star_class_generation
 		case "D", "NS", "BH":
@@ -113,14 +124,84 @@ primary_star_class_generation:
 	return nil
 }
 
-func (b *Builder) determinePrimaryStarSubtype(ss *StarSystem) error {
-	switch ss.PrimaryStar.Type {
+func (b *Builder) determineStarTSC(primary bool, mods ...string) (*Star, error) {
+	activeMods1 := []string{}
+	star := &Star{}
+primary_star_class_generation:
+	for {
+		res, err := b.step1.tablesStarType.Roll("Type", mods...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to roll on RTG1: %v", err)
+		}
+		switch res {
+		case "O", "B", "A", "F", "G", "K", "M":
+			switch star.Class {
+			case "":
+				star.Class = "V"
+			case "IV":
+				switch res {
+				case "O":
+					res = "B"
+				case "M":
+					continue
+				}
+			case "VI":
+				if res == "F" {
+					res = "G"
+				}
+				if res == "A" {
+					res = "B"
+				}
+			}
+			star.Type = res
+			if err := b.determineStarSubtype(star); err != nil {
+				return nil, fmt.Errorf("subtype error: %v", err)
+			}
+		case "Ia", "Ib", "II", "III", "IV", "VI":
+			if res != "IV" && res != "VI" {
+				activeMods1 = append(activeMods1, rtg.MOD_NonMainSequenceClass)
+			}
+			star.Class = res
+		case "BD":
+			star.Type = res
+			star.Class = ""
+			star.SubType = ""
+			break primary_star_class_generation
+		case "D", "NS", "BH", "Anomaly", "PSR":
+			star.Type = res
+			star.Class = ""
+			star.SubType = ""
+			break primary_star_class_generation
+		case "Nb":
+		case "Star Cluster":
+		case "Protostar":
+			activeMods1 = append(activeMods1, rtg.MOD_ProtostarSystem)
+		default:
+			panic(fmt.Sprintf("dev error: invalid value rolled: %v", res))
+		}
+		switch primary {
+		case true:
+			if star.Type != "" && star.Class != "" {
+				break primary_star_class_generation
+			}
+		case false:
+			if validateTSC(star) == nil {
+				break primary_star_class_generation
+			}
+		}
+
+	}
+	return star, nil
+}
+
+func (b *Builder) determineStarSubtype(s *Star) error {
+	switch s.Type {
 	case "M":
 		res, err := b.step1.tablesStarType.Roll("M Type Primary")
 		if err != nil {
 			return fmt.Errorf("failed to roll on RTG1: %v", err)
 		}
-		ss.PrimaryStar.SubType = res
+		s.SubType = res
 	case "O", "B", "A", "F", "G", "K":
 		res, err := b.step1.tablesStarType.Roll("M Type Primary")
 		if err != nil {
@@ -130,10 +211,12 @@ func (b *Builder) determinePrimaryStarSubtype(ss *StarSystem) error {
 		if err != nil {
 			return fmt.Errorf("expect number for subtype: '%v'", res)
 		}
-		if ss.PrimaryStar.Class == "IV" && ss.PrimaryStar.Type == "K" && n > 4 {
+		if s.Class == "IV" && s.Type == "K" && n > 4 {
 			n = n - 5 //For a K-type Class IV star, subtract 5 (make lower) any subtype result above 4 (p. 16)
 		}
-		ss.PrimaryStar.SubType = fmt.Sprintf("%v", n)
+		s.SubType = fmt.Sprintf("%v", n)
+	default:
+		return nil
 	}
 	return nil
 }
@@ -141,7 +224,7 @@ func (b *Builder) determinePrimaryStarSubtype(ss *StarSystem) error {
 func determineMassDiameterAgeTemperature(r *dice.Roller, s *Star) error {
 	i := interpolate.Index(s.Type, s.SubType, s.Class)
 	switch s.Type {
-	case "D":
+	case "D", "BD":
 		s.Mass = whiteDwarfMass(r)
 		s.Diameter = float.Round(whiteDwarfDiameter(s.Mass))
 		s.Age = starAge(r, s)
@@ -154,6 +237,7 @@ func determineMassDiameterAgeTemperature(r *dice.Roller, s *Star) error {
 		s.Diameter = 19 + float64(r.Roll("1d6")) //km
 		s.Age = starAge(r, s)
 	case "Anomaly":
+
 	default:
 		s.Mass = float.Round(interpolate.MassByIndex(i))
 		if s.Mass == 0 {
@@ -270,4 +354,42 @@ func starAge(r *dice.Roller, s *Star) float64 {
 
 func luminocity(diameter, temperature float64) float64 {
 	return math.Pow(diameter, 2) * math.Pow(temperature/float64(5772), 4)
+}
+
+func validateTSC(s *Star) error {
+	switch s.Class {
+	case "Ia", "Ib", "II", "III", "V":
+		if !strings.Contains("OBAFGKM", s.Type) {
+			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
+		}
+	case "IV":
+		if !strings.Contains("BAFGK", s.Type) {
+			s.Class = "V"
+			// return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
+		}
+		if s.Type == "K" && !strings.Contains("01234", s.SubType) {
+			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
+		}
+	case "VI":
+		if !strings.Contains("OBGKMF", s.Type) {
+			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
+		}
+		if s.Type == "F" && !strings.Contains("56789", s.SubType) {
+			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
+		}
+	}
+	switch s.Type {
+	case "":
+		return fmt.Errorf("no star?")
+	case "O", "B", "A", "F", "G", "K", "M":
+		if s.Class == "" {
+			s.Class = "V"
+		}
+	case "D", "BD", "BH", "NS", "PSR", "NB":
+		if s.SubType == "" && s.Class == "" {
+			return nil
+		}
+		return fmt.Errorf("invalid combination type='%v' subtype='%v' class='%v'", s.Type, s.SubType, s.Class)
+	}
+	return nil
 }

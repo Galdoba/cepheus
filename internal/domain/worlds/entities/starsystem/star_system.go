@@ -3,19 +3,9 @@ package starsystem
 import (
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/orbit"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/stellar"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/t5ss"
 	"github.com/Galdoba/cepheus/pkg/dice"
-)
-
-const (
-	Primary     = "Aa"
-	PrimaryComp = "Ab"
-	Close       = "Ba"
-	CloseComp   = "Bb"
-	Near        = "Ca"
-	NearComp    = "Cb"
-	Far         = "Da"
-	FarComp     = "Db"
 )
 
 type StarSystem struct {
@@ -37,7 +27,7 @@ type Star struct {
 	Type        string
 	SubType     string
 	Class       string
-	Designation string
+	Designation stellar.StarDesignation
 	Dead        bool
 	Protostar   bool
 	Mass        float64
@@ -46,6 +36,7 @@ type Star struct {
 	Luminocity  float64
 	Age         float64
 	Anomaly     string
+	Period      float64
 }
 
 func rollNebula(r *dice.Roller) int {

@@ -48,6 +48,7 @@ func NewBuilder(seed string, options ...BuildOption) (*Builder, error) {
 	ssd.tables = rtg1
 
 	b.step1 = &psd
+	b.step2 = &ssd
 	return &b, nil
 }
 
@@ -62,6 +63,9 @@ func (b *Builder) Build(directives ...string) (*StarSystem, error) {
 	ss := &StarSystem{}
 	if err := b.runStep1(ss); err != nil {
 		return nil, fmt.Errorf("step 1 failed: %v", err)
+	}
+	if err := b.runStep2(ss); err != nil {
+		return nil, fmt.Errorf("step 2 failed: %v", err)
 	}
 
 	return ss, nil
