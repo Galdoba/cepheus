@@ -24,6 +24,9 @@ type StarSystem struct {
 	PrimaryStar  *Star
 	Age          float64
 	Stars        map[orbit.Orbit]*Star
+	GG           int
+	Belts        int
+	Planets      int
 }
 
 type Star struct {

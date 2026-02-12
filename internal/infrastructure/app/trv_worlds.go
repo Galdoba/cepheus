@@ -41,6 +41,9 @@ func InitTrvWorlds() (*TrvWorldsInfrastructure, error) {
 	if err := rtg.InitStarSystemDeterminationTables(); err != nil {
 		return nil, err
 	}
+	if err := rtg.InitStarSystemPlanetsDeterminationTables(); err != nil {
+		return nil, err
+	}
 	return &inf, nil
 }
 

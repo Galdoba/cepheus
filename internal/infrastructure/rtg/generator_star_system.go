@@ -16,6 +16,8 @@ const (
 
 	MOD_NonMainSequenceClass = "non main sequence class determined"
 	MOD_ProtostarSystem      = "protostar system determined class determined"
+	MOD_ClassIV              = "IV"
+	MOD_ClassIII             = "III"
 
 	TableVariant_Type_Realistic = "realistic types"
 
@@ -124,10 +126,9 @@ func InitStarSystemDeterminationTables() error {
 						"11":   "F",
 						"12+":  "Hot",
 					},
-					map[string]int{
-						MOD_NonMainSequenceClass: 1,
-						MOD_ProtostarSystem:      1,
-					},
+					NewMods().
+						AddMod(tttable.Flat, MOD_NonMainSequenceClass, 1).
+						AddMod(tttable.Flat, MOD_ProtostarSystem, 1),
 				)
 			case TableHot:
 				err = CreateRandomIndexTable(path, name, "2d6",
@@ -136,7 +137,7 @@ func InitStarSystemDeterminationTables() error {
 						"10-11": "B",
 						"12+":   "O",
 					},
-					map[string]int{},
+					nil,
 				)
 			case TableSpecial:
 				err = CreateRandomIndexTable(path, name, "2d6",
@@ -146,7 +147,7 @@ func InitStarSystemDeterminationTables() error {
 						"9-10": "III",
 						"11+":  "Giants",
 					},
-					map[string]int{},
+					nil,
 				)
 			case TableUnusual:
 				err = CreateRandomIndexTable(path, name, "2d6",
@@ -159,7 +160,7 @@ func InitStarSystemDeterminationTables() error {
 						"11":   "III",
 						"12+":  "Giants",
 					},
-					map[string]int{},
+					nil,
 				)
 			case TableGiants:
 				err = CreateRandomIndexTable(path, name, "2d6",
@@ -169,7 +170,7 @@ func InitStarSystemDeterminationTables() error {
 						"11":   "Ib",
 						"12+":  "Ia",
 					},
-					map[string]int{},
+					nil,
 				)
 			case TablePeculiar:
 				err = CreateRandomIndexTable(path, name, "2d6",
@@ -182,7 +183,7 @@ func InitStarSystemDeterminationTables() error {
 						"10":  "Star Cluster",
 						"11+": "Anomaly",
 					},
-					map[string]int{},
+					nil,
 				)
 			case TableNumeric:
 				err = CreateRandomIndexTable(path, name, "2d6",
@@ -199,7 +200,7 @@ func InitStarSystemDeterminationTables() error {
 						"11": "2",
 						"12": "0",
 					},
-					map[string]int{},
+					nil,
 				)
 			case TableMTypePrimary:
 				err = CreateRandomIndexTable(path, name, "2d6",
@@ -216,7 +217,7 @@ func InitStarSystemDeterminationTables() error {
 						"11": "7",
 						"12": "9",
 					},
-					map[string]int{},
+					nil,
 				)
 			case TableSecondary:
 				err = CreateRandomIndexTable(path, name, "2d6",
@@ -227,10 +228,9 @@ func InitStarSystemDeterminationTables() error {
 						"9-10": "Sibling",
 						"11+":  "Twin",
 					},
-					map[string]int{
-						"III": -1,
-						"IV":  -1,
-					},
+					NewMods().
+						AddMod(tttable.Flat, MOD_ClassIII, -1).
+						AddMod(tttable.Flat, MOD_ClassIV, -1),
 				)
 			case TableCompanion:
 				err = CreateRandomIndexTable(path, name, "2d6",
@@ -241,10 +241,9 @@ func InitStarSystemDeterminationTables() error {
 						"8-9": "Sibling",
 						"10+": "Twin",
 					},
-					map[string]int{
-						"III": -1,
-						"IV":  -1,
-					},
+					NewMods().
+						AddMod(tttable.Flat, MOD_ClassIII, -1).
+						AddMod(tttable.Flat, MOD_ClassIV, -1),
 				)
 			case TablePostStelar:
 				err = CreateRandomIndexTable(path, name, "2d6",
@@ -254,10 +253,9 @@ func InitStarSystemDeterminationTables() error {
 						"9-10": "Lesser",
 						"11+":  "Twin",
 					},
-					map[string]int{
-						"III": -1,
-						"IV":  -1,
-					},
+					NewMods().
+						AddMod(tttable.Flat, MOD_ClassIII, -1).
+						AddMod(tttable.Flat, MOD_ClassIV, -1),
 				)
 			case TableOther:
 				err = CreateRandomIndexTable(path, name, "2d6",
@@ -266,10 +264,9 @@ func InitStarSystemDeterminationTables() error {
 						"3-7": "D",
 						"8+":  "BD",
 					},
-					map[string]int{
-						"III": -1,
-						"IV":  -1,
-					},
+					NewMods().
+						AddMod(tttable.Flat, MOD_ClassIII, -1).
+						AddMod(tttable.Flat, MOD_ClassIV, -1),
 				)
 			}
 			if err != nil {

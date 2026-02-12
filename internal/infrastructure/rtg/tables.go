@@ -35,7 +35,7 @@ func tableFileName(tableName string) string {
 	return name + ".json"
 }
 
-func CreateRandomIndexTable(dir, name, diceExpr string, rows map[string]string, mods map[string]int) error {
+func CreateRandomIndexTable(dir, name, diceExpr string, rows map[string]string, mods map[tttable.ModType]map[string]int) error {
 	rowList := []tttable.TableEntry{}
 	for key, val := range rows {
 		rowList = append(rowList, tttable.NewTableEntry(key, val))
@@ -43,7 +43,10 @@ func CreateRandomIndexTable(dir, name, diceExpr string, rows map[string]string, 
 	tab, err := tttable.NewTable(name,
 		tttable.WithDiceExpression(diceExpr),
 		tttable.WithIndexEntries(rowList...),
-		tttable.WithIndexMods(tttable.Flat, mods),
+		tttable.WithIndexMods(tttable.Flat, mods[tttable.Flat]),
+		tttable.WithIndexMods(tttable.Cumulative, mods[tttable.Cumulative]),
+		tttable.WithIndexMods(tttable.Max, mods[tttable.Max]),
+		tttable.WithIndexMods(tttable.Min, mods[tttable.Min]),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create table %v: %v", name, err)
@@ -52,6 +55,21 @@ func CreateRandomIndexTable(dir, name, diceExpr string, rows map[string]string, 
 		return fmt.Errorf("failed to save table %v: %v", name, err)
 	}
 	return nil
+}
+
+type mods map[tttable.ModType]map[string]int
+
+func NewMods() mods {
+	modMap := make(map[tttable.ModType]map[string]int)
+	return modMap
+}
+
+func (mm mods) AddMod(mType tttable.ModType, descr string, value int) mods {
+	if mm[mType] == nil {
+		mm[mType] = make(map[string]int)
+	}
+	mm[mType][descr] = value
+	return mm
 }
 
 func AssertTable(path string) error {

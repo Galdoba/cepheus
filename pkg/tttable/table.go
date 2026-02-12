@@ -114,6 +114,9 @@ func WithDiceExpression(dexpr string) TableOption {
 // Keys are modifier names, values are integer bonuses/penalties
 func WithIndexMods(mtype ModType, mods map[string]int) TableOption {
 	return func(t *Table) error {
+		if mods == nil {
+			return nil
+		}
 		err := fmt.Errorf("duplicated option")
 		switch mtype {
 		case Flat:
@@ -123,19 +126,19 @@ func WithIndexMods(mtype ModType, mods map[string]int) TableOption {
 			t.ModsFlat = make(map[string]int)
 			t.ModsFlat = mods
 		case Cumulative:
-			if t.ModsFlat != nil {
+			if t.ModsCumulative != nil {
 				return fmt.Errorf("%v: cumulative mods", err)
 			}
 			t.ModsCumulative = make(map[string]int)
 			t.ModsCumulative = mods
 		case Max:
-			if t.ModsFlat != nil {
+			if t.ModsMax != nil {
 				return fmt.Errorf("%v: max mods", err)
 			}
 			t.ModsMax = make(map[string]int)
 			t.ModsMax = mods
 		case Min:
-			if t.ModsFlat != nil {
+			if t.ModsMin != nil {
 				return fmt.Errorf("%v: min mods", err)
 			}
 			t.ModsMin = make(map[string]int)
