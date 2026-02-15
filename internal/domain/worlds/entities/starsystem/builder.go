@@ -74,18 +74,18 @@ func NewBuilder(seed string, options ...BuildOption) (*Builder, error) {
 	return &b, nil
 }
 
-func newStarSystem() *StarSystem {
-	ss := StarSystem{}
-	ss.Stars = make(map[orbit.Orbit]*Star)
+func newStarSystemPrecursor() *starSystemPrecursor {
+	ss := starSystemPrecursor{}
+	ss.Stars = make(map[orbit.Orbit]*starPrecursor)
 	ss.GG = -1000
 	ss.Belts = -1000
 	ss.Planets = -1000
 	return &ss
 }
 
-func (b *Builder) Build(directives ...string) (*StarSystem, error) {
+func (b *Builder) Build(directives ...string) (*starSystemPrecursor, error) {
 
-	ss := &StarSystem{}
+	ss := newStarSystemPrecursor()
 	if err := b.runStep1(ss); err != nil {
 		return nil, fmt.Errorf("step 1 failed: %v", err)
 	}

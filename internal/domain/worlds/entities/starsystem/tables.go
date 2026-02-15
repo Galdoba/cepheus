@@ -1,7 +1,7 @@
 package starsystem
 
 type TableRoller interface {
-	DeterminePrimaryStar() *Star
+	DeterminePrimaryStar() *starPrecursor
 }
 
 func primaryStarTables() (TableRoller, error) {

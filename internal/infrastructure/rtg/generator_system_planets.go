@@ -20,7 +20,14 @@ const (
 	MOD_PerEveryPostStellar  = "Per every post stellar object"
 	MOD_FourOrMoreStars      = "System consists of four or more stars"
 
-	TableGGQuantity = "Gas Giant Quantity"
+	MOD_SystemHas1orMoreGG       = "System has 1 or more gas giants"
+	MOD_PrimaryIsProtostar       = "Primary star is a protostar"
+	MOD_PrimaryIsPrimordial      = "Primary star is primordial"
+	MOD_TotalNumberOfPoststellar = "Total number of poststellar object(s)"
+	MOD_SystemHas2orMoreStars    = "System consists of two or more stars"
+
+	TableGGQuantity    = "Gas Giant Quantity"
+	TableBeltsQuantity = "Belts Quantity"
 )
 
 func NewSystemPlanetsDeterminationGenerator(roller *dice.Roller, opts ...string) (RandomTableGenerator, error) {
@@ -60,6 +67,7 @@ func StarSystemPlanetsTableMap() map[string]string {
 func starSystemPlanetsTableNames() []string {
 	return []string{
 		TableGGQuantity,
+		TableBeltsQuantity,
 	}
 }
 
@@ -93,6 +101,21 @@ func InitStarSystemPlanetsDeterminationTables() error {
 						AddMod(tttable.Flat, MOD_PrimaryIsPostStellar, -2).
 						AddMod(tttable.Cumulative, MOD_PerEveryPostStellar, -1).
 						AddMod(tttable.Flat, MOD_FourOrMoreStars, -1),
+				)
+			case TableBeltsQuantity:
+				err = CreateRandomIndexTable(path, name, "2d6",
+					map[string]string{
+						"6-":   "1",
+						"7-11": "2",
+						"12+":  "3",
+					},
+					NewMods().
+						AddMod(tttable.Flat, MOD_SystemHas1orMoreGG, 1).
+						AddMod(tttable.Flat, MOD_PrimaryIsProtostar, 3).
+						AddMod(tttable.Flat, MOD_PrimaryIsPrimordial, 2).
+						AddMod(tttable.Flat, MOD_PrimaryIsPostStellar, 1).
+						AddMod(tttable.Cumulative, MOD_PerEveryPostStellar, 1).
+						AddMod(tttable.Flat, MOD_SystemHas2orMoreStars, 1),
 				)
 			}
 			if err != nil {

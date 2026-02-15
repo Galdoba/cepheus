@@ -13,26 +13,24 @@ import (
 	"github.com/Galdoba/cepheus/pkg/dice"
 )
 
-func (b *Builder) runStep1(ss *StarSystem) error {
-	ss.PrimaryStar = &Star{Designation: stellar.Primary}
-	if err := b.determinePrimaryStarTypeAndClass(ss); err != nil {
-		return fmt.Errorf("failed to determine primary star type and class: %v", err)
-	}
+func (b *Builder) runStep1(ss *starSystemPrecursor) error {
+	ss.PrimaryStar = &starPrecursor{Designation: stellar.Primary}
 
-	//step 1a
-	// if err := b.determinePrimaryStarSubtype(ss); err != nil {
-	// 	return fmt.Errorf("failed to determine primary star subtype: %v", err)
-	// }
-	// ss.Dead = ss.PrimaryStar.Dead
-	// ss.Primordial = ss.PrimaryStar.Protostar
-	star, err := b.determineStarTSC(true)
-	if err != nil {
+	switch err := b.importPrimaryStarData(ss); err == nil {
+	case true:
+	default:
+		if err := b.determinePrimaryStarTypeAndClass(ss); err != nil {
+			return fmt.Errorf("failed to determine primary star type and class: %v", err)
+		}
+		//step 1a
+		err := b.determineStarTSC(ss.PrimaryStar, true)
+		if err != nil {
+			return err
+		}
+	}
+	if err := validateTSC(ss.PrimaryStar); err != nil {
 		return err
 	}
-	if err := validateTSC(star); err != nil {
-		return err
-	}
-	ss.PrimaryStar = star
 
 	//step 1b
 	if err := determineMassDiameterAgeTemperature(b.rng, ss.PrimaryStar); err != nil {
@@ -45,10 +43,11 @@ func (b *Builder) runStep1(ss *StarSystem) error {
 	//step 1d
 	ss.Age = ss.PrimaryStar.Age
 	ss.PrimaryStar.Designation = stellar.Primary
+
 	return nil
 }
 
-func (b *Builder) determinePrimaryStarTypeAndClass(ss *StarSystem) error {
+func (b *Builder) determinePrimaryStarTypeAndClass(ss *starSystemPrecursor) error {
 	activeMods1 := []string{}
 primary_star_class_generation:
 	for {
@@ -90,6 +89,7 @@ primary_star_class_generation:
 			ss.PrimaryStar.Class = res
 		case "BD":
 			ss.PrimaryStar.Type = res
+			ss.PrimaryStar.Class = ""
 			ss.Empty = true
 			break primary_star_class_generation
 		case "D", "NS", "BH":
@@ -120,18 +120,16 @@ primary_star_class_generation:
 			break primary_star_class_generation
 		}
 	}
-	b.step1.completed = true
 	return nil
 }
 
-func (b *Builder) determineStarTSC(primary bool, mods ...string) (*Star, error) {
+func (b *Builder) determineStarTSC(star *starPrecursor, primary bool, mods ...string) error {
 	activeMods1 := []string{}
-	star := &Star{}
 primary_star_class_generation:
 	for {
 		res, err := b.step1.tablesStarType.Roll("Type", mods...)
 		if err != nil {
-			return nil, fmt.Errorf("failed to roll on RTG1: %v", err)
+			return fmt.Errorf("failed to roll on RTG1: %v", err)
 		}
 		switch res {
 		case "O", "B", "A", "F", "G", "K", "M":
@@ -155,7 +153,7 @@ primary_star_class_generation:
 			}
 			star.Type = res
 			if err := b.determineStarSubtype(star); err != nil {
-				return nil, fmt.Errorf("subtype error: %v", err)
+				return fmt.Errorf("subtype error: %v", err)
 			}
 		case "Ia", "Ib", "II", "III", "IV", "VI":
 			if res != "IV" && res != "VI" {
@@ -191,10 +189,10 @@ primary_star_class_generation:
 		}
 
 	}
-	return star, nil
+	return nil
 }
 
-func (b *Builder) determineStarSubtype(s *Star) error {
+func (b *Builder) determineStarSubtype(s *starPrecursor) error {
 	switch s.Type {
 	case "M":
 		res, err := b.step1.tablesStarType.Roll("M Type Primary")
@@ -221,7 +219,7 @@ func (b *Builder) determineStarSubtype(s *Star) error {
 	return nil
 }
 
-func determineMassDiameterAgeTemperature(r *dice.Roller, s *Star) error {
+func determineMassDiameterAgeTemperature(r *dice.Roller, s *starPrecursor) error {
 	i := interpolate.Index(s.Type, s.SubType, s.Class)
 	switch s.Type {
 	case "D", "BD":
@@ -314,7 +312,7 @@ func deadStarMass(r *dice.Roller, m float64) float64 {
 	return float.Round(float64(r.Roll("1d3+2")) * m)
 }
 
-func starAge(r *dice.Roller, s *Star) float64 {
+func starAge(r *dice.Roller, s *starPrecursor) float64 {
 	age := 0.0
 	mass := s.Mass
 	if s.Dead {
@@ -356,7 +354,18 @@ func luminocity(diameter, temperature float64) float64 {
 	return math.Pow(diameter, 2) * math.Pow(temperature/float64(5772), 4)
 }
 
-func validateTSC(s *Star) error {
+func validateTSC(s *starPrecursor) error {
+	switch s.Type {
+	case "":
+		return fmt.Errorf("no star?")
+	case "O", "B", "A", "F", "G", "K", "M":
+		if s.Class == "" {
+			s.Class = "V"
+		}
+	case "D", "BD", "BH", "NS", "PSR", "NB":
+		s.SubType = ""
+		s.Class = ""
+	}
 	switch s.Class {
 	case "Ia", "Ib", "II", "III", "V":
 		if !strings.Contains("OBAFGKM", s.Type) {
@@ -384,18 +393,25 @@ func validateTSC(s *Star) error {
 			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
 		}
 	}
-	switch s.Type {
-	case "":
-		return fmt.Errorf("no star?")
-	case "O", "B", "A", "F", "G", "K", "M":
-		if s.Class == "" {
-			s.Class = "V"
-		}
-	case "D", "BD", "BH", "NS", "PSR", "NB":
-		if s.SubType == "" && s.Class == "" {
-			return nil
-		}
-		return fmt.Errorf("invalid combination type='%v' subtype='%v' class='%v'", s.Type, s.SubType, s.Class)
+	return nil
+}
+
+func (b *Builder) importPrimaryStarData(ss *starSystemPrecursor) error {
+	if b.imported.Stellar == "" {
+		return fmt.Errorf("nothing to import")
 	}
+	stl, err := stellar.New(b.imported.Stellar)
+	if err != nil {
+		return fmt.Errorf("failed to create stellar: %w", err)
+	}
+	prim := stl.PrimaryCode()
+
+	t, s, c, err := prim.Decode()
+	if err != nil {
+		return fmt.Errorf("failed to decode primary code (%v): %w", prim, err)
+	}
+	ss.PrimaryStar.Type = t
+	ss.PrimaryStar.SubType = s
+	ss.PrimaryStar.Class = c
 	return nil
 }

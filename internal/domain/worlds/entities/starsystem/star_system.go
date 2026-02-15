@@ -11,7 +11,7 @@ import (
 	"github.com/Galdoba/cepheus/pkg/dice"
 )
 
-type StarSystem struct {
+type starSystemPrecursor struct {
 	ID           string
 	coordinates  coordinates.Cube
 	importedData t5ss.WorldData
@@ -21,15 +21,16 @@ type StarSystem struct {
 	Clustered    bool
 	NebulaType   int
 	Anomaly      bool
-	PrimaryStar  *Star
+	PrimaryStar  *starPrecursor
 	Age          float64
-	Stars        map[orbit.Orbit]*Star
+	Stars        map[orbit.Orbit]*starPrecursor
 	GG           int
 	Belts        int
 	Planets      int
+	TotalWorlds  int
 }
 
-type Star struct {
+type starPrecursor struct {
 	Type        string
 	SubType     string
 	Class       string
@@ -54,7 +55,7 @@ func rollNebula(r *dice.Roller) int {
 	}
 }
 
-func (ss *StarSystem) Profile() string {
+func (ss *starSystemPrecursor) Profile() string {
 	p := ""
 	si := newStarIterator(ss.Stars)
 	starPos := 0

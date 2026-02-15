@@ -3,6 +3,7 @@ package starsystem
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/Galdoba/cepheus/internal/domain/support/services/float"
 	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/au"
@@ -11,14 +12,14 @@ import (
 	"github.com/Galdoba/cepheus/internal/infrastructure/rtg"
 )
 
-func (b *Builder) runStep2(ss *StarSystem) error {
+func (b *Builder) runStep2(ss *starSystemPrecursor) error {
 	// - [+] 2. **Determine if system has multiple stars, if yes, then:**
 	//   - [+] a. Determine Orbit#s of secondary and companion stars
 	b.step2.starSchema = stellar.RollDesignations(b.rng)
 	if b.imported.Allegiance != "" && b.imported.Stellar != "" {
 		b.step2.starSchema = stellar.RollStellarDesignations(b.rng, stellar.Stellar(b.imported.Stellar))
 	}
-	ss.Stars = make(map[orbit.Orbit]*Star)
+	ss.Stars = make(map[orbit.Orbit]*starPrecursor)
 	switch len(b.step2.starSchema) {
 	case 0:
 		return fmt.Errorf("failed to roll stellar designations")
@@ -33,7 +34,7 @@ func (b *Builder) runStep2(ss *StarSystem) error {
 			case stellar.Primary:
 				ss.Stars[orbit.RollStellarOrbit(b.rng, stellar.StarDesignation(designation))] = ss.PrimaryStar
 			default:
-				ss.Stars[orbit.RollStellarOrbit(b.rng, stellar.StarDesignation(designation))] = &Star{Designation: designation}
+				ss.Stars[orbit.RollStellarOrbit(b.rng, stellar.StarDesignation(designation))] = &starPrecursor{Designation: designation}
 			}
 		}
 	}
@@ -53,6 +54,19 @@ func (b *Builder) runStep2(ss *StarSystem) error {
 	if err := b.determineStarsOrbitalPeriods(ss); err != nil {
 		return err
 	}
+	sit := newStarIterator(ss.Stars)
+	for sit.next() {
+		_, star, err := sit.getValues()
+		if err != nil {
+			panic(err)
+		}
+		if star.Dead && star.Age > ss.Age {
+			fmt.Println("adjust system age:", ss.Age, star.Age)
+			time.Sleep(time.Second)
+			ss.Age = star.Age
+		}
+	}
+
 	if err := step2Validation(ss); err != nil {
 		return err
 	}
@@ -60,7 +74,7 @@ func (b *Builder) runStep2(ss *StarSystem) error {
 	return nil
 }
 
-func step2Validation(ss *StarSystem) error {
+func step2Validation(ss *starSystemPrecursor) error {
 	switch len(ss.Stars) {
 	case 0:
 		return fmt.Errorf("no stars found")
@@ -89,7 +103,7 @@ func step2Validation(ss *StarSystem) error {
 	return nil
 }
 
-func (b *Builder) determineSecondaryStarsDetails(ss *StarSystem) error {
+func (b *Builder) determineSecondaryStarsDetails(ss *starSystemPrecursor) error {
 	si := newStarIterator(ss.Stars)
 	for si.next() {
 		o, star, err := si.getValues()
@@ -122,7 +136,7 @@ func (b *Builder) determineSecondaryStarsDetails(ss *StarSystem) error {
 	return nil
 }
 
-func (b *Builder) determineStarsOrbitalPeriods(ss *StarSystem) error {
+func (b *Builder) determineStarsOrbitalPeriods(ss *starSystemPrecursor) error {
 	si := newStarIterator(ss.Stars)
 	for si.next() {
 		o, star, err := si.getValues()
@@ -142,7 +156,7 @@ func (b *Builder) determineStarsOrbitalPeriods(ss *StarSystem) error {
 	return nil
 }
 
-func (b *Builder) determineEccentricityOfSecondaryStars(ss *StarSystem) error {
+func (b *Builder) determineEccentricityOfSecondaryStars(ss *starSystemPrecursor) error {
 	si := newStarIterator(ss.Stars)
 	for si.next() {
 		o, star, err := si.getValues()
@@ -172,7 +186,7 @@ func (b *Builder) determineEccentricityOfSecondaryStars(ss *StarSystem) error {
 	return nil
 }
 
-func (b *Builder) determineSecondaryTypeAndClass(ss *StarSystem) error {
+func (b *Builder) determineSecondaryTypeAndClass(ss *starSystemPrecursor) error {
 	si := newStarIterator(ss.Stars)
 	for si.next() {
 		o, star, err := si.getValues()
@@ -225,13 +239,13 @@ func (b *Builder) determineSecondaryTypeAndClass(ss *StarSystem) error {
 	return nil
 }
 
-func getParent(ss *StarSystem, o orbit.Orbit) *Star {
+func getParent(ss *starSystemPrecursor, o orbit.Orbit) *starPrecursor {
 	parentDes := stellar.StarDesignation(o.Designation)
 	return ss.getStarByDesignation(parentDes)
 
 }
 
-func (ss *StarSystem) getStarByDesignation(d stellar.StarDesignation) *Star {
+func (ss *starSystemPrecursor) getStarByDesignation(d stellar.StarDesignation) *starPrecursor {
 	for _, star := range ss.Stars {
 		if star.Designation == d {
 			return star
@@ -240,7 +254,7 @@ func (ss *StarSystem) getStarByDesignation(d stellar.StarDesignation) *Star {
 	return nil
 }
 
-func makeSibling(r stellar.Roller, parent, child *Star) error {
+func makeSibling(r stellar.Roller, parent, child *starPrecursor) error {
 	if parent == nil {
 		return fmt.Errorf("no parent provided")
 	}
@@ -269,7 +283,7 @@ func makeSibling(r stellar.Roller, parent, child *Star) error {
 	return nil
 }
 
-func makeTwin(r stellar.Roller, parent, child *Star) error {
+func makeTwin(r stellar.Roller, parent, child *starPrecursor) error {
 	if parent == nil {
 		return fmt.Errorf("no parent provided")
 	}
@@ -283,7 +297,7 @@ func makeTwin(r stellar.Roller, parent, child *Star) error {
 	return nil
 }
 
-func makeLesser(r stellar.Roller, parent, child *Star) error {
+func makeLesser(r stellar.Roller, parent, child *starPrecursor) error {
 	if parent == nil {
 		return fmt.Errorf("no parent provided")
 	}
@@ -303,7 +317,7 @@ func makeLesser(r stellar.Roller, parent, child *Star) error {
 	return nil
 }
 
-func makeRandom(r stellar.Roller, parent, child *Star) error {
+func makeRandom(r stellar.Roller, parent, child *starPrecursor) error {
 	if parent == nil {
 		return fmt.Errorf("no parent provided")
 	}
@@ -341,7 +355,7 @@ func coolerType(stype string) string {
 	return stype
 }
 
-func orderedDesignations(stars map[orbit.Orbit]*Star) []stellar.StarDesignation {
+func orderedDesignations(stars map[orbit.Orbit]*starPrecursor) []stellar.StarDesignation {
 	designations := []stellar.StarDesignation{}
 	for _, d := range stellar.AllDesignations() {
 		for _, star := range stars {
@@ -354,13 +368,13 @@ func orderedDesignations(stars map[orbit.Orbit]*Star) []stellar.StarDesignation 
 }
 
 type starIterator struct {
-	pool         map[orbit.Orbit]*Star
+	pool         map[orbit.Orbit]*starPrecursor
 	designations []stellar.StarDesignation
 	index        int
 	hasMore      bool
 }
 
-func newStarIterator(stars map[orbit.Orbit]*Star) *starIterator {
+func newStarIterator(stars map[orbit.Orbit]*starPrecursor) *starIterator {
 	si := starIterator{}
 	si.pool = stars
 	si.designations = stellar.AllDesignations()
@@ -382,7 +396,7 @@ func (si *starIterator) next() bool {
 	return false
 }
 
-func (si *starIterator) getValues() (orbit.Orbit, *Star, error) {
+func (si *starIterator) getValues() (orbit.Orbit, *starPrecursor, error) {
 	if !si.hasMore {
 		return orbit.Orbit{}, nil, fmt.Errorf("no more stars")
 	}
@@ -394,7 +408,7 @@ func (si *starIterator) getValues() (orbit.Orbit, *Star, error) {
 	return orbit.Orbit{}, nil, fmt.Errorf("unexpected end")
 }
 
-func PrintStarPositions(ss *StarSystem) {
+func PrintStarPositions(ss *starSystemPrecursor) {
 	si := newStarIterator(ss.Stars)
 	for si.next() {
 		o, star, err := si.getValues()
