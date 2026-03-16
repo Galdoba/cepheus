@@ -1,22 +1,26 @@
 package starsystem0
 
-import "github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/orbit"
+import (
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/coordinates"
+	"github.com/Galdoba/cepheus/internal/domain/worlds/valueobject/orbit"
+)
 
 type StarSystem struct {
-	Sector          string                 `json:"sector"`
-	Grid            string                 `json:"grid"`
-	IISSDesignation string                 `json:"iiss_designation"`
-	Location        string                 `json:"location"`
-	InitialSurvey   string                 `json:"initial_survey"`
-	LastUpdated     string                 `json:"last_updated"`
-	SystemAge       float64                `json:"system_age"`
-	TravelZone      string                 `json:"travel_zone"`
-	Comments        string                 `json:"comments"`
-	Stars           map[orbit.Orbit]*Star  `json:"stars"`
-	Worlds          map[orbit.Orbit]*World `json:"worlds"`
-	SurveyClass     int                    `json:"survey_class"`
-	PrimaryStar     *Star                  `json:"primary_star"`
-	Mainworld       *World                 `json:"mainworld"`
+	GlobalCoordinates coordinates.Global     `json:"global_coordinates"`
+	Sector            string                 `json:"sector"`
+	Subsector         string                 `json:"subsector"`
+	Hex               string                 `json:"hex"`
+	Designation       string                 `json:"designation"`
+	InitialSurvey     string                 `json:"initial_survey"`
+	LastUpdated       string                 `json:"last_updated"`
+	SystemAge         float64                `json:"system_age"`
+	TravelZone        string                 `json:"travel_zone"`
+	Comments          string                 `json:"comments"`
+	Stars             map[orbit.Orbit]*Star  `json:"stars"`
+	Worlds            map[orbit.Orbit]*World `json:"worlds"`
+	SurveyClass       int                    `json:"survey_class"`
+	PrimaryStar       *Star                  `json:"primary_star"`
+	Mainworld         *World                 `json:"mainworld"`
 }
 
 type Star struct {
