@@ -12,90 +12,101 @@ import (
 	"github.com/Galdoba/cepheus/internal/infrastructure/rtg"
 )
 
-func (b *Builder) runStep2(ss *starSystemPrecursor) error {
-	// - [+] 2. **Determine if system has multiple stars, if yes, then:**
-	//   - [+] a. Determine Orbit#s of secondary and companion stars
-	b.step2.starSchema = stellar.RollDesignations(b.rng)
-	if b.imported.Allegiance != "" && b.imported.Stellar != "" {
-		b.step2.starSchema = stellar.RollStellarDesignations(b.rng, stellar.Stellar(b.imported.Stellar))
+// runStep2 executes Step 2 of star system generation: determining secondary stars and their properties.
+// This includes:
+// 1. Rolling for stellar designations (how many stars and their roles)
+// 2. Determining orbital eccentricities for companion stars
+// 3. Determining star types for secondary stars (sibling, twin, lesser)
+// 4. Calculating physical properties for all stars
+// 5. Determining orbital periods
+// 6. Adjusting system age based on post-stellar objects
+func (builder *Builder) runStep02(systemPrecursor *starSystemPrecursor) error {
+	builder.step2.starSchema = stellar.RollDesignations(builder.rng)
+	if builder.imported.Allegiance != "" && builder.imported.Stellar != "" {
+		builder.step2.starSchema = stellar.RollStellarDesignations(builder.rng, stellar.Stellar(builder.imported.Stellar))
 	}
-	ss.Stars = make(map[orbit.Orbit]*starPrecursor)
-	switch len(b.step2.starSchema) {
+	systemPrecursor.Stars = make(map[orbit.Orbit]*starPrecursor)
+	switch len(builder.step2.starSchema) {
 	case 0:
 		return fmt.Errorf("failed to roll stellar designations")
 	case 1:
-		ss.Stars[orbit.RollStellarOrbit(b.rng, b.step2.starSchema[0])] = ss.PrimaryStar
-		b.step2.completed = true
+		systemPrecursor.Stars[orbit.RollStellarOrbit(builder.rng, builder.step2.starSchema[0])] = systemPrecursor.PrimaryStar
+		builder.step2.completed = true
 		return nil
 	default:
-		ss.Stars[orbit.RollStellarOrbit(b.rng, b.step2.starSchema[0])] = ss.PrimaryStar
-		for _, designation := range b.step2.starSchema {
+		systemPrecursor.Stars[orbit.RollStellarOrbit(builder.rng, builder.step2.starSchema[0])] = systemPrecursor.PrimaryStar
+		for _, designation := range builder.step2.starSchema {
 			switch designation {
 			case stellar.Primary:
-				ss.Stars[orbit.RollStellarOrbit(b.rng, stellar.StarDesignation(designation))] = ss.PrimaryStar
+				systemPrecursor.Stars[orbit.RollStellarOrbit(builder.rng, stellar.StarDesignation(designation))] = systemPrecursor.PrimaryStar
 			default:
-				ss.Stars[orbit.RollStellarOrbit(b.rng, stellar.StarDesignation(designation))] = &starPrecursor{Designation: designation}
+				systemPrecursor.Stars[orbit.RollStellarOrbit(builder.rng, stellar.StarDesignation(designation))] = &starPrecursor{Designation: designation}
 			}
 		}
 	}
-	//   - [+] b. Determine eccentricity of secondary stars and check for overlaps
-	if err := b.determineEccentricityOfSecondaryStars(ss); err != nil {
+	if err := builder.rollOrbitalEccentricitiesForCompanionStars(systemPrecursor); err != nil {
 		return err
 	}
-	//   - [+] c. Determine secondary and companion star types
-	if err := b.determineSecondaryTypeAndClass(ss); err != nil {
+	if err := builder.determineCompanionStarClassification(systemPrecursor); err != nil {
 		return err
 	}
-	//   - [ ] d. Adjust system age to account for post-stellar objects (if any)
-	//   - [ ] e. Determine star orbital periods
-	if err := b.determineSecondaryStarsDetails(ss); err != nil {
+	if err := builder.determineSecondaryStarsDetails(systemPrecursor); err != nil {
 		return err
 	}
-	if err := b.determineStarsOrbitalPeriods(ss); err != nil {
+	if err := builder.determineStarsOrbitalPeriods(systemPrecursor); err != nil {
 		return err
 	}
-	sit := newStarIterator(ss.Stars)
-	for sit.next() {
-		_, star, err := sit.getValues()
+	starIterator := newStarIterator(systemPrecursor.Stars)
+	for starIterator.next() {
+		_, starPrecursor, err := starIterator.getValues()
 		if err != nil {
-			panic(err)
+			panic(err) // TODO: Return error instead of panic
 		}
-		if star.Dead && star.Age > ss.Age {
-			fmt.Println("adjust system age:", ss.Age, star.Age)
+		// TODO: Implement step 2d - Adjust system age to account for post-stellar objects
+		if starPrecursor.Dead && starPrecursor.Age > systemPrecursor.Age {
+			fmt.Println("adjust system age:", systemPrecursor.Age, starPrecursor.Age)
+			// TODO: Remove debug sleep - this was likely for debugging
 			time.Sleep(time.Second)
-			ss.Age = star.Age
+			systemPrecursor.Age = starPrecursor.Age
 		}
 	}
 
-	if err := step2Validation(ss); err != nil {
+	if err := validateStep02Results(systemPrecursor); err != nil {
 		return err
 	}
-	b.step2.completed = true
+	builder.step2.completed = true
 	return nil
 }
 
-func step2Validation(ss *starSystemPrecursor) error {
-	switch len(ss.Stars) {
+// validateStep2Results validates the results of step 2 generation.
+// Checks that:
+// - At least one star exists
+// - Secondary stars have valid distances (between 0.02 and 20)
+// - Eccentricities are set for secondary stars
+// - All stars have mass
+// - All secondary stars have orbital periods
+func validateStep02Results(systemPrecursor *starSystemPrecursor) error {
+	switch len(systemPrecursor.Stars) {
 	case 0:
 		return fmt.Errorf("no stars found")
 	case 1:
 		return nil
 	default:
-		for o, star := range ss.Stars {
-			if o.Distance < 0.02 && star.Designation != stellar.Primary {
-				return fmt.Errorf("star distance is lower than expected: %v : %v", o, star)
+		for orbit, starPrecursor := range systemPrecursor.Stars {
+			if orbit.Distance < 0.02 && starPrecursor.Designation != stellar.Primary {
+				return fmt.Errorf("star distance is lower than expected: %v : %v", orbit, starPrecursor)
 			}
-			if o.Distance > 20 && star.Designation != stellar.Primary {
-				return fmt.Errorf("star distance is higher than expected: %v : %v", o, star)
+			if orbit.Distance > 20 && starPrecursor.Designation != stellar.Primary {
+				return fmt.Errorf("star distance is higher than expected: %v : %v", orbit, starPrecursor)
 			}
-			if o.Eccentricity < 0 && star.Designation != stellar.Primary {
-				return fmt.Errorf("star eccentrisity is not set: %v : %v", o, star)
+			if orbit.Eccentricity < 0 && starPrecursor.Designation != stellar.Primary {
+				return fmt.Errorf("star eccentricity is not set: %v : %v", orbit, starPrecursor)
 			}
-			if star.Mass == 0 {
-				return fmt.Errorf("no mass for: %v", star)
+			if starPrecursor.Mass == 0 {
+				return fmt.Errorf("no mass for: %v", starPrecursor)
 			}
-			if star.Designation != stellar.Primary && star.Period == 0 {
-				return fmt.Errorf("no period for: %v", star)
+			if starPrecursor.Designation != stellar.Primary && starPrecursor.Period == 0 {
+				return fmt.Errorf("no period for: %v", starPrecursor)
 			}
 		}
 	}
@@ -103,242 +114,275 @@ func step2Validation(ss *starSystemPrecursor) error {
 	return nil
 }
 
-func (b *Builder) determineSecondaryStarsDetails(ss *starSystemPrecursor) error {
-	si := newStarIterator(ss.Stars)
-	for si.next() {
-		o, star, err := si.getValues()
+// determineSecondaryStarsDetails calculates physical properties (mass, diameter, temperature, age, luminosity)
+// for all secondary stars in the system. The primary star should already have these properties from step 1.
+func (builder *Builder) determineSecondaryStarsDetails(systemPrecursor *starSystemPrecursor) error {
+	starIterator := newStarIterator(systemPrecursor.Stars)
+	for starIterator.next() {
+		orbit, starPrecursor, err := starIterator.getValues()
 		if err != nil {
 			return err
 		}
-		if star.Mass == 0 {
-			if err := determineMassDiameterAgeTemperature(b.rng, star); err != nil {
+		// Calculate physical properties if not already set
+		if starPrecursor.Mass == 0 {
+			if err := calculateStarPhysicalProperties(builder.rng, starPrecursor); err != nil {
 				return err
 			}
 		}
-		if star.Mass == 0 {
-			return fmt.Errorf("failed to calcaulate mass for %v", star)
+		if starPrecursor.Mass == 0 {
+			return fmt.Errorf("failed to calculate mass for %v", starPrecursor)
 		} else {
-			ss.Stars[o] = star
+			systemPrecursor.Stars[orbit] = starPrecursor
 		}
-		if star.Luminocity == 0 {
-			star.Luminocity = float.RoundN(luminocity(star.Diameter, star.Temperature), 3)
-			if star.Luminocity < 0.001 {
-				star.Luminocity = 0.001
+		// Calculate luminosity if not already set
+		if starPrecursor.Luminosity == 0 {
+			starPrecursor.Luminosity = float.RoundN(calculateLuminosity(starPrecursor.Diameter, starPrecursor.Temperature), 3)
+			if starPrecursor.Luminosity < 0.001 {
+				starPrecursor.Luminosity = 0.001
 			}
 		}
-		if star.Mass == 0 {
-			return fmt.Errorf("failed to calcaulate mass for %v", star)
+		// Duplicate check - could be consolidated with above
+		if starPrecursor.Mass == 0 {
+			return fmt.Errorf("failed to calculate mass for %v", starPrecursor)
 		} else {
-			ss.Stars[o] = star
+			systemPrecursor.Stars[orbit] = starPrecursor
 		}
 
 	}
 	return nil
 }
 
-func (b *Builder) determineStarsOrbitalPeriods(ss *starSystemPrecursor) error {
-	si := newStarIterator(ss.Stars)
-	for si.next() {
-		o, star, err := si.getValues()
+// determineStarsOrbitalPeriods calculates the orbital period for each secondary star in the system.
+// The orbital period is the time it takes for the star to complete one orbit around its parent.
+// Uses Kepler's third law modified for the system.
+func (builder *Builder) determineStarsOrbitalPeriods(systemPrecursor *starSystemPrecursor) error {
+	starIterator := newStarIterator(systemPrecursor.Stars)
+	for starIterator.next() {
+		orbitInstance, starPrecursor, err := starIterator.getValues()
 		if err != nil {
 			return err
 		}
-		if star.Designation == stellar.Primary {
+		if starPrecursor.Designation == stellar.Primary {
 			continue
 		}
-		parent := getParent(ss, o)
-		dist := o.Distance
+		parentStar := findParentStar(systemPrecursor, orbitInstance)
+		dist := orbitInstance.Distance
 		distAU := au.FromOrbitNumber(dist)
-		star.Period = float.RoundN(orbit.StarOrbitPeriod(parent.Mass, star.Mass, distAU), 3)
-		ss.Stars[o] = star
+		starPrecursor.Period = float.RoundN(orbit.StarOrbitPeriod(parentStar.Mass, starPrecursor.Mass, distAU), 3)
+		systemPrecursor.Stars[orbitInstance] = starPrecursor
 
 	}
 	return nil
 }
 
-func (b *Builder) determineEccentricityOfSecondaryStars(ss *starSystemPrecursor) error {
-	si := newStarIterator(ss.Stars)
-	for si.next() {
-		o, star, err := si.getValues()
+// rollOrbitalEccentricitiesForCompanionStars rolls for the orbital eccentricity of each secondary star.
+// Eccentricity determines how elliptical an orbit is (0 = circular, closer to 1 = more elliptical).
+// Different dice modifiers are applied based on whether the companion is a primary companion
+// (Close, Near, Far) or a companion of companion.
+func (builder *Builder) rollOrbitalEccentricitiesForCompanionStars(systemPrecursor *starSystemPrecursor) error {
+	starIterator := newStarIterator(systemPrecursor.Stars)
+	for starIterator.next() {
+		orbitInstance, starPrecursor, err := starIterator.getValues()
 		if err != nil {
 			return err
 		}
-		dm := orbit.DM_ObjectIsStar
-		if o.Distance <= 0 {
+		diceModifier := orbit.DM_ObjectIsStar
+		if orbitInstance.Distance <= 0 {
 			continue
 		}
-		switch star.Designation {
+		switch starPrecursor.Designation {
 		case stellar.PrimaryComp, stellar.CloseComp, stellar.NearComp, stellar.FarComp:
-			dm += orbit.DM_PerParentObject
+			diceModifier += orbit.DM_PerParentObject
 		case stellar.Close, stellar.Near, stellar.Far:
-			for i, des := range b.step2.starSchema {
-				if des == star.Designation {
-					dm += (orbit.DM_PerParentObject * i)
+			for i, des := range builder.step2.starSchema {
+				if des == starPrecursor.Designation {
+					diceModifier += (orbit.DM_PerParentObject * i)
 				}
 			}
 		}
-		updatedOrbit := o
-		updatedOrbit.Eccentricity = float.RoundN(orbit.RollStarEccentricity(b.rng, dm), 3)
-		ss.Stars[updatedOrbit] = star
-		delete(ss.Stars, o)
+		updatedOrbit := orbitInstance
+		updatedOrbit.Eccentricity = float.RoundN(orbit.RollStarEccentricity(builder.rng, diceModifier), 3)
+		systemPrecursor.Stars[updatedOrbit] = starPrecursor
+		delete(systemPrecursor.Stars, orbitInstance)
 	}
 
 	return nil
 }
 
-func (b *Builder) determineSecondaryTypeAndClass(ss *starSystemPrecursor) error {
-	si := newStarIterator(ss.Stars)
-	for si.next() {
-		o, star, err := si.getValues()
+// determineCompanionStarClassification determines the classification (type) of each secondary star
+// in a multiple star system. Secondary stars can be classified as:
+// - Sibling: Similar type to parent but cooler
+// - Twin: Same type and subtype as parent
+// - Lesser: Cooler and often smaller
+// - BD, D, NS: Brown dwarf, white dwarf, or neutron star
+func (builder *Builder) determineCompanionStarClassification(systemPrecursor *starSystemPrecursor) error {
+	starIterator := newStarIterator(systemPrecursor.Stars)
+	for starIterator.next() {
+		orbit, starPrecursor, err := starIterator.getValues()
 		if err != nil {
-			return nil
+			return nil // TODO: Return error instead of nil
 		}
-		if star.Designation == stellar.Primary {
+		if starPrecursor.Designation == stellar.Primary {
 			continue
 		}
-		secondaryType, err := b.step2.tables.Roll(rtg.TableSecondary, ss.PrimaryStar.Class)
+		secondaryType, err := builder.step2.tables.Roll(rtg.TableSecondary, systemPrecursor.PrimaryStar.Class)
 		if err != nil {
 			return err
 		}
-		parent := getParent(ss, o)
-		// fmt.Println("secondary:", star.Designation, secondaryType)
+		parentStar := findParentStar(systemPrecursor, orbit)
 		switch secondaryType {
 		default:
+			// TODO: Return error instead of panic for unimplemented types
 			panic(secondaryType + " not implemented")
 		case "Sibling":
-			if err := makeSibling(b.rng, parent, star); err != nil {
-				return fmt.Errorf("failed to make sibling: %v", err)
+			if err := createSiblingStar(builder.rng, parentStar, starPrecursor); err != nil {
+				return fmt.Errorf("failed to create sibling star: %v", err)
 			}
 		case "Twin":
-			if err := makeTwin(b.rng, parent, star); err != nil {
-				return fmt.Errorf("failed to make sibling: %v", err)
+			if err := createTwinStar(builder.rng, parentStar, starPrecursor); err != nil {
+				return fmt.Errorf("failed to create twin star: %v", err)
 			}
 		case "Lesser", "Random":
-			if err := makeLesser(b.rng, parent, star); err != nil {
-				return fmt.Errorf("failed to make sibling: %v", err)
+			if err := createLesserCompanionStar(builder.rng, parentStar, starPrecursor); err != nil {
+				return fmt.Errorf("failed to create lesser companion star: %v", err)
 			}
 		case "BD", "D", "NS":
-			star.Class = ""
-			star.Type = secondaryType
-			star.SubType = ""
+			starPrecursor.Class = ""
+			starPrecursor.Type = secondaryType
+			starPrecursor.SubType = ""
 
 		}
-		switch star.Type {
+		switch starPrecursor.Type {
 		case "O", "B", "A", "F", "G", "K", "M":
 		default:
-			star.SubType = ""
-			star.Class = ""
+			starPrecursor.SubType = ""
+			starPrecursor.Class = ""
 		}
-		if err := validateTSC(star); err != nil {
+		if err := validateStarTypeSubtypeClassCombination(starPrecursor); err != nil {
 			return err
 		}
 
-		ss.Stars[o] = star
+		systemPrecursor.Stars[orbit] = starPrecursor
 	}
 
 	return nil
 }
 
-func getParent(ss *starSystemPrecursor, o orbit.Orbit) *starPrecursor {
-	parentDes := stellar.StarDesignation(o.Designation)
-	return ss.getStarByDesignation(parentDes)
+// findParentStar finds the parent star that a companion star orbits.
+// The parent is determined by the orbit's designation.
+func findParentStar(systemPrecursor *starSystemPrecursor, orbit orbit.Orbit) *starPrecursor {
+	parentDesignation := stellar.StarDesignation(orbit.Designation)
+	return systemPrecursor.findStarByDesignation(parentDesignation)
 
 }
 
-func (ss *starSystemPrecursor) getStarByDesignation(d stellar.StarDesignation) *starPrecursor {
-	for _, star := range ss.Stars {
-		if star.Designation == d {
-			return star
+// findStarByDesignation searches for a star in the system by its designation.
+func (systemPrecursor *starSystemPrecursor) findStarByDesignation(designation stellar.StarDesignation) *starPrecursor {
+	for _, starPrecursor := range systemPrecursor.Stars {
+		if starPrecursor.Designation == designation {
+			return starPrecursor
 		}
 	}
 	return nil
 }
 
-func makeSibling(r stellar.Roller, parent, child *starPrecursor) error {
-	if parent == nil {
+// createSiblingStar creates a sibling star - a companion that is similar to the parent
+// but typically of a cooler spectral type. The subtype is rolled randomly.
+func createSiblingStar(roller stellar.Roller, parentStar, companionStar *starPrecursor) error {
+	if parentStar == nil {
 		return fmt.Errorf("no parent provided")
 	}
-	if child == nil {
-		return fmt.Errorf("no child provided")
+	if companionStar == nil {
+		return fmt.Errorf("no companion provided")
 	}
-	switch parent.SubType {
+	switch parentStar.SubType {
 	case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
-		n, _ := strconv.Atoi(parent.SubType)
+		n, _ := strconv.Atoi(parentStar.SubType)
 		if n == 0 {
 			n = 10
 		}
-		n = n - r.Roll("1d6")
+		n = n - roller.Roll("1d6")
 		switch n > 0 {
 		case true:
-			child.Type = parent.Type
-			child.SubType = strconv.Itoa(n)
+			companionStar.Type = parentStar.Type
+			companionStar.SubType = strconv.Itoa(n)
 		case false:
-			child.Type = coolerType(parent.Type)
-			child.SubType = parent.SubType
+			companionStar.Type = getCoolerSpectralType(parentStar.Type)
+			companionStar.SubType = parentStar.SubType
 		}
 	default:
-		child.Type = parent.Type
+		companionStar.Type = parentStar.Type
 	}
 
 	return nil
 }
 
-func makeTwin(r stellar.Roller, parent, child *starPrecursor) error {
-	if parent == nil {
+// createTwinStar creates a twin star - a companion with the same type, subtype, and class
+// as the parent, with slightly less mass.
+func createTwinStar(roller stellar.Roller, parentStar, companionStar *starPrecursor) error {
+	if parentStar == nil {
 		return fmt.Errorf("no parent provided")
 	}
-	if child == nil {
-		return fmt.Errorf("no child provided")
+	if companionStar == nil {
+		return fmt.Errorf("no companion provided")
 	}
-	child.Class = parent.Class
-	child.Type = parent.Type
-	child.SubType = parent.SubType
-	child.Mass = float.RoundN(parent.Mass*(1-(0.01*float64(r.Roll("1d6")))), 3)
+	companionStar.Class = parentStar.Class
+	companionStar.Type = parentStar.Type
+	companionStar.SubType = parentStar.SubType
+	companionStar.Mass = float.RoundN(parentStar.Mass*(1-(0.01*float64(roller.Roll("1d6")))), 3)
 	return nil
 }
 
-func makeLesser(r stellar.Roller, parent, child *starPrecursor) error {
-	if parent == nil {
+// createLesserCompanionStar creates a lesser companion star - a cooler and typically smaller
+// companion. If the result would be an M-type with higher subtype than parent, converts to brown dwarf.
+func createLesserCompanionStar(roller stellar.Roller, parentStar, companionStar *starPrecursor) error {
+	if parentStar == nil {
 		return fmt.Errorf("no parent provided")
 	}
-	if child == nil {
-		return fmt.Errorf("no child provided")
+	if companionStar == nil {
+		return fmt.Errorf("no companion provided")
 	}
-	child.Class = parent.Class
-	child.Type = coolerType(parent.Type)
-	n := r.Roll("1d10-1")
-	child.SubType = strconv.Itoa(n)
-	m, _ := strconv.Atoi(parent.SubType)
-	if child.Type == "M" && parent.Type == "M" && (m+1) < n {
-		child.SubType = ""
-		child.Type = "BD"
-		child.Class = ""
+	companionStar.Class = parentStar.Class
+	companionStar.Type = getCoolerSpectralType(parentStar.Type)
+	n := roller.Roll("1d10-1")
+	companionStar.SubType = strconv.Itoa(n)
+	m, _ := strconv.Atoi(parentStar.SubType)
+	if companionStar.Type == "M" && parentStar.Type == "M" && (m+1) < n {
+		companionStar.SubType = ""
+		companionStar.Type = "BD"
+		companionStar.Class = ""
 	}
 	return nil
 }
 
-func makeRandom(r stellar.Roller, parent, child *starPrecursor) error {
-	if parent == nil {
+// createRandomCompanionStar creates a random companion star with a cooler spectral type.
+// Similar to lesser but uses different roll for subtype.
+// TODO: This function is defined but never used - implement or remove
+func createRandomCompanionStar(roller stellar.Roller, parentStar, companionStar *starPrecursor) error {
+	if parentStar == nil {
 		return fmt.Errorf("no parent provided")
 	}
-	if child == nil {
-		return fmt.Errorf("no child provided")
+	if companionStar == nil {
+		return fmt.Errorf("no companion provided")
 	}
-	child.Class = parent.Class
-	child.Type = coolerType(parent.Type)
-	n := r.Roll("1d10")
-	child.SubType = strconv.Itoa(n)
-	m, _ := strconv.Atoi(parent.SubType)
-	if child.Type == "M" && parent.Type == "M" && (m+1) < n {
-		child.SubType = ""
-		child.Type = ""
-		child.Class = "BD"
+	companionStar.Class = parentStar.Class
+	companionStar.Type = getCoolerSpectralType(parentStar.Type)
+	n := roller.Roll("1d10")
+	companionStar.SubType = strconv.Itoa(n)
+	m, _ := strconv.Atoi(parentStar.SubType)
+	if companionStar.Type == "M" && parentStar.Type == "M" && (m+1) < n {
+		companionStar.SubType = ""
+		companionStar.Type = ""
+		companionStar.Class = "BD"
 	}
 	return nil
 }
 
-func coolerType(stype string) string {
-	switch stype {
+// getCoolerSpectralType returns the next cooler spectral type in the sequence:
+// O -> B -> A -> F -> G -> K -> M
+// Used when creating companion stars that are cooler than their parent.
+func getCoolerSpectralType(currentType string) string {
+	switch currentType {
 	case "O":
 		return "B"
 	case "B":
@@ -352,69 +396,102 @@ func coolerType(stype string) string {
 	case "K":
 		return "M"
 	}
-	return stype
+	return currentType
 }
 
+// orderedDesignations returns the designations of all stars in the system ordered
+// by their canonical order (Primary, PrimaryComp, Close, etc.)
+// TODO: This function is defined but never used - implement or remove
 func orderedDesignations(stars map[orbit.Orbit]*starPrecursor) []stellar.StarDesignation {
 	designations := []stellar.StarDesignation{}
-	for _, d := range stellar.AllDesignations() {
-		for _, star := range stars {
-			if star.Designation == d {
-				designations = append(designations, d)
+	for _, designation := range stellar.AllDesignations() {
+		for _, starPrecursor := range stars {
+			if starPrecursor.Designation == designation {
+				designations = append(designations, designation)
 			}
 		}
 	}
 	return designations
 }
 
+// starIterator provides iteration over stars in a star system, ordered by designation.
 type starIterator struct {
-	pool         map[orbit.Orbit]*starPrecursor
+	starPool     map[orbit.Orbit]*starPrecursor
 	designations []stellar.StarDesignation
 	index        int
 	hasMore      bool
 }
 
+// newStarIterator creates a new star iterator for the given star map.
 func newStarIterator(stars map[orbit.Orbit]*starPrecursor) *starIterator {
-	si := starIterator{}
-	si.pool = stars
-	si.designations = stellar.AllDesignations()
-	si.index = -1
-	return &si
+	iterator := starIterator{}
+	iterator.starPool = stars
+	iterator.designations = stellar.AllDesignations()
+	iterator.index = -1
+	return &iterator
 }
 
-func (si *starIterator) next() bool {
-	for i := si.index + 1; i < len(si.designations); i++ {
-		for _, star := range si.pool {
-			if star.Designation == si.designations[i] {
-				si.index = i
-				si.hasMore = true
+// next advances the iterator to the next star.
+// Returns true if another star exists, false if iteration is complete.
+func (iterator *starIterator) next() bool {
+	for i := iterator.index + 1; i < len(iterator.designations); i++ {
+		for _, starPrecursor := range iterator.starPool {
+			if starPrecursor.Designation == iterator.designations[i] {
+				iterator.index = i
+				iterator.hasMore = true
 				return true
 			}
 		}
 	}
-	si.hasMore = false
+	iterator.hasMore = false
 	return false
 }
 
-func (si *starIterator) getValues() (orbit.Orbit, *starPrecursor, error) {
-	if !si.hasMore {
+// getValues returns the current orbit and star from the iterator.
+// TODO: Rename to GetCurrent() for consistency with Go conventions
+func (iterator *starIterator) getValues() (orbit.Orbit, *starPrecursor, error) {
+	if !iterator.hasMore {
 		return orbit.Orbit{}, nil, fmt.Errorf("no more stars")
 	}
-	for o, star := range si.pool {
-		if star.Designation == si.designations[si.index] {
-			return o, star, nil
+	for orbit, starPrecursor := range iterator.starPool {
+		if starPrecursor.Designation == iterator.designations[iterator.index] {
+			return orbit, starPrecursor, nil
 		}
 	}
 	return orbit.Orbit{}, nil, fmt.Errorf("unexpected end")
 }
 
-func PrintStarPositions(ss *starSystemPrecursor) {
-	si := newStarIterator(ss.Stars)
-	for si.next() {
-		o, star, err := si.getValues()
-		if err != nil {
-			panic(err)
+func (iterator *starIterator) callPosition(p int) (orbit.Orbit, *starPrecursor) {
+	if !iterator.hasMore {
+		return orbit.Orbit{}, nil
+	}
+	if p < 0 || p > 7 {
+		return orbit.Orbit{}, nil
+	}
+	wantDesignation := stellar.DesignationOrder[p]
+	for orbit, starPrecursor := range iterator.starPool {
+		if starPrecursor.Designation == wantDesignation {
+			return orbit, starPrecursor
 		}
-		fmt.Printf("orbit %v around %v (%v) star: '%v%v %v'\n", star.Designation, o.Designation, o.Distance, star.Type, star.SubType, star.Class)
+	}
+	return orbit.Orbit{}, nil
+
+}
+
+func (iterator *starIterator) restart() {
+	iterator.hasMore = true
+	iterator.index = -1
+}
+
+// PrintStarPositions prints a debug view of all stars and their orbits in the system.
+// TODO: Remove or convert to String() method for proper debugging
+func PrintStarPositions(systemPrecursor *starSystemPrecursor) {
+	starIterator := newStarIterator(systemPrecursor.Stars)
+	for starIterator.next() {
+		orbit, starPrecursor, err := starIterator.getValues()
+		if err != nil {
+			panic(err) // TODO: Return error instead of panic
+		}
+		fmt.Printf("orbit %v around %v (%v) star: '%v%v %v'\n", starPrecursor.Designation, orbit.Designation, orbit.Distance, starPrecursor.Type, starPrecursor.SubType, starPrecursor.Class)
 	}
 }

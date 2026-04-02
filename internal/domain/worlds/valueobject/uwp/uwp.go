@@ -251,6 +251,22 @@ func describeGovr(code string) string {
 		"D": "Religious Dictatorship (Ruling by religious organisation without regard to the individual needs of the citizenry)",
 		"E": "Religious Autocracy (Government by a single religious leader having absolute power over the citizenry)",
 		"F": "Totalitarian Oligarchy (Government by an all-powerful minority which maintains absolute control through widespread coercion and oppression)",
+		"G": "Small Station or Facility. (Aslan)",
+		"H": "Split Clan Control. (Aslan)",
+		"J": "Single On-world Clan Control. (Aslan)",
+		"K": "Single Multi-world Clan Control. (Aslan)",
+		"L": "Major Clan Control. (Aslan)",
+		"M": "Vassal Clan Control. (Aslan)",
+		"N": "Major Vassal Clan Control. (Aslan)",
+		"P": "Small Station or Facility. (K'kree)",
+		"Q": "Krurruna or Krumanak Rule for Off-world Steppelord. (K'kree)",
+		"R": "Steppelord On-world Rule (K'kree)",
+		"S": "Sept. (Hiver)",
+		"T": "Unsupervised Anarchy. (Hiver)",
+		"U": "Supervised Anarchy. (Hiver)",
+		"W": "Committee. (Hiver)",
+		"X": "Droyne Hierarchy. (Droyne)",
+		"?": "Unknown.",
 	}
 	if descr[code] != "" {
 		d = descr[code]

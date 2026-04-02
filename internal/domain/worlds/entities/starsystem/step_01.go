@@ -13,177 +13,197 @@ import (
 	"github.com/Galdoba/cepheus/pkg/dice"
 )
 
-func (b *Builder) runStep1(ss *starSystemPrecursor) error {
-	ss.PrimaryStar = &starPrecursor{Designation: stellar.Primary}
+// runStep1 executes Step 1 of star system generation: determining the primary star's properties.
+// This includes:
+// 1. Creating or importing primary star data
+// 2. Rolling for star Type, Subtype, and Class (TSC)
+// 3. Calculating physical properties (mass, diameter, temperature, age)
+// 4. Calculating luminosity
+//
+// The function sets the system age based on the primary star's age.
+func (builder *Builder) runStep01(systemPrecursor *starSystemPrecursor) error {
+	systemPrecursor.PrimaryStar = &starPrecursor{Designation: stellar.Primary}
 
-	switch err := b.importPrimaryStarData(ss); err == nil {
+	// TODO: Refactor inverted switch logic to use normal if-else pattern
+	switch err := builder.importPrimaryStarData(systemPrecursor); err == nil {
 	case true:
 	default:
-		if err := b.determinePrimaryStarTypeAndClass(ss); err != nil {
+		if err := builder.determinePrimaryStarTypeAndClass(systemPrecursor); err != nil {
 			return fmt.Errorf("failed to determine primary star type and class: %v", err)
 		}
-		//step 1a
-		err := b.determineStarTSC(ss.PrimaryStar, true)
+		err := builder.determineStarTSC(systemPrecursor.PrimaryStar, true)
 		if err != nil {
 			return err
 		}
 	}
-	if err := validateTSC(ss.PrimaryStar); err != nil {
+	if err := validateStarTypeSubtypeClassCombination(systemPrecursor.PrimaryStar); err != nil {
 		return err
 	}
 
-	//step 1b
-	if err := determineMassDiameterAgeTemperature(b.rng, ss.PrimaryStar); err != nil {
+	if err := calculateStarPhysicalProperties(builder.rng, systemPrecursor.PrimaryStar); err != nil {
 		return err
 	}
 
-	//step 1c
-	ss.PrimaryStar.Luminocity = float.Round(luminocity(ss.PrimaryStar.Diameter, ss.PrimaryStar.Temperature))
+	systemPrecursor.PrimaryStar.Luminosity = float.Round(calculateLuminosity(systemPrecursor.PrimaryStar.Diameter, systemPrecursor.PrimaryStar.Temperature))
 
-	//step 1d
-	ss.Age = ss.PrimaryStar.Age
-	ss.PrimaryStar.Designation = stellar.Primary
+	systemPrecursor.Age = systemPrecursor.PrimaryStar.Age
+	systemPrecursor.PrimaryStar.Designation = stellar.Primary
 
 	return nil
 }
 
-func (b *Builder) determinePrimaryStarTypeAndClass(ss *starSystemPrecursor) error {
-	activeMods1 := []string{}
+// determinePrimaryStarTypeAndClass rolls for the primary star's spectral type and luminosity class.
+// It handles special cases like brown dwarfs, white dwarfs, neutron stars, black holes,
+// protostars, and star clusters. The function uses a loop with labeled break to ensure
+// a valid TSC combination is generated.
+//
+// Returns error if the random table rolling fails.
+// TODO: The activeMods1 variable is declared but never used - either implement modifier system or remove
+func (builder *Builder) determinePrimaryStarTypeAndClass(systemPrecursor *starSystemPrecursor) error {
+	activeMods1 := []string{} // TODO: Remove unused variable
 primary_star_class_generation:
 	for {
-		res, err := b.step1.tablesStarType.Roll("Type")
+		rolledResult, err := builder.step1.tablesStarType.Roll("Type")
 		if err != nil {
 			return fmt.Errorf("failed to roll on RTG1: %v", err)
 		}
-		switch res {
+		switch rolledResult {
 		case "O", "B", "A", "F", "G", "K", "M":
-			switch ss.PrimaryStar.Class {
+			switch systemPrecursor.PrimaryStar.Class {
 			case "":
-				ss.PrimaryStar.Class = "V"
+				systemPrecursor.PrimaryStar.Class = "V"
 			case "IV":
-				switch res {
+				switch rolledResult {
 				case "O":
-					res = "B"
+					rolledResult = "B"
 				case "M":
 					continue
 				}
 			case "VI":
-				if res == "F" {
-					res = "G"
+				if rolledResult == "F" {
+					rolledResult = "G"
 				}
-				if res == "A" {
-					res = "B"
+				if rolledResult == "A" {
+					rolledResult = "B"
 				}
 			}
-			if ss.Primordial {
-				switch res {
+			if systemPrecursor.Primordial {
+				switch rolledResult {
 				case "O", "B":
 					continue
 				}
 			}
-			ss.PrimaryStar.Type = res
+			systemPrecursor.PrimaryStar.Type = rolledResult
 		case "Ia", "Ib", "II", "III", "IV", "VI":
-			if res != "IV" && res != "VI" {
+			if rolledResult != "IV" && rolledResult != "VI" {
 				activeMods1 = append(activeMods1, rtg.MOD_NonMainSequenceClass)
 			}
-			ss.PrimaryStar.Class = res
+			systemPrecursor.PrimaryStar.Class = rolledResult
 		case "BD":
-			ss.PrimaryStar.Type = res
-			ss.PrimaryStar.Class = ""
-			ss.Empty = true
+			systemPrecursor.PrimaryStar.Type = rolledResult
+			systemPrecursor.PrimaryStar.Class = ""
+			systemPrecursor.Empty = true
 			break primary_star_class_generation
 		case "D", "NS", "BH":
-			ss.PrimaryStar.Type = res
-			ss.PrimaryStar.Dead = true
-			ss.Empty = true
+			systemPrecursor.PrimaryStar.Type = rolledResult
+			systemPrecursor.PrimaryStar.Dead = true
+			systemPrecursor.Empty = true
 			break primary_star_class_generation
 		case "Nb":
-			if ss.NebulaType == 0 {
-				ss.NebulaType = rollNebula(b.rng)
+			if systemPrecursor.NebulaType == 0 {
+				systemPrecursor.NebulaType = rollNebula(builder.rng)
 			}
 		case "Star Cluster":
-			ss.Clustered = true
+			systemPrecursor.Clustered = true
 		case "Protostar":
-			ss.PrimaryStar.Protostar = true
+			systemPrecursor.PrimaryStar.Protostar = true
 			activeMods1 = append(activeMods1, rtg.MOD_ProtostarSystem)
 		case "PSR":
-			ss.PrimaryStar.Type = res
-			ss.Dead = true
+			systemPrecursor.PrimaryStar.Type = rolledResult
+			systemPrecursor.Dead = true
 			break primary_star_class_generation
 		case "Anomaly":
-			ss.PrimaryStar.Type = res
+			systemPrecursor.PrimaryStar.Type = rolledResult
 			break primary_star_class_generation
 		default:
-			panic(fmt.Sprintf("dev error: invalid value rolled: %v", res))
+			// TODO: Return error instead of panic for invalid rolled values
+			panic(fmt.Sprintf("dev error: invalid value rolled: %v", rolledResult))
 		}
-		if ss.PrimaryStar.Class != "" && ss.PrimaryStar.Type != "" {
+		if systemPrecursor.PrimaryStar.Class != "" && systemPrecursor.PrimaryStar.Type != "" {
 			break primary_star_class_generation
 		}
 	}
 	return nil
 }
 
-func (b *Builder) determineStarTSC(star *starPrecursor, primary bool, mods ...string) error {
-	activeMods1 := []string{}
+// determineStarTSC rolls for a star's Type, Subtype, and Class (TSC).
+// This is used for both primary and secondary stars. The function handles
+// special types like brown dwarfs, white dwarfs, neutron stars, etc.
+//
+// The primary flag indicates whether this is the primary star in the system.
+// TODO: Refactor to reduce code duplication with determinePrimaryStarTypeAndClass
+func (builder *Builder) determineStarTSC(starPrecursor *starPrecursor, primary bool, mods ...string) error {
+	activeMods1 := []string{} // TODO: Remove unused variable
 primary_star_class_generation:
 	for {
-		res, err := b.step1.tablesStarType.Roll("Type", mods...)
+		rolledResult, err := builder.step1.tablesStarType.Roll("Type", mods...)
 		if err != nil {
 			return fmt.Errorf("failed to roll on RTG1: %v", err)
 		}
-		switch res {
+		switch rolledResult {
 		case "O", "B", "A", "F", "G", "K", "M":
-			switch star.Class {
+			switch starPrecursor.Class {
 			case "":
-				star.Class = "V"
+				starPrecursor.Class = "V"
 			case "IV":
-				switch res {
+				switch rolledResult {
 				case "O":
-					res = "B"
+					rolledResult = "B"
 				case "M":
 					continue
 				}
 			case "VI":
-				if res == "F" {
-					res = "G"
+				if rolledResult == "F" {
+					rolledResult = "G"
 				}
-				if res == "A" {
-					res = "B"
+				if rolledResult == "A" {
+					rolledResult = "B"
 				}
 			}
-			star.Type = res
-			if err := b.determineStarSubtype(star); err != nil {
+			starPrecursor.Type = rolledResult
+			if err := builder.determineStarSubtype(starPrecursor); err != nil {
 				return fmt.Errorf("subtype error: %v", err)
 			}
 		case "Ia", "Ib", "II", "III", "IV", "VI":
-			if res != "IV" && res != "VI" {
+			if rolledResult != "IV" && rolledResult != "VI" {
 				activeMods1 = append(activeMods1, rtg.MOD_NonMainSequenceClass)
 			}
-			star.Class = res
+			starPrecursor.Class = rolledResult
 		case "BD":
-			star.Type = res
-			star.Class = ""
-			star.SubType = ""
+			starPrecursor.Type = rolledResult
+			starPrecursor.Class = ""
+			starPrecursor.SubType = ""
 			break primary_star_class_generation
 		case "D", "NS", "BH", "Anomaly", "PSR":
-			star.Type = res
-			star.Class = ""
-			star.SubType = ""
+			starPrecursor.Type = rolledResult
+			starPrecursor.Class = ""
+			starPrecursor.SubType = ""
 			break primary_star_class_generation
 		case "Nb":
 		case "Star Cluster":
 		case "Protostar":
 			activeMods1 = append(activeMods1, rtg.MOD_ProtostarSystem)
 		default:
-			panic(fmt.Sprintf("dev error: invalid value rolled: %v", res))
+			// TODO: Return error instead of panic for invalid rolled values
+			panic(fmt.Sprintf("dev error: invalid value rolled: %v", rolledResult))
 		}
 		switch primary {
 		case true:
-			if star.Type != "" && star.Class != "" {
+			if starPrecursor.Type != "" && starPrecursor.Class != "" {
 				break primary_star_class_generation
 			}
 		case false:
-			if validateTSC(star) == nil {
+			if validateStarTypeSubtypeClassCombination(starPrecursor) == nil {
 				break primary_star_class_generation
 			}
 		}
@@ -192,226 +212,276 @@ primary_star_class_generation:
 	return nil
 }
 
-func (b *Builder) determineStarSubtype(s *starPrecursor) error {
-	switch s.Type {
+// determineStarSubtype rolls for the numeric subtype of a star.
+// For M-type stars, the subtype is a letter (a, b, c, etc.)
+// For O, B, A, F, G, K stars, the subtype is a number (0-9)
+// Special rules apply for K-type Class IV stars (subtract 5 from results > 4)
+func (builder *Builder) determineStarSubtype(starPrecursor *starPrecursor) error {
+	switch starPrecursor.Type {
 	case "M":
-		res, err := b.step1.tablesStarType.Roll("M Type Primary")
+		rolledResult, err := builder.step1.tablesStarType.Roll("M Type Primary")
 		if err != nil {
 			return fmt.Errorf("failed to roll on RTG1: %v", err)
 		}
-		s.SubType = res
+		starPrecursor.SubType = rolledResult
 	case "O", "B", "A", "F", "G", "K":
-		res, err := b.step1.tablesStarType.Roll("M Type Primary")
+		rolledResult, err := builder.step1.tablesStarType.Roll("M Type Primary")
 		if err != nil {
 			return fmt.Errorf("failed to roll on RTG1: %v", err)
 		}
-		n, err := strconv.Atoi(res)
+		n, err := strconv.Atoi(rolledResult)
 		if err != nil {
-			return fmt.Errorf("expect number for subtype: '%v'", res)
+			return fmt.Errorf("expect number for subtype: '%v'", rolledResult)
 		}
-		if s.Class == "IV" && s.Type == "K" && n > 4 {
-			n = n - 5 //For a K-type Class IV star, subtract 5 (make lower) any subtype result above 4 (p. 16)
+		// Apply special rule for K-type Class IV stars
+		if starPrecursor.Class == "IV" && starPrecursor.Type == "K" && n > 4 {
+			n = n - 5
 		}
-		s.SubType = fmt.Sprintf("%v", n)
+		starPrecursor.SubType = fmt.Sprintf("%v", n)
 	default:
 		return nil
 	}
 	return nil
 }
 
-func determineMassDiameterAgeTemperature(r *dice.Roller, s *starPrecursor) error {
-	i := interpolate.Index(s.Type, s.SubType, s.Class)
-	switch s.Type {
+// calculateStarPhysicalProperties calculates a star's mass, diameter, temperature, and age
+// based on its TSC (Type/Subtype/Class) using interpolation tables for main sequence stars
+// and special formulas for degenerate objects (white dwarfs, neutron stars, black holes).
+func calculateStarPhysicalProperties(roller *dice.Roller, starPrecursor *starPrecursor) error {
+	interpolationIndex := interpolate.Index(starPrecursor.Type, starPrecursor.SubType, starPrecursor.Class)
+	switch starPrecursor.Type {
 	case "D", "BD":
-		s.Mass = whiteDwarfMass(r)
-		s.Diameter = float.Round(whiteDwarfDiameter(s.Mass))
-		s.Age = starAge(r, s)
+		starPrecursor.Mass = calculateWhiteDwarfMass(roller)
+		starPrecursor.Diameter = float.Round(calculateWhiteDwarfDiameter(starPrecursor.Mass))
+		starPrecursor.Age = calculateStarAge(roller, starPrecursor)
 	case "BH":
-		s.Mass = blackHoleMass(r)
-		s.Diameter = float.Round(2.95 * s.Mass) //km
-		s.Age = starAge(r, s)
+		starPrecursor.Mass = calculateBlackHoleMass(roller)
+		starPrecursor.Diameter = float.Round(2.95 * starPrecursor.Mass) // TODO: Add unit comment (km)
+		starPrecursor.Age = calculateStarAge(roller, starPrecursor)
 	case "NS", "PSR":
-		s.Mass = neitronStarMass(r)
-		s.Diameter = 19 + float64(r.Roll("1d6")) //km
-		s.Age = starAge(r, s)
+		starPrecursor.Mass = calculateNeutronStarMass(roller)
+		starPrecursor.Diameter = 19 + float64(roller.Roll("1d6")) // TODO: Add unit comment (km)
+		starPrecursor.Age = calculateStarAge(roller, starPrecursor)
 	case "Anomaly":
+		// TODO: Handle anomaly type - currently does nothing
 
 	default:
-		s.Mass = float.Round(interpolate.MassByIndex(i))
-		if s.Mass == 0 {
-			fmt.Println(i)
-			return fmt.Errorf("failed to determine by interpolation: star mass (%v%v %v)", s.Type, s.SubType, s.Class)
+		starPrecursor.Mass = float.Round(interpolate.MassByIndex(interpolationIndex))
+		if starPrecursor.Mass == 0 {
+			fmt.Println(interpolationIndex)
+			return fmt.Errorf("failed to determine by interpolation: star mass (%v%v %v)", starPrecursor.Type, starPrecursor.SubType, starPrecursor.Class)
 		}
-		s.Diameter = float.Round(interpolate.DiamByIndex(i))
-		if s.Diameter == 0 {
-			return fmt.Errorf("failed to determine by interpolation: star diameter (%v%v %v)", s.Type, s.SubType, s.Class)
+		starPrecursor.Diameter = float.Round(interpolate.DiamByIndex(interpolationIndex))
+		if starPrecursor.Diameter == 0 {
+			return fmt.Errorf("failed to determine by interpolation: star diameter (%v%v %v)", starPrecursor.Type, starPrecursor.SubType, starPrecursor.Class)
 		}
-		s.Age = starAge(r, s)
+		starPrecursor.Age = calculateStarAge(roller, starPrecursor)
 	}
-	s.Temperature = float.Round(interpolate.TempByIndex(i))
+	starPrecursor.Temperature = float.Round(interpolate.TempByIndex(interpolationIndex))
 	return nil
 }
 
-func whiteDwarfMass(r *dice.Roller) float64 {
-	r1 := float64(r.Roll("2d6"))
-	r2 := float64(r.Roll("1d10"))
-	m := float.Round(((r1 - 1) / 10) + (r2 / 100))
-	if m > 1.44 {
-		m = 1.34 + float64(r.Roll("1d100"))/1000
+// calculateWhiteDwarfMass rolls for the mass of a white dwarf star.
+// Uses 2d6 and 1d10 rolls to determine mass in solar masses.
+// If mass exceeds 1.44 (Chandrasekhar limit), additional mass is added.
+func calculateWhiteDwarfMass(roller *dice.Roller) float64 {
+	roll1 := float64(roller.Roll("2d6"))
+	roll2 := float64(roller.Roll("1d10"))
+	mass := float.Round(((roll1 - 1) / 10) + (roll2 / 100))
+	if mass > 1.44 {
+		mass = 1.34 + float64(roller.Roll("1d100"))/1000
 	}
-	return m
+	return mass
 }
 
-func whiteDwarfDiameter(m float64) float64 {
-	return (1.0 / m) * 0.01
+// calculateWhiteDwarfDiameter calculates the diameter of a white dwarf based on its mass.
+// Uses the inverse relationship between mass and diameter for degenerate matter.
+func calculateWhiteDwarfDiameter(mass float64) float64 {
+	return (1.0 / mass) * 0.01 // TODO: Add units and formula explanation in comment
 }
 
-func blackHoleMass(r *dice.Roller) float64 {
-	r6 := r.Roll("1d6")
-	r10 := r.Roll("1d10")
-	m := 2.1 + float64(r6) - 1 + (float64(r10) / 10)
-	for r6 == 6 {
-		r6 = r.Roll("1d6")
-		m += float64(r6)
+// calculateBlackHoleMass rolls for the mass of a black hole.
+// Uses 1d6 and 1d10 rolls with reroll on 6 for additional mass.
+func calculateBlackHoleMass(roller *dice.Roller) float64 {
+	roll6 := roller.Roll("1d6")
+	roll10 := roller.Roll("1d10")
+	mass := 2.1 + float64(roll6) - 1 + (float64(roll10) / 10)
+	for roll6 == 6 {
+		roll6 = roller.Roll("1d6")
+		mass += float64(roll6)
 	}
-	return float.Round(m)
+	return float.Round(mass)
 }
 
-func neitronStarMass(r *dice.Roller) float64 {
-	r1 := r.Roll("1d6")
-	m := 1 + (float64(r1) / 10)
-	for r1 == 6 {
-		r1 = r.Roll("1d6")
-		m += (float64(r1) - 1.0) / 10.0
+// calculateNeutronStarMass rolls for the mass of a neutron star.
+// Uses 1d6 with reroll on 6 for additional mass.
+func calculateNeutronStarMass(roller *dice.Roller) float64 {
+	roll1 := roller.Roll("1d6")
+	mass := 1 + (float64(roll1) / 10)
+	for roll1 == 6 {
+		roll1 = roller.Roll("1d6")
+		mass += (float64(roll1) - 1.0) / 10.0
 	}
-	return m
+	return mass
 }
 
-func variance(r *dice.Roller) float64 {
-	r1 := r.Roll("1d1001-1")
-	return float64(r1) / 1000.0
+// calculateVariance rolls for a variance multiplier used in age calculations.
+// Returns a value between 0 and 1.
+func calculateVariance(roller *dice.Roller) float64 {
+	roll1 := roller.Roll("1d1001-1")
+	return float64(roll1) / 1000.0
 }
 
-func mainSequanceLifespan(m float64) float64 {
-	return float.Round(10 / math.Pow(m, 2.5))
+// calculateMainSequenceLifespan calculates the expected lifespan of a main sequence star
+// based on its mass. More massive stars have shorter lifespans.
+func calculateMainSequenceLifespan(mass float64) float64 {
+	return float.Round(10 / math.Pow(mass, 2.5))
 }
 
-func smallStarAge(r *dice.Roller) float64 {
-	return float64(r.Roll("1d6x2")-r.Roll("1d3-2")) + float64(r.Roll("1d10")/10.0)
+// calculateSmallStarAge calculates age for small stars (less than 0.9 solar masses)
+// using a different formula than main sequence lifespan.
+func calculateSmallStarAge(roller *dice.Roller) float64 {
+	return float64(roller.Roll("1d6x2")-roller.Roll("1d3-2")) + float64(roller.Roll("1d10")/10.0)
 }
 
-func subgiantLifeSpan(msl, m float64) float64 {
-	return msl / (4 + m)
+// calculateSubgiantLifespan calculates the expected lifespan of a subgiant star
+// based on its main sequence lifespan and mass.
+func calculateSubgiantLifespan(mainSequenceLifespan, mass float64) float64 {
+	return mainSequenceLifespan / (4 + mass)
 }
 
-func giantLifeSpan(msl, m float64) float64 {
-	return msl / 10.0 * math.Pow(m, 3)
+// calculateGiantLifespan calculates the expected lifespan of a giant star
+// based on its main sequence lifespan and mass.
+func calculateGiantLifespan(mainSequenceLifespan, mass float64) float64 {
+	return mainSequenceLifespan / 10.0 * math.Pow(mass, 3)
 }
 
-func deadStarMass(r *dice.Roller, m float64) float64 {
-	return float.Round(float64(r.Roll("1d3+2")) * m)
+// calculateDeadStarMass calculates the mass of a dead star (remnant).
+// Used for age calculations of white dwarfs, neutron stars, and black holes.
+func calculateDeadStarMass(roller *dice.Roller, mass float64) float64 {
+	return float.Round(float64(roller.Roll("1d3+2")) * mass)
 }
 
-func starAge(r *dice.Roller, s *starPrecursor) float64 {
+// calculateStarAge calculates the age of a star based on its mass, class, and type.
+// Different formulas are used for:
+// - Main sequence stars
+// - Subgiants (Class IV)
+// - Giants (Class III)
+// - White dwarfs, neutron stars, black holes
+// - Protostars
+func calculateStarAge(roller *dice.Roller, starPrecursor *starPrecursor) float64 {
 	age := 0.0
-	mass := s.Mass
-	if s.Dead {
-		mass = deadStarMass(r, mass)
+	mass := starPrecursor.Mass
+	if starPrecursor.Dead {
+		mass = calculateDeadStarMass(roller, mass)
 	}
-	msl := mainSequanceLifespan(mass)
+	mainSequenceLifespan := calculateMainSequenceLifespan(mass)
 	if mass < 0.9 {
-		msl = smallStarAge(r)
+		mainSequenceLifespan = calculateSmallStarAge(roller)
 	}
-	age = msl * variance(r)
-	switch s.Class {
+	age = mainSequenceLifespan * calculateVariance(roller)
+	switch starPrecursor.Class {
 	case "BD":
-		age = smallStarAge(r)
+		age = calculateSmallStarAge(roller)
 	case "D", "NS", "BH":
-		mass := deadStarMass(r, s.Mass)
-		msl := mainSequanceLifespan(deadStarMass(r, mass))
-		age = smallStarAge(r) + msl + subgiantLifeSpan(msl, mass) + giantLifeSpan(msl, mass)
+		massValue := calculateDeadStarMass(roller, starPrecursor.Mass)
+		mainSequenceLifespanValue := calculateMainSequenceLifespan(calculateDeadStarMass(roller, massValue))
+		age = calculateSmallStarAge(roller) + mainSequenceLifespanValue + calculateSubgiantLifespan(mainSequenceLifespanValue, massValue) + calculateGiantLifespan(mainSequenceLifespanValue, massValue)
 	case "PSR":
-		mass := deadStarMass(r, s.Mass)
-		msl := mainSequanceLifespan(deadStarMass(r, mass))
-		age = (0.1 * float64(r.Roll("2d10"))) + msl + subgiantLifeSpan(msl, mass) + giantLifeSpan(msl, mass)
+		massValue := calculateDeadStarMass(roller, starPrecursor.Mass)
+		mainSequenceLifespanValue := calculateMainSequenceLifespan(calculateDeadStarMass(roller, massValue))
+		age = (0.1 * float64(roller.Roll("2d10"))) + mainSequenceLifespanValue + calculateSubgiantLifespan(mainSequenceLifespanValue, massValue) + calculateGiantLifespan(mainSequenceLifespanValue, massValue)
 	case "IV":
-		age = msl + (subgiantLifeSpan(msl, mass) * variance(r))
+		age = mainSequenceLifespan + (calculateSubgiantLifespan(mainSequenceLifespan, mass) * calculateVariance(roller))
 	case "III":
-		age = msl + subgiantLifeSpan(msl, mass) + (giantLifeSpan(msl, mass) * variance(r))
+		age = mainSequenceLifespan + calculateSubgiantLifespan(mainSequenceLifespan, mass) + (calculateGiantLifespan(mainSequenceLifespan, mass) * calculateVariance(roller))
 
 	}
-	if s.Protostar {
-		age = float64(r.Roll("2d10")) * 0.01
+	if starPrecursor.Protostar {
+		age = float64(roller.Roll("2d10")) * 0.01
 	}
 	age = min(13.8, float.Round(age))
 	for age <= 0 {
-		age = variance(r) * 13.8
+		age = calculateVariance(roller) * 13.8
 	}
 	return age
 }
 
-func luminocity(diameter, temperature float64) float64 {
+// calculateLuminosity calculates a star's luminosity based on its diameter and temperature.
+// Uses the Stefan-Boltzmann law: L = 4 * pi * R^2 * sigma * T^4
+// Simplified to relative luminosity assuming solar values.
+func calculateLuminosity(diameter, temperature float64) float64 {
 	return math.Pow(diameter, 2) * math.Pow(temperature/float64(5772), 4)
 }
 
-func validateTSC(s *starPrecursor) error {
-	switch s.Type {
+// validateStarTypeSubtypeClassCombination validates that the star's TSC (Type/Subtype/Class) combination is valid.
+// TSC represents the spectral classification of a star:
+//   - Type: Spectral class (O, B, A, F, G, K, M) or special types (D, BD, BH, NS, PSR)
+//   - SubType: Numeric subtype (0-9 for main sequence, empty for special types)
+//   - Class: Luminosity class (V=main sequence, IV=subgiant, III=giant, VI=subdwarf, etc.)
+//
+// The function also corrects some invalid combinations (e.g., converts to valid types)
+// and returns an error for truly invalid combinations.
+func validateStarTypeSubtypeClassCombination(starPrecursor *starPrecursor) error {
+	switch starPrecursor.Type {
 	case "":
 		return fmt.Errorf("no star?")
 	case "O", "B", "A", "F", "G", "K", "M":
-		if s.Class == "" {
-			s.Class = "V"
+		if starPrecursor.Class == "" {
+			starPrecursor.Class = "V"
 		}
 	case "D", "BD", "BH", "NS", "PSR", "NB":
-		s.SubType = ""
-		s.Class = ""
+		starPrecursor.SubType = ""
+		starPrecursor.Class = ""
 	}
-	switch s.Class {
+	switch starPrecursor.Class {
 	case "Ia", "Ib", "II", "III", "V":
-		if !strings.Contains("OBAFGKM", s.Type) {
-			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
+		if !strings.Contains("OBAFGKM", starPrecursor.Type) {
+			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", starPrecursor.Type, starPrecursor.SubType, starPrecursor.Class)
 		}
 	case "IV":
-		if !strings.Contains("BAFGK", s.Type) {
-			s.Class = "V"
-			// return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
+		if !strings.Contains("BAFGK", starPrecursor.Type) {
+			starPrecursor.Class = "V"
 		}
-		if s.Type == "K" && !strings.Contains("01234", s.SubType) {
-			s.Class = "V"
+		if starPrecursor.Type == "K" && !strings.Contains("01234", starPrecursor.SubType) {
+			starPrecursor.Class = "V"
 		}
 	case "VI":
-		if s.Type == "F" {
-			s.Type = "G"
+		if starPrecursor.Type == "F" {
+			starPrecursor.Type = "G"
 		}
-		if s.Type == "A" {
-			s.Type = "B"
+		if starPrecursor.Type == "A" {
+			starPrecursor.Type = "B"
 		}
-		if !strings.Contains("OBGKM", s.Type) {
-			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
+		if !strings.Contains("OBGKM", starPrecursor.Type) {
+			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", starPrecursor.Type, starPrecursor.SubType, starPrecursor.Class)
 		}
-		if s.Type == "F" && !strings.Contains("56789", s.SubType) {
-			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", s.Type, s.SubType, s.Class)
+		if starPrecursor.Type == "F" && !strings.Contains("56789", starPrecursor.SubType) {
+			return fmt.Errorf("invalid combination type=%v subtype=%v class=%v", starPrecursor.Type, starPrecursor.SubType, starPrecursor.Class)
 		}
 	}
 	return nil
 }
 
-func (b *Builder) importPrimaryStarData(ss *starSystemPrecursor) error {
-	if b.imported.Stellar == "" {
+// importPrimaryStarData attempts to import primary star data from the imported t5ss data.
+// If no stellar data is available in the import, returns an error.
+// Otherwise, decodes the stellar code to extract Type, SubType, and Class.
+func (builder *Builder) importPrimaryStarData(systemPrecursor *starSystemPrecursor) error {
+	if builder.imported.Stellar == "" {
 		return fmt.Errorf("nothing to import")
 	}
-	stl, err := stellar.New(b.imported.Stellar)
+	stellarObject, err := stellar.New(builder.imported.Stellar)
 	if err != nil {
 		return fmt.Errorf("failed to create stellar: %w", err)
 	}
-	prim := stl.PrimaryCode()
+	primaryCode := stellarObject.PrimaryCode()
 
-	t, s, c, err := prim.Decode()
+	starType, starSubtype, starClass, err := primaryCode.Decode()
 	if err != nil {
-		return fmt.Errorf("failed to decode primary code (%v): %w", prim, err)
+		return fmt.Errorf("failed to decode primary code (%v): %w", primaryCode, err)
 	}
-	ss.PrimaryStar.Type = t
-	ss.PrimaryStar.SubType = s
-	ss.PrimaryStar.Class = c
+	systemPrecursor.PrimaryStar.Type = starType
+	systemPrecursor.PrimaryStar.SubType = starSubtype
+	systemPrecursor.PrimaryStar.Class = starClass
 	return nil
 }
