@@ -7,10 +7,25 @@ import (
 	"strings"
 )
 
-func ParseExpression(expr string) (Dicepool, error) {
+const (
+	diceTypeNormal      = "d"
+	diceTypeConcat      = "D"
+	diceTypeDestructive = "DD"
+	addEachSuffix       = "e"
+	addIndividualSuffix = ">>"
+	dropLowPrefix       = "dl"
+	dropHighPrefix      = "dh"
+	dividePrefix        = "/"
+	multiplyPrefix1     = "x"
+	multiplyPrefix2     = "*"
+
+	complexModsSeparator = ":"
+)
+
+func parseExpression(expr string) (Dicepool, []Mod, error) {
 	expr = strings.TrimSpace(expr)
 	if expr == "" {
-		return Dicepool{}, fmt.Errorf("empty expression")
+		return Dicepool{}, nil, fmt.Errorf("empty expression")
 	}
 
 	dicePart, modsPart := "", ""
@@ -23,14 +38,14 @@ func ParseExpression(expr string) (Dicepool, error) {
 
 	count, diceType, sides, leftover, err := parseDicePart(dicePart)
 	if err != nil {
-		return Dicepool{}, err
+		return Dicepool{}, nil, err
 	}
 
 	var simpleAdd *AddConst
 	if strings.TrimSpace(leftover) != "" {
 		val, err := parseSimpleAdditive(leftover)
 		if err != nil {
-			return Dicepool{}, fmt.Errorf("invalid simple additive modifier '%s': %w", leftover, err)
+			return Dicepool{}, nil, fmt.Errorf("invalid simple additive modifier '%s': %w", leftover, err)
 		}
 		simpleAdd = &AddConst{value: val}
 	}
@@ -38,22 +53,22 @@ func ParseExpression(expr string) (Dicepool, error) {
 	dice := make([]Die, count)
 	for i := range count {
 		switch diceType {
-		case "d":
+		case diceTypeNormal:
 			dice[i] = NewDice(sides)
-		case "D", "DD":
-			// Специальные типы – пока только мета, бросок не реализован
+		case diceTypeConcat, diceTypeDestructive:
+			//TODO:special types (not implemented yet)
 			dice[i] = NewDice(0).WithMeta(map[string]string{
 				"special": diceType,
 				"faces":   strconv.Itoa(sides),
 			})
 		default:
-			return Dicepool{}, fmt.Errorf("unknown dice type %s", diceType)
+			return Dicepool{}, nil, fmt.Errorf("unknown dice type %s", diceType)
 		}
 	}
 
 	complexMods, err := parseComplexModifiers(modsPart)
 	if err != nil {
-		return Dicepool{}, err
+		return Dicepool{}, nil, err
 	}
 
 	allMods := []Mod{}
@@ -67,7 +82,7 @@ func ParseExpression(expr string) (Dicepool, error) {
 	allMods = sortModifiers(allMods)
 
 	dp := NewDicepool(dice...).WithMods(allMods...)
-	return dp, nil
+	return dp, allMods, nil
 }
 
 func parseDicePart(part string) (count int, diceType string, sides int, leftover string, err error) {
@@ -89,12 +104,12 @@ func parseDicePart(part string) (count int, diceType string, sides int, leftover
 	}
 
 	switch {
-	case strings.HasPrefix(part, "DD"):
-		diceType = "DD"
-	case strings.HasPrefix(part, "D"):
-		diceType = "D"
-	case strings.HasPrefix(part, "d"):
-		diceType = "d"
+	case strings.HasPrefix(part, diceTypeDestructive):
+		diceType = diceTypeDestructive
+	case strings.HasPrefix(part, diceTypeConcat):
+		diceType = diceTypeConcat
+	case strings.HasPrefix(part, diceTypeNormal):
+		diceType = diceTypeNormal
 	default:
 		return 0, "", 0, "", fmt.Errorf("invalid dice type")
 	}
@@ -124,7 +139,7 @@ func parseDicePart(part string) (count int, diceType string, sides int, leftover
 	return count, diceType, sides, leftover, nil
 }
 
-// parseSimpleAdditive парсит строку вида "+3", "-2", "  +5  "
+// parseSimpleAdditive parse additives like "+3", "-2", "  +5  "
 func parseSimpleAdditive(s string) (int, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
@@ -138,7 +153,7 @@ func parseComplexModifiers(modsStr string) ([]Mod, error) {
 	if modsStr == "" {
 		return nil, nil
 	}
-	parts := strings.Split(modsStr, ":")
+	parts := strings.Split(modsStr, complexModsSeparator)
 	var mods []Mod
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
@@ -156,8 +171,8 @@ func parseComplexModifiers(modsStr string) ([]Mod, error) {
 
 func parseOneComplexModifier(modStr string) (Mod, error) {
 	// +Ne / -Ne
-	if strings.HasSuffix(modStr, "e") {
-		numStr := strings.TrimSuffix(modStr, "e")
+	if strings.HasSuffix(modStr, addEachSuffix) {
+		numStr := strings.TrimSuffix(modStr, addEachSuffix)
 		val, err := strconv.Atoi(numStr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid AddToEach: %s", modStr)
@@ -165,17 +180,18 @@ func parseOneComplexModifier(modStr string) (Mod, error) {
 		return AddToEach{value: val}, nil
 	}
 	// +NtoM / -NtoM
-	if strings.Contains(modStr, "to") {
+	if strings.Contains(modStr, addIndividualSuffix) {
 		// формат: +3to2 или -5to1
 		var sign int = 1
 		s := modStr
-		if s[0] == '-' {
+		switch s[0] {
+		case '-':
 			sign = -1
 			s = s[1:]
-		} else if s[0] == '+' {
+		case '+':
 			s = s[1:]
 		}
-		parts := strings.Split(s, "to")
+		parts := strings.Split(s, addIndividualSuffix)
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("invalid AddIndividual format: %s", modStr)
 		}
@@ -190,7 +206,7 @@ func parseOneComplexModifier(modStr string) (Mod, error) {
 		return AddIndividual{position: pos, value: sign * val}, nil
 	}
 	// dlN
-	if strings.HasPrefix(modStr, "dl") {
+	if strings.HasPrefix(modStr, dropLowPrefix) {
 		numStr := modStr[2:]
 		n, err := strconv.Atoi(numStr)
 		if err != nil || n < 1 {
@@ -199,7 +215,7 @@ func parseOneComplexModifier(modStr string) (Mod, error) {
 		return DropLowest{quantity: n}, nil
 	}
 	// dhN
-	if strings.HasPrefix(modStr, "dh") {
+	if strings.HasPrefix(modStr, dropHighPrefix) {
 		numStr := modStr[2:]
 		n, err := strconv.Atoi(numStr)
 		if err != nil || n < 1 {
@@ -208,7 +224,7 @@ func parseOneComplexModifier(modStr string) (Mod, error) {
 		return DropHighest{quantity: n}, nil
 	}
 	// /N
-	if strings.HasPrefix(modStr, "/") {
+	if strings.HasPrefix(modStr, dividePrefix) {
 		numStr := modStr[1:]
 		n, err := strconv.Atoi(numStr)
 		if err != nil || n == 0 {
@@ -217,7 +233,7 @@ func parseOneComplexModifier(modStr string) (Mod, error) {
 		return Divide{value: n}, nil
 	}
 	// xN или *N
-	if strings.HasPrefix(modStr, "x") || strings.HasPrefix(modStr, "*") {
+	if strings.HasPrefix(modStr, multiplyPrefix1) || strings.HasPrefix(modStr, multiplyPrefix2) {
 		numStr := modStr[1:]
 		n, err := strconv.Atoi(numStr)
 		if err != nil {
@@ -233,4 +249,9 @@ func sortModifiers(mods []Mod) []Mod {
 		return mods[i].Priority() < mods[j].Priority()
 	})
 	return mods
+}
+
+func ValidateExpression(expr string) error {
+	_, _, err := parseExpression(expr)
+	return err
 }

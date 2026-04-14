@@ -7,12 +7,12 @@ import (
 
 // newRoller initializes a Roller with a specific seed.
 // It converts the seed string to an int64 or uses a random seed if empty.
-func newRoller(seed string) *Roller {
+func newRoller(seed string) Roller {
 	seedInt := randomSeed()
 	if seed != "" {
 		seedInt = stringToInt64(seed)
 	}
-	r := Roller{}
+	r := randRoller{}
 	r.rng = rand.New(rand.NewSource(int64(seedInt)))
 	return &r
 }
@@ -69,9 +69,10 @@ func (d Die) WithMeta(meta map[string]string) Die {
 
 func NewDicepool(dice ...Die) Dicepool {
 	dp := Dicepool{
-		Dice:      dice,
-		Modifiers: []Mod{None{}},
-		Metadata:  map[string]string{},
+		Dice: dice,
+		// Modifiers: []Mod{None{}},
+		Metadata: map[string]string{},
+		Type:     "",
 	}
 	return dp
 }
@@ -83,5 +84,10 @@ func (dp Dicepool) WithMods(mods ...Mod) Dicepool {
 
 func (dp Dicepool) WithMeta(meta map[string]string) Dicepool {
 	dp.Metadata = meta
+	return dp
+}
+
+func (dp Dicepool) WithRoller(r *Roller) Dicepool {
+	dp.roller = r
 	return dp
 }

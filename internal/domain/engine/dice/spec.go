@@ -2,29 +2,40 @@ package dice
 
 import "math/rand"
 
-// DieSpec описывает один кубик (неизменяемый шаблон).
+var defaultRoller Roller
+var defaultManager *Manager
+
+func init() {
+	defaultRoller = newRoller("")
+	defaultManager = newManager(defaultRoller)
+}
+
+// Die is a elementary component of Dicepool
 type Die struct {
 	Faces    int
 	Codes    map[int]string    // текстовые обозначения для UI/логов (например, 20→"crit")
 	Metadata map[string]string // цвет, имя, теги
 }
 
-// PoolSpec описывает пул кубиков и модификаторы уровня пула (неизменяемый).
+// Dicepool describes composition of dice and modifications of the result.
 type Dicepool struct {
 	Type      string
 	Dice      []Die
 	Modifiers []Mod // в порядке применения
 	Metadata  map[string]string
+	roller    *Roller
 }
 
-type Roller struct {
+// Roller
+
+type Roller interface {
+	Roll(Die) int
+}
+
+type randRoller struct {
 	rng *rand.Rand
 }
 
-type Result struct {
-	Rolled         Dicepool
-	Raw            []int
-	Mods           []Mod
-	Final          []int
-	FinalAsStrings []string
+func (r *randRoller) Roll(d Die) int {
+	return r.rng.Intn(d.Faces) + 1
 }
