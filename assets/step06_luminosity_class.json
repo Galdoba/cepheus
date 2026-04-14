@@ -1,0 +1,12 @@
+{
+  "name": "Luminosity Class",
+  "expression": "d100",
+  "data": {
+    "1-90": "V",
+    "91-94": "IV",
+    "95-96": "D",
+    "97-99": "III",
+    "100": "Rare"
+  },
+  "d_66": false
+}

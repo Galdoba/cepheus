@@ -1,0 +1,11 @@
+{
+  "name": "Companion Star Luminosity Contribution",
+  "type": "formula",
+  "formula": "Y = L / sqrt((C/W)/2)",
+  "variables": {
+    "Y": "Luminosity to add to primary star (Solar Units)",
+    "L": "Companion star luminosity (Solar Units)",
+    "C": "Distance of companion in AU",
+    "W": "Planet distance from primary in AU"
+  }
+}

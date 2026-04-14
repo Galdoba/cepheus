@@ -1,0 +1,13 @@
+{
+  "name": "Moon Orbit Distance (Gas Giant)",
+  "expression": "d6",
+  "data": {
+    "1": "5 diameters",
+    "2": "10 diameters",
+    "3": "15 diameters",
+    "4": "20 diameters",
+    "5": "25 diameters",
+    "6": "30 diameters"
+  },
+  "d_66": false
+}

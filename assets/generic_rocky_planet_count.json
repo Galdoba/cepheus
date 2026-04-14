@@ -1,0 +1,5 @@
+{
+  "name": "Rocky Planet Count",
+  "type": "formula",
+  "formula": "1d6+1"
+}

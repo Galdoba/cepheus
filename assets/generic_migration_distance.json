@@ -1,0 +1,6 @@
+{
+  "name": "Migration Distance",
+  "type": "formula",
+  "formula": "d100",
+  "notes": "Result is the number of AU the gas giant migrated inward. Not a lookup table -- the roll IS the answer."
+}

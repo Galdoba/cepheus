@@ -1,0 +1,13 @@
+{
+  "name": "Asteroid Belt Composition (Beyond Snow Line)",
+  "expression": "2d6",
+  "data": {
+    "2": "70% rock, 20% hydrocarbons, 10% water ice",
+    "3-4": "50% rock, 40% hydrocarbons, 10% water ice",
+    "5-7": "50% hydrocarbons, 40% rock, 10% water ice",
+    "8-9": "60% hydrocarbons, 30% rock, 20% water ice",
+    "10-11": "70% hydrocarbons, 20% water ice, 10% rock",
+    "12": "70% hydrocarbons, 30% water ice"
+  },
+  "d_66": false
+}

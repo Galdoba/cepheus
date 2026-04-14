@@ -1,0 +1,33 @@
+{
+  "name": "Government (Superterran, Habitable Zone)",
+  "type": "government_table",
+  "base_roll": "2d6",
+  "columns": ["roll", "code", "government", "law_level"],
+  "data": {
+    "2": {
+      "code": "0",
+      "government": "None",
+      "law_level": "0"
+    },
+    "3": {
+      "code": "1",
+      "government": "Company",
+      "law_level": "1d6+4"
+    },
+    "4-5": {
+      "code": "6",
+      "government": "Captive research",
+      "law_level": "1d6+5"
+    },
+    "6-9": {
+      "code": "6",
+      "government": "Captive colony",
+      "law_level": "1d6+5"
+    },
+    "10-12": {
+      "code": "Normal",
+      "government": "Roll normally",
+      "law_level": "Normal"
+    }
+  }
+}

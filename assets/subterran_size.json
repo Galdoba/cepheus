@@ -1,0 +1,10 @@
+{
+  "name": "Subterran Size",
+  "expression": "d6",
+  "data": {
+    "1-2": "4",
+    "3-4": "5",
+    "5-6": "6"
+  },
+  "d_66": false
+}

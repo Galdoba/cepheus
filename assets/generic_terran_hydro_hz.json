@@ -1,0 +1,6 @@
+{
+  "name": "Terran Hydrographics (Habitable Zone)",
+  "type": "formula",
+  "formula": "2d6-7 + Atmosphere Code",
+  "notes": "Roll 2d6, subtract 7, add atmosphere code. Result is hydrographics code."
+}

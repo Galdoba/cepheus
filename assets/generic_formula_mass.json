@@ -1,0 +1,10 @@
+{
+  "name": "Planet Mass",
+  "type": "formula",
+  "formula": "M = K * (R/8)^3",
+  "variables": {
+    "M": "Mass in Earth Masses",
+    "K": "Density in Earth Densities (from planet_density table)",
+    "R": "Planet Size Code (use 0.5 if R=0)"
+  }
+}

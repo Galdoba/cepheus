@@ -1,0 +1,10 @@
+{
+  "name": "Brown Dwarf Class",
+  "expression": "d100",
+  "data": {
+    "1-50": "L",
+    "51-75": "T",
+    "76-100": "Y"
+  },
+  "d_66": false
+}

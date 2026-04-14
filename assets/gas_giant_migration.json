@@ -1,0 +1,9 @@
+{
+  "name": "Gas Giant Migration Check",
+  "expression": "d6",
+  "data": {
+    "1-5": "No migration",
+    "6": "Migrated inward"
+  },
+  "d_66": false
+}

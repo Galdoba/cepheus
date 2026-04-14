@@ -1,0 +1,12 @@
+{
+  "name": "Companion Distance",
+  "expression": "d100",
+  "data": {
+    "1-10": "Contact",
+    "11-30": "Close",
+    "31-50": "Near",
+    "51-80": "Far",
+    "81-100": "Distant"
+  },
+  "d_66": false
+}

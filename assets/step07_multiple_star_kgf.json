@@ -1,0 +1,10 @@
+{
+  "name": "Multiple Star System (K/G/F)",
+  "expression": "d100",
+  "data": {
+    "1-45": "Single Star System",
+    "46-99": "Binary Star System",
+    "100": "Trinary Star System"
+  },
+  "d_66": false
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Surface Gravity",
+  "type": "formula",
+  "formula": "G = M * (64/R^2)",
+  "variables": {
+    "G": "Surface Gravity in Earth Gravities",
+    "M": "Mass in Earth Masses (from planet mass formula)",
+    "R": "Planet Size Code (use 0.5 if R=0)"
+  }
+}

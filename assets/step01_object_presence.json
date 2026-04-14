@@ -1,0 +1,14 @@
+{
+  "name": "Object Presence",
+  "expression": "d100",
+  "data": {
+    "1-5": "Empty",
+    "6-20": "Scattered",
+    "21-35": "Dispersed",
+    "36-50": "Average",
+    "51-60": "Crowded",
+    "61-75": "Dense",
+    "76-100": "No object"
+  },
+  "d_66": false
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Eccentric Orbit Check",
+  "expression": "d6",
+  "data": {
+    "1-3": "Elliptical",
+    "4-6": "Circular"
+  },
+  "d_66": false
+}

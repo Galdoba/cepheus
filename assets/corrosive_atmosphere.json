@@ -1,0 +1,18 @@
+{
+  "name": "Corrosive Atmosphere Type",
+  "expression": "2d6",
+  "data": {
+    "2": "Ammonia, 0.2-0.4 atm",
+    "3": "Ammonia, 0.4-0.8 atm",
+    "4": "Ammonia, 0.8-1.5 atm",
+    "5": "Fluorine, 0.1-0.3 atm",
+    "6": "Fluorine, 0.3-0.6 atm",
+    "7": "Chlorine, 0.1-0.3 atm",
+    "8": "Chlorine, 0.3-0.6 atm",
+    "9": "Hydrogen chloride, 0.2-0.5 atm",
+    "10": "Hydrogen chloride, 0.5-1.0 atm",
+    "11": "Hydrogen sulfide, 0.3-0.7 atm",
+    "12": "Hydrogen sulfide, 0.7-1.5 atm"
+  },
+  "d_66": false
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Number of Moons",
+  "type": "formula_table",
+  "data": {
+    "Size 0": "0",
+    "Size 1-3": "1d6-4",
+    "Size 4-6": "1d6-3",
+    "Size 7-Q": "1d6-2",
+    "Small Gas Giant (Neptunian)": "2d6-4",
+    "Large Gas Giant (Jovian)": "2d6+4"
+  },
+  "notes": "Treat any result of less than zero as 0."
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Luminosity Class (Rare)",
+  "expression": "d10",
+  "data": {
+    "1-4": "II",
+    "5": "VI",
+    "6": "II",
+    "7-8": "Ia",
+    "9-10": "Ib"
+  },
+  "d_66": false
+}

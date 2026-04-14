@@ -1,0 +1,9 @@
+{
+  "name": "Dwarf Size",
+  "expression": "d6",
+  "data": {
+    "2,4,6": "0",
+    "1,3,5": "1"
+  },
+  "d_66": false
+}

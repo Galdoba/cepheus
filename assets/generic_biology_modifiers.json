@@ -1,0 +1,51 @@
+{
+  "name": "Biology Modifiers",
+  "type": "modifier_table",
+  "base_roll": "2d10",
+  "modifiers": {
+    "atmosphere_no_oxygen": {
+      "condition": "Atmosphere has no oxygen",
+      "modifier": -20
+    },
+    "atmosphere_thin": {
+      "condition": "Atmosphere code 4-5",
+      "modifier": -5
+    },
+    "atmosphere_standard": {
+      "condition": "Atmosphere code 6-9",
+      "modifier": 10
+    },
+    "hydrosphere_low": {
+      "condition": "Hydrosphere 1-2",
+      "modifier": -15
+    },
+    "hydrosphere_marginal": {
+      "condition": "Hydrosphere 3-4 or 10(A)",
+      "modifier": -5
+    },
+    "hydrosphere_good": {
+      "condition": "Hydrosphere 5-9",
+      "modifier": 5
+    },
+    "temperature_extreme": {
+      "condition": "Average temp <0°C or >40°C",
+      "modifier": -10
+    },
+    "position_beyond_hz": {
+      "condition": "Planet beyond habitable zone",
+      "modifier": -20
+    },
+    "position_inner_hz": {
+      "condition": "Planet between star and habitable zone",
+      "modifier": -20
+    },
+    "star_type_hot_cool": {
+      "condition": "Star is O, B, A, or M-class",
+      "modifier": -10
+    },
+    "star_type_solar": {
+      "condition": "Star is G-class",
+      "modifier": 10
+    }
+  }
+}

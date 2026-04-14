@@ -1,0 +1,43 @@
+{
+  "name": "Government (Mercurian, Beyond HZ)",
+  "type": "government_table",
+  "base_roll": "2d6",
+  "columns": ["roll", "code", "government", "law_level"],
+  "data": {
+    "2": {
+      "code": "0",
+      "government": "None",
+      "law_level": "0"
+    },
+    "3": {
+      "code": "1",
+      "government": "Company",
+      "law_level": "1d6+4"
+    },
+    "4-5": {
+      "code": "6",
+      "government": "Captive research",
+      "law_level": "1d6+4"
+    },
+    "6-7": {
+      "code": "6",
+      "government": "Military base",
+      "law_level": "1d6+5"
+    },
+    "8-9": {
+      "code": "6",
+      "government": "Refueling station",
+      "law_level": "1d6+5"
+    },
+    "10-11": {
+      "code": "6",
+      "government": "Prison",
+      "law_level": "1d6+5"
+    },
+    "12": {
+      "code": "Normal",
+      "government": "Roll normally",
+      "law_level": "Normal"
+    }
+  }
+}

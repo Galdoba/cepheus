@@ -1,0 +1,13 @@
+{
+  "name": "Asteroid Belt Composition (Inner - Snow Line)",
+  "expression": "2d6",
+  "data": {
+    "2": "85% carbonaceous, 13% silicate, 2% metal rich",
+    "3-4": "80% carbonaceous, 15% silicate, 5% metal rich",
+    "5-7": "75% carbonaceous, 17% silicate, 8% metal rich",
+    "8-9": "75% carbonaceous, 15% silicate, 10% metal rich",
+    "10-11": "75% carbonaceous, 13% silicate, 12% metal rich",
+    "12": "78% carbonaceous, 10% silicate, 12% metal rich"
+  },
+  "d_66": false
+}

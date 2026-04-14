@@ -1,0 +1,12 @@
+{
+  "name": "Multiple Star System (A/B/O)",
+  "expression": "d100",
+  "data": {
+    "1-10": "Single Star System",
+    "11-90": "Binary Star System",
+    "91-98": "Trinary Star System",
+    "99": "Quaternary Star System",
+    "100": "Quintenary Star System"
+  },
+  "d_66": false
+}

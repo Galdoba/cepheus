@@ -1,0 +1,11 @@
+{
+  "name": "Gas Giant Count",
+  "type": "formula",
+  "formulas": {
+    "Star": "1d6-2",
+    "L-class Brown Dwarf": "1d6-4",
+    "T-class Brown Dwarf": "1d6-5",
+    "Y-class Brown Dwarf": "0"
+  },
+  "notes": "Treat any result of less than zero as 0."
+}

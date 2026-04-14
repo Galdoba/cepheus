@@ -1,0 +1,9 @@
+{
+  "name": "Gas Giant Size Type",
+  "expression": "d6",
+  "data": {
+    "1-3": "Neptunian",
+    "4-6": "Jovian"
+  },
+  "d_66": false
+}

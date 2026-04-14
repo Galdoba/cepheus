@@ -1,0 +1,18 @@
+{
+  "name": "Equatorial Temperature",
+  "type": "formula_collection",
+  "formulas": {
+    "tilt_less_35": {
+      "formula": "Q = (3*S) + T",
+      "notes": "Axial tilt < 35 degrees. Q = Equatorial Temp in Celsius, S = Size Code, T = Avg Temp in Celsius"
+    },
+    "tilt_more_35_summer": {
+      "formula": "Q = [M * (A * 0.6)] + (3*S) + T",
+      "notes": "Axial tilt > 35 degrees, summer. M = Axial Tilt Modifier, A = Axial Tilt degrees"
+    },
+    "tilt_more_35_winter": {
+      "formula": "Q = [T + (3*S)] - [M * (A * 0.6)]",
+      "notes": "Axial tilt > 35 degrees, winter"
+    }
+  }
+}

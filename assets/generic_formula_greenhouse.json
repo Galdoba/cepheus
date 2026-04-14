@@ -1,0 +1,10 @@
+{
+  "name": "Greenhouse Effect",
+  "type": "formula",
+  "formula": "E = (P/6) * (P/G)",
+  "variables": {
+    "E": "Greenhouse Effect multiplier",
+    "P": "Atmospheric Pressure in Standard",
+    "G": "Surface Gravity in Standard"
+  }
+}

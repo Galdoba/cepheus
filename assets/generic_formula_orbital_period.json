@@ -1,0 +1,10 @@
+{
+  "name": "Orbital Period",
+  "type": "formula",
+  "formula": "P = sqrt(D^3 / M)",
+  "variables": {
+    "P": "Orbital Period in standard years",
+    "D": "Distance from star in AU",
+    "M": "Mass of central star in Solar Masses"
+  }
+}

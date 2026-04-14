@@ -1,0 +1,18 @@
+{
+  "name": "Insidious Atmosphere Type",
+  "expression": "2d6",
+  "data": {
+    "2": "Argon, 0.1-0.3 atm",
+    "3": "Argon, 0.3-0.6 atm",
+    "4": "Argon, 0.6-1.2 atm",
+    "5": "Krypton, 0.1-0.3 atm",
+    "6": "Krypton, 0.3-0.6 atm",
+    "7": "Xenon, 0.1-0.3 atm",
+    "8": "Carbon dioxide, 0.1-0.3 atm",
+    "9": "Carbon dioxide, 0.3-0.6 atm",
+    "10": "Carbon dioxide, 0.6-1.2 atm",
+    "11": "Nitrogen oxides, 0.2-0.5 atm",
+    "12": "Nitrogen oxides, 0.5-1.0 atm"
+  },
+  "d_66": false
+}

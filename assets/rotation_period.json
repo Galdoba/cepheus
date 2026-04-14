@@ -1,0 +1,18 @@
+{
+  "name": "Rotation Period (>45 hours)",
+  "expression": "2d6",
+  "data": {
+    "2": "Keep original",
+    "3": "1d10 x 5 hours",
+    "4": "1d10 x 10 hours",
+    "5": "1d10 x 20 hours",
+    "6": "1d10 x 30 hours",
+    "7": "1d10 days",
+    "8": "1d10 x 5 days",
+    "9": "1d10 x 10 days",
+    "10": "1d10 x 20 days",
+    "11": "1d10 x 30 days",
+    "12": "1d10 x 20 days (retrograde)"
+  },
+  "d_66": false
+}

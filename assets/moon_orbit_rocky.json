@@ -1,0 +1,26 @@
+{
+  "name": "Moon Orbit Distance (Rocky Planet)",
+  "expression": "2d10",
+  "data": {
+    "2": "4 diameters",
+    "3": "6 diameters",
+    "4": "8 diameters",
+    "5": "10 diameters",
+    "6": "12 diameters",
+    "7": "14 diameters",
+    "8": "16 diameters",
+    "9": "18 diameters",
+    "10": "20 diameters",
+    "11": "22 diameters",
+    "12": "24 diameters",
+    "13": "26 diameters",
+    "14": "28 diameters",
+    "15": "30 diameters",
+    "16": "32 diameters",
+    "17": "34 diameters",
+    "18": "36 diameters",
+    "19": "38 diameters",
+    "20": "40 diameters"
+  },
+  "d_66": false
+}

@@ -1,0 +1,26 @@
+{
+  "name": "Superterran Hydrographics Modifiers (Beyond HZ)",
+  "type": "modifier_table",
+  "base_roll": "1d6 (subterran_hydrographics table)",
+  "size_modifiers": {
+    "size_15-19": {
+      "condition": "Planet size 15(F)-19(K)",
+      "modifier": 1
+    },
+    "size_20+": {
+      "condition": "Planet size 20(L)-24(Q)",
+      "modifier": 3
+    }
+  },
+  "atmosphere_modifiers": {
+    "atmosphere_4-5": {
+      "condition": "Atmosphere code 4 or 5",
+      "modifier": -1
+    },
+    "atmosphere_6-7": {
+      "condition": "Atmosphere code 6 or 7",
+      "modifier": 1
+    }
+  },
+  "notes": "Roll on subterran_hydrographics table (1d6), then apply size and atmosphere modifiers."
+}

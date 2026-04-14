@@ -1,0 +1,9 @@
+{
+  "name": "Mercurian Size",
+  "expression": "d6",
+  "data": {
+    "2,4,6": "2",
+    "1,3,5": "3"
+  },
+  "d_66": false
+}

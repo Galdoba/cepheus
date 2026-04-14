@@ -16,10 +16,10 @@ var (
 )
 
 type GameTable struct {
-	Name       string
-	Expression string
-	Data       map[string]string
-	D66        bool
+	Name       string            `json:"name"`
+	Expression string            `json:"expression"`
+	Data       map[string]string `json:"data"`
+	D66        bool              `json:"d_66"`
 }
 
 func New(name, expression string, data map[string]string) GameTable {

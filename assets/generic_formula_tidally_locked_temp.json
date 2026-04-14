@@ -1,0 +1,14 @@
+{
+  "name": "Tidally Locked Temperature",
+  "type": "formula_collection",
+  "formulas": {
+    "day_side": {
+      "formula": "D = T * R",
+      "notes": "D = Day Side Temp in Kelvin, T = Average Temp in Kelvin, R = Atmosphere Code Modifier (varies by atmosphere type)"
+    },
+    "night_side": {
+      "formula": "N = T * Z",
+      "notes": "N = Night Side Temp in Kelvin, Z = Atmosphere Code Modifier for night side (varies by atmosphere type)"
+    }
+  }
+}

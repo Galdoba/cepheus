@@ -1,0 +1,14 @@
+{
+  "name": "Object Type",
+  "expression": "d100",
+  "data": {
+    "1-80": "Star",
+    "81-88": "Brown Dwarf",
+    "89-94": "Rogue Planet",
+    "95-97": "Rogue Gas Giant",
+    "98": "Neutron Star",
+    "99": "Nebula",
+    "100": "Black Hole"
+  },
+  "d_66": false
+}

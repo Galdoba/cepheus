@@ -1,0 +1,11 @@
+{
+  "name": "Superterran Population Modifiers",
+  "type": "formula_table",
+  "description": "Roll formula depends on atmosphere and zone",
+  "data": {
+    "Habitable Zone, Atm >= 10": "1d6-3",
+    "Habitable Zone, Atm < 10": "2d6-2",
+    "Inner Zone": "2d6-4",
+    "Beyond HZ": "2d6-4"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Planet Type (Habitable Zone)",
+  "expression": "2d6",
+  "data": {
+    "2-3": "Dwarf",
+    "4-6": "Mercurian",
+    "7-8": "Subterran",
+    "9-10": "Terran",
+    "11-12": "Superterran"
+  },
+  "d_66": false
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Numeric Classification (Step 5)",
+  "type": "formula",
+  "formula": "1d10",
+  "notes": "Result is 0-9 directly (0 = warmest, 9 = coolest). Used to determine star subtype within stellar class (e.g., G2, K5, M3)."
+}

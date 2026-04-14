@@ -1,0 +1,6 @@
+{
+  "name": "Subterran Atmosphere (Beyond Habitable Zone)",
+  "type": "formula",
+  "formula": "1d6+1",
+  "notes": "Result is atmosphere code. May need hydrographics modifier applied afterward."
+}

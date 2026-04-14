@@ -1,0 +1,33 @@
+{
+  "name": "Government (Superterran, Beyond HZ)",
+  "type": "government_table",
+  "base_roll": "2d6",
+  "columns": ["roll", "code", "government", "law_level"],
+  "data": {
+    "2": {
+      "code": "0",
+      "government": "None",
+      "law_level": "0"
+    },
+    "3-4": {
+      "code": "1",
+      "government": "Company",
+      "law_level": "1d6+4"
+    },
+    "5-6": {
+      "code": "6",
+      "government": "Captive research",
+      "law_level": "1d6+5"
+    },
+    "7-8": {
+      "code": "6",
+      "government": "Military base",
+      "law_level": "1d6+5"
+    },
+    "9-12": {
+      "code": "Normal",
+      "government": "Roll normally",
+      "law_level": "Normal"
+    }
+  }
+}

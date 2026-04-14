@@ -1,0 +1,38 @@
+{
+  "name": "Government (Terran, Beyond HZ)",
+  "type": "government_table",
+  "base_roll": "2d6",
+  "columns": ["roll", "code", "government", "law_level"],
+  "data": {
+    "2": {
+      "code": "0",
+      "government": "None",
+      "law_level": "0"
+    },
+    "3": {
+      "code": "1",
+      "government": "Company",
+      "law_level": "2d6-1"
+    },
+    "4-5": {
+      "code": "6",
+      "government": "Captive research",
+      "law_level": "2d6-1"
+    },
+    "6-7": {
+      "code": "6",
+      "government": "Refueling station",
+      "law_level": "2d6"
+    },
+    "8-9": {
+      "code": "6",
+      "government": "Military base",
+      "law_level": "2d6"
+    },
+    "10-12": {
+      "code": "Normal",
+      "government": "Roll normally",
+      "law_level": "Normal"
+    }
+  }
+}

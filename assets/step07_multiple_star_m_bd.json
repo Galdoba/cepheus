@@ -1,0 +1,10 @@
+{
+  "name": "Multiple Star System (M/Brown Dwarf)",
+  "expression": "d100",
+  "data": {
+    "1-69": "Single Star System",
+    "70-98": "Binary Star System",
+    "99-100": "Trinary Star System"
+  },
+  "d_66": false
+}

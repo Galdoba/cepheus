@@ -1,0 +1,10 @@
+{
+  "name": "Blackbody Temperature",
+  "type": "formula",
+  "formula": "B = (271 * L^0.25) / sqrt(D)",
+  "variables": {
+    "B": "Blackbody Temperature in Kelvin",
+    "L": "Solar Luminosity in Solar Units",
+    "D": "Distance from star in AU"
+  }
+}

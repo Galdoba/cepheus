@@ -1,0 +1,12 @@
+{
+  "name": "Rotation Period (Base)",
+  "type": "formula",
+  "formula": "P = W + M/D",
+  "variables": {
+    "P": "Rotation period in hours",
+    "W": "4d10+5 (base rotation)",
+    "M": "Mass of star in Solar Masses",
+    "D": "Orbital distance in AU"
+  },
+  "notes": "If result >45 hours, roll on rotation_period table."
+}

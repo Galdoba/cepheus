@@ -1,0 +1,17 @@
+{
+  "name": "Hydrographics Modifiers (Ice Worlds)",
+  "type": "modifier_table",
+  "base_roll": "1d6",
+  "description": "Apply modifier based on atmosphere before looking up hydrographics table",
+  "modifiers": {
+    "atmosphere_4-5": {
+      "condition": "Atmosphere code 4 or 5",
+      "modifier": -1
+    },
+    "atmosphere_6-7": {
+      "condition": "Atmosphere code 6 or 7",
+      "modifier": 1
+    }
+  },
+  "notes": "Used for Subterran/Terran/Superterran hydrographics beyond HZ. After modifier, look up subterran_hydrographics table."
+}

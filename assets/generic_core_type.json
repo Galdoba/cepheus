@@ -1,0 +1,42 @@
+{
+  "name": "Planet Core Type",
+  "type": "threshold_table",
+  "base_roll": "2d6",
+  "thresholds": [
+    {
+      "max": 6,
+      "result": "Molten"
+    },
+    {
+      "min": 7,
+      "max": 15,
+      "result": "Rocky"
+    },
+    {
+      "min": 16,
+      "result": "Icy"
+    }
+  ],
+  "modifiers": [
+    {
+      "condition": "Size <= 5, between Inner Limit and Snow Line",
+      "modifier": 3
+    },
+    {
+      "condition": "Size >= 6, between Inner Limit and Habitable Zone",
+      "modifier": -2
+    },
+    {
+      "condition": "Size >= 6, in Habitable Zone",
+      "modifier": -4
+    },
+    {
+      "condition": "Size <= 5, beyond Snow Line",
+      "modifier": 9
+    },
+    {
+      "condition": "Size >= 6, beyond Snow Line",
+      "modifier": 3
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "Dominant Life on the Planet",
+  "expression": "2d10",
+  "data": {
+    "2": "No life",
+    "3": "No life",
+    "4": "No life",
+    "5": "Single-celled (water only)",
+    "6": "Single-celled (water only)",
+    "7": "Single-celled (land+water), early multicellular",
+    "8": "Single-celled (land+water), early multicellular",
+    "9": "Multicellular water life, algae",
+    "10": "Multicellular water life, algae",
+    "11": "Small fish, mosses, primitive insects",
+    "12": "Small fish, mosses, primitive insects",
+    "13": "Larger fish, ferns, mites/scorpions",
+    "14": "Larger fish, ferns, mites/scorpions",
+    "15": "Ferns/mosses, insects, amphibians",
+    "16": "Ferns/mosses, insects, amphibians",
+    "17": "Conifers, insects/amphibians/small mammals",
+    "18": "Conifers, insects/amphibians/small mammals",
+    "19": "Fish/mammals in water, small mammals/reptiles on land",
+    "20": "Full ecosystem"
+  },
+  "d_66": false
+}

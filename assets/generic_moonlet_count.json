@@ -1,0 +1,6 @@
+{
+  "name": "Moonlet Count (Gas Giants)",
+  "type": "formula",
+  "formula": "d100",
+  "notes": "Result is the number of moonlets. Not a lookup table -- the roll IS the answer."
+}

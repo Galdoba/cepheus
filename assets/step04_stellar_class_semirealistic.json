@@ -1,0 +1,14 @@
+{
+  "name": "Stellar Class (Semi-realistic)",
+  "expression": "d100",
+  "data": {
+    "1-50": "M",
+    "51-77": "K",
+    "78-90": "G",
+    "91-97": "F",
+    "98": "A",
+    "99": "B",
+    "100": "O"
+  },
+  "d_66": false
+}

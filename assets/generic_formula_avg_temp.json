@@ -1,0 +1,11 @@
+{
+  "name": "Average Surface Temperature",
+  "type": "formula",
+  "formula": "T = B * (1-A)^0.25 * (1+E)",
+  "variables": {
+    "T": "Average Surface Temperature in Kelvin",
+    "B": "Blackbody Temperature in Kelvin",
+    "A": "Albedo",
+    "E": "Greenhouse Effect"
+  }
+}

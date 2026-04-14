@@ -1,0 +1,13 @@
+{
+  "name": "Asteroid Belt Population",
+  "type": "formula_table",
+  "description": "Formula depends on belt composition and asteroid size",
+  "data": {
+    "Standard (Inner-Snow Line)": "1d6-3",
+    ">10% metal rich (Inner-Snow Line)": "1d6-2",
+    "Asteroids <=50m (Inner-Snow Line)": "1d6-4",
+    "Standard (Beyond Snow Line)": "1d6-3",
+    ">60% hydrocarbons (Beyond Snow Line)": "1d6-2"
+  },
+  "notes": "Treat any result of less than zero as 0."
+}

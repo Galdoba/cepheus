@@ -1,0 +1,9 @@
+{
+  "name": "Ring System Check",
+  "expression": "d6",
+  "data": {
+    "1-4": "No ring",
+    "5-6": "RingSystemTable"
+  },
+  "d_66": false
+}

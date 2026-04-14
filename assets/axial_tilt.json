@@ -1,0 +1,13 @@
+{
+  "name": "Axial Tilt",
+  "expression": "2d10",
+  "data": {
+    "2-5": "0 + 1d10-1 degrees",
+    "6-9": "10 + 1d10-1 degrees",
+    "10-13": "20 + 1d10-1 degrees",
+    "14-17": "30 + 1d10-1 degrees",
+    "18-19": "40 + 1d10-1 degrees",
+    "20": "Extreme"
+  },
+  "d_66": false
+}

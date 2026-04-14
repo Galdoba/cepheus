@@ -1,0 +1,6 @@
+{
+  "name": "Asteroid Belt Count",
+  "type": "formula",
+  "formula": "1d6-3",
+  "notes": "Treat any result of less than zero as 0."
+}

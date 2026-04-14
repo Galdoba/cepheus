@@ -1,0 +1,11 @@
+{
+  "name": "Population Roll Modifiers",
+  "type": "formula_table",
+  "description": "Roll formula depends on planet's atmosphere code",
+  "data": {
+    "Atmosphere 0-5": "1d6-2",
+    "Atmosphere 6-7": "2d6-4",
+    "Atmosphere 10+": "1d6-3"
+  },
+  "notes": "Used for Dwarf/Mercurian/Subterran/Terran/Superterran population in Beyond HZ contexts."
+}
