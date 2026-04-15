@@ -1,12 +1,11 @@
 package dice
 
-func basicRoll(roller Roller, dp Dicepool) *Result {
-	res := Result{}
-	raw := make(map[*Die]int)
-	for _, d := range dp.Dice {
-		raw[&d] = roller.Roll(d)
+// basicRoll rolls every die in the dicepool and returns a Result.
+func basicRoll(r roller, dp dicepool) result {
+	res := result{}
+	for _, d := range dp.dice {
+		res.dice = append(res.dice, d)
+		res.raw = append(res.raw, r.roll(d))
 	}
-	res.Raw = raw
-	return &res
-
+	return res
 }

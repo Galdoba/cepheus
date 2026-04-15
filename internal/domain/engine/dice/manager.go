@@ -5,16 +5,7 @@ import (
 	"slices"
 )
 
-type Manager struct {
-	roller    Roller
-	rollState *RollState
-}
-
-func New(roller Roller) (*Manager, error) {
-	return newManager(roller), nil
-}
-
-func newManager(r Roller) *Manager {
+func newManager(r roller) *Manager {
 	if r == nil {
 		r = defaultRoller
 	}
@@ -24,110 +15,91 @@ func newManager(r Roller) *Manager {
 	}
 }
 
-func newRollState(i Interpreter) *RollState {
-	rs := RollState{}
-	rs.Result = &Result{}
-	rs.Result.Raw = make(map[*Die]int)
-	rs.Interpreter = i
-	return &rs
+func newRollState(i interpreter) *rollState {
+	return &rollState{
+		result:      result{},
+		interpreter: i,
+	}
 }
 
-func (m *Manager) Result() *Result {
-	return m.rollState.Result
+// Result returns the last roll result. The caller must not modify the returned slices.
+// This method is safe for concurrent use.
+func (m *Manager) Result() Result {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return Result{dice: m.rollState.result.dice, raw: m.rollState.result.raw}
 }
 
-func (m *Manager) RollSafe(expr string) error {
-	expStruct, ok := exprCache.Get(expr)
+// roll parses the expression (using cache) and performs the basic roll.
+// It must be called with the mutex held.
+func (m *Manager) roll(expr string) error {
+	expStruct, ok := exprCache.get(expr)
 	if !ok {
 		var err error
 		expStruct, err = newExpression(expr)
 		if err != nil {
-			return fmt.Errorf("failed to parse expresion %q: %w", expr, err)
+			return fmt.Errorf("failed to parse expression %q: %w", expr, err)
 		}
-		exprCache.Set(expr, expStruct)
+		exprCache.set(expr, expStruct)
 	}
-	m.rollState.Expression = expStruct
-	m.rollState.Result = basicRoll(m.roller, m.rollState.Expression.Dicepool)
+	m.rollState.expression = expStruct
+	m.rollState.result = basicRoll(m.roller, m.rollState.expression.dicepool)
 	return nil
 }
 
-type RollState struct {
-	Expression  *Expression
-	Result      *Result
-	Interpreter Interpreter
+type rollState struct {
+	expression  *expression
+	result      result
+	interpreter interpreter
 }
 
-type Expression struct {
-	Code     string
-	Dicepool Dicepool
-	Mods     []Mod
+type expression struct {
+	code     string
+	dicepool dicepool
+	mods     []mod
 }
 
-func newExpression(expr string) (*Expression, error) {
+func newExpression(expr string) (*expression, error) {
 	dp, mods, err := parseExpression(expr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse expression %q: %w", expr, err)
 	}
-	e := Expression{
-		Code:     expr,
-		Dicepool: dp,
-		Mods:     mods,
-	}
-	return &e, nil
+	return &expression{
+		code:     expr,
+		dicepool: dp,
+		mods:     mods,
+	}, nil
 }
 
-type Result struct {
-	Raw map[*Die]int
+type result struct {
+	dice []die
+	raw  []int
 }
 
-func (rs *RollState) Sum() (int, error) {
-	switch rs.Interpreter.(type) {
-	default:
-		return 0, fmt.Errorf("wrong interpreter type")
-	case *stdInterpreter:
-	}
-	in, err := rs.Interpreter.Interpret(rs)
-	if err != nil {
-		return 0, fmt.Errorf("interpretation failed: %w", err)
-	}
-	return in.Sum, nil
+type interpreter interface {
+	interpret(*rollState) (interpretation, error)
 }
 
-type Interpreter interface {
-	Interpret(*RollState) (Interpretation, error)
-}
-
-type Interpretation struct {
-	Sum   int
-	Code  string
-	Valid bool
+type interpretation struct {
+	sum   int
+	code  string
+	valid bool
 }
 
 type stdInterpreter struct{}
 
-func (si stdInterpreter) Interpret(rs *RollState) (Interpretation, error) {
-	raw := []int{}
-	for _, value := range rs.Result.Raw {
-		raw = append(raw, value)
-	}
-
-	mid := slices.Clone(raw)
+func (si stdInterpreter) interpret(rs *rollState) (interpretation, error) {
+	mid := slices.Clone(rs.result.raw)
 	var err error
-	for _, m := range rs.Expression.Mods {
-		mid, err = m.Apply(mid)
+	for _, m := range rs.expression.mods {
+		mid, err = m.apply(mid)
 		if err != nil {
-			return Interpretation{}, fmt.Errorf("failed to apply mod: %w", err)
+			return interpretation{}, fmt.Errorf("failed to apply mod: %w", err)
 		}
 	}
-	s := 0
+	sum := 0
 	for _, v := range mid {
-		s += v
+		sum += v
 	}
-	in := Interpretation{}
-	in.Sum = s
-	in.Code = fmt.Sprintf("%d", s)
-	in.Valid = true
-	return in, nil
+	return interpretation{sum: sum, code: fmt.Sprintf("%d", sum), valid: true}, nil
 }
-
-type concInterpreter struct{}

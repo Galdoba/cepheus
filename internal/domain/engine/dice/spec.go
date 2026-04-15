@@ -1,8 +1,10 @@
+// Package dice provides a flexible dice rolling system with expression parsing,
+// modifier chaining, and support for common RPG mechanics (D66, Flux, etc.).
 package dice
 
-import "math/rand"
+import "sync"
 
-var defaultRoller Roller
+var defaultRoller roller
 var defaultManager *Manager
 
 func init() {
@@ -10,32 +12,37 @@ func init() {
 	defaultManager = newManager(defaultRoller)
 }
 
-// Die is a elementary component of Dicepool
-type Die struct {
-	Faces    int
-	Codes    map[int]string    // текстовые обозначения для UI/логов (например, 20→"crit")
-	Metadata map[string]string // цвет, имя, теги
-}
-
-// Dicepool describes composition of dice and modifications of the result.
-type Dicepool struct {
-	Type      string
-	Dice      []Die
-	Modifiers []Mod // в порядке применения
-	Metadata  map[string]string
-	roller    *Roller
-}
-
-// Roller
-
+// Roller is the interface that wraps the Roll method.
+// It defines how a single die is rolled.
 type Roller interface {
-	Roll(Die) int
+	roll(die) int
 }
 
-type randRoller struct {
-	rng *rand.Rand
+// Manager coordinates dice rolling, expression caching, and result interpretation.
+type Manager struct {
+	roller    roller
+	rollState *rollState
+	mu        sync.Mutex
 }
 
-func (r *randRoller) Roll(d Die) int {
-	return r.rng.Intn(d.Faces) + 1
+// New creates a new Manager with the given Roller.
+// If roller is nil, the default (math/rand with random seed) is used.
+func New(seed string) (*Manager, error) {
+	return newManager(newRoller(seed)), nil
+}
+
+// Result contains the dice that were rolled and their raw values (order preserved).
+type Result struct {
+	dice []die
+	raw  []int
+}
+
+// Dice returns a copy of the dice that were rolled.
+func (r Result) Dice() []die {
+	return append([]die(nil), r.dice...)
+}
+
+// Raw returns a copy of the raw roll results.
+func (r Result) Raw() []int {
+	return append([]int(nil), r.raw...)
 }

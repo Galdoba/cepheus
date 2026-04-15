@@ -1,37 +1,33 @@
 package dice
 
-import (
-	"sync"
-)
+import "sync"
 
-var (
-	exprCache = &ExpressionCache{}
-)
+var exprCache = &expressionCache{}
 
-type ExpressionCache struct {
+type expressionCache struct {
 	mu    sync.RWMutex
-	cache map[string]*Expression
+	cache map[string]*expression
 }
 
-func (ec *ExpressionCache) Get(expr string) (*Expression, bool) {
+func (ec *expressionCache) get(expr string) (*expression, bool) {
 	ec.mu.RLock()
 	defer ec.mu.RUnlock()
 	exp, ok := ec.cache[expr]
 	return exp, ok
 }
 
-func (ec *ExpressionCache) Set(expr string, exp *Expression) {
+func (ec *expressionCache) set(expr string, exp *expression) {
 	ec.mu.Lock()
 	defer ec.mu.Unlock()
 	ec.cache[expr] = exp
 }
 
-func (ec *ExpressionCache) Clear() {
+func (ec *expressionCache) clear() {
 	ec.mu.Lock()
 	defer ec.mu.Unlock()
-	ec.cache = make(map[string]*Expression)
+	ec.cache = make(map[string]*expression)
 }
 
 func init() {
-	exprCache.cache = make(map[string]*Expression)
+	exprCache.cache = make(map[string]*expression)
 }
