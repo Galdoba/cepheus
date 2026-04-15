@@ -1,9 +1,10 @@
 package tables
 
 import (
+	"encoding/json"
 	"fmt"
-
-	"github.com/Galdoba/cepheus/internal/domain/engine/dice"
+	"os"
+	"path/filepath"
 )
 
 type Collection struct {
@@ -35,11 +36,16 @@ func NewCollection(name string, tables ...GameTable) (*Collection, error) {
 }
 
 func (tc *Collection) Reset() {
+	tc.rollSequence = []string{}
 	tc.results = []string{}
 }
 
-func (tc *Collection) Roll(dm *dice.Manager, name string, mods ...int) (string, error) {
+func (tc *Collection) Roll(roller TableRoller, name string, mods ...int) (string, error) {
 	table := GameTable{}
+	var err error
+	if roller == nil {
+		return "", fmt.Errorf("nil roller provided")
+	}
 	if found, ok := tc.Tables[name]; !ok {
 		return "", fmt.Errorf("table %q not found in collection %q", name, tc.Name)
 	} else {
@@ -50,10 +56,13 @@ func (tc *Collection) Roll(dm *dice.Manager, name string, mods ...int) (string, 
 	result := ""
 	switch table.D66 {
 	case true:
-		indexStr = dm.D66(mods...)
+		indexStr = roller.D66(mods...)
 		result = table.Data[indexStr]
 	case false:
-		index = dm.Roll(table.Expression, mods...)
+		index, err = roller.Roll(table.Expression, mods...)
+		if err != nil {
+			return "", fmt.Errorf("roll on table %q (expression %q %v) failed: %w", table.Name, table.Expression, mods, err)
+		}
 	search_loop:
 		for indexStr, value := range table.Data {
 			candidates, _ := stringToIndexes(indexStr) //skip error because it supposed to be validated by now
@@ -74,12 +83,14 @@ func (tc *Collection) Roll(dm *dice.Manager, name string, mods ...int) (string, 
 	return result, nil
 }
 
-func (tc *Collection) RollCascade(dm *dice.Manager, name string) (string, error) {
+func (tc *Collection) RollCascade(roller TableRoller, name string) (string, error) {
 	maxDepth := 1000
 	currentTable := name
-
-	for depth := 0; depth < maxDepth; depth++ {
-		result, err := tc.Roll(dm, currentTable)
+	if name == "" {
+		return "", fmt.Errorf("no name for starting table")
+	}
+	for depth := range maxDepth {
+		result, err := tc.Roll(roller, currentTable)
 		if err != nil {
 			return "", fmt.Errorf("cascade failed at depth %d: %w", depth, err)
 		}
@@ -108,4 +119,39 @@ func (tc *Collection) Validate() error {
 		}
 	}
 	return nil
+}
+
+func Save(t GameTable, path string) error {
+	data, err := json.MarshalIndent(&t, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal table: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0777); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		return fmt.Errorf("failed to open/create file: %w", err)
+	}
+	defer f.Close()
+
+	if err := f.Truncate(0); err != nil {
+		return fmt.Errorf("failed to clean table file: %w", err)
+	}
+	if _, err := f.Write(data); err != nil {
+		return fmt.Errorf("failed to write table to file: %w", err)
+	}
+	return nil
+}
+
+func Load(path string) (GameTable, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return GameTable{}, fmt.Errorf("failed to read table file: %w", err)
+	}
+	tab := GameTable{}
+	if err := json.Unmarshal(data, &tab); err != nil {
+		return GameTable{}, fmt.Errorf("failed to unmarshal table data: %w", err)
+	}
+	return tab, nil
 }

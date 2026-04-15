@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
-
-	"github.com/Galdoba/cepheus/internal/domain/engine/dice"
 )
 
 var (
@@ -23,13 +22,11 @@ type GameTable struct {
 }
 
 func New(name, expression string, data map[string]string) GameTable {
-	return GameTable{Name: name, Expression: expression, Data: data}
-}
-
-func (t GameTable) WithD66Roll(d66 bool) GameTable {
-	t.D66 = d66
-	t.Expression = ""
-	return t
+	d66 := false
+	if expression == "D66" || expression == "d66" {
+		d66 = true
+	}
+	return GameTable{Name: name, Expression: expression, Data: data, D66: d66}
 }
 
 func (t GameTable) Validate() error {
@@ -39,15 +36,8 @@ func (t GameTable) Validate() error {
 	if len(t.Data) < 2 {
 		return fmt.Errorf("table %q must have at least 2 entries", t.Name)
 	}
-	switch t.D66 {
-	case false:
-		if err := dice.ValidateExpression(t.Expression); err != nil {
-			return fmt.Errorf("table %q expression is not parseable: %w", t.Name, err)
-		}
-	case true:
-		if t.Expression != "" {
-			return fmt.Errorf("table %q is D66 table: expression is not empty", t.Name)
-		}
+	if err := validateExpression(t.Expression); err != nil {
+		return fmt.Errorf("table %q expression is not parseable: %w", t.Name, err)
 	}
 	indexes := make([]int, 0, len(t.Data))
 	indexMet := make(map[int]int)
@@ -86,9 +76,9 @@ func (t GameTable) Validate() error {
 	return nil
 }
 
-type TableCollection struct {
-	tables map[string]GameTable
-}
+// type TableCollection struct {
+// 	tables map[string]GameTable
+// }
 
 const (
 	andAbove = 1001
@@ -223,7 +213,45 @@ func stringToIndexes(s string) ([]int, error) {
 }
 
 func mustParseInt(s string) int {
-	n := 0
-	fmt.Sscanf(s, "%d", &n)
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		panic("must not hapen")
+	}
 	return n
+}
+
+//expresion validation
+
+var dicePattern = regexp.MustCompile(`^(\d*)d(\d+)([+-]\d+)?$`)
+
+func validateExpression(expr string) error {
+	if expr == "d66" || expr == "D66" {
+		return nil
+	}
+	matches := dicePattern.FindStringSubmatch(expr)
+	if matches == nil {
+		return fmt.Errorf("invalid format: expected 'XdY', 'XdY+Z' or 'XdY-Z'")
+	}
+
+	xStr, yStr, modStr := matches[1], matches[2], matches[3]
+
+	y, err := strconv.Atoi(yStr)
+	if err != nil || y <= 0 {
+		return fmt.Errorf("number of faces (Y) must be a positive integer, got %q", yStr)
+	}
+
+	if xStr != "" {
+		x, err := strconv.Atoi(xStr)
+		if err != nil || x <= 0 {
+			return fmt.Errorf("number of dice (X) must be a positive integer, got %q", xStr)
+		}
+	}
+
+	if modStr != "" {
+		if _, err := strconv.Atoi(modStr); err != nil {
+			return fmt.Errorf("modifier (N) must be an integer, got %q", modStr)
+		}
+	}
+
+	return nil
 }
