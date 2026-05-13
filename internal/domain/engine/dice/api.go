@@ -143,3 +143,14 @@ func setBounds(val, min, max int) int {
 	}
 	return val
 }
+
+// InRange return random value between min and max.
+// If min > max or step < 0 it return min.
+func (m *Manager) InRange(min, max, step float64) float64 {
+	if min >= max || step <= 0 {
+		return min
+	}
+	count := int((max-min)/step) + 1
+	roll := m.MustRoll(fmt.Sprintf("1d%d", count)) - 1
+	return min + float64(roll)*step
+}
