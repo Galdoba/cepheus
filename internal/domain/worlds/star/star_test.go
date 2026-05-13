@@ -5,11 +5,21 @@ import (
 	"testing"
 )
 
-func Test_defineStarKeys(t *testing.T) {
-	// "D" заменён на "D7" (валидный), добавлен "BD"
-	for _, sk := range Parse("G2 V O3 III BD; D7; L4  D2") {
-		fmt.Println(sk)
-		s, n, l := parseKey(sk)
-		fmt.Printf("stellar=%q; num=%q luma=%q\n", s, n, l)
+func TestDefault(t *testing.T) {
+	for k, v := range defaultRegistry.Data {
+		// fmt.Println(k, v)
+		if len(v) != 8 {
+			fmt.Printf("%s: have %v elements\n", k, len(v))
+		}
+		if v[6] < v[5] && v[6] != 0 && v[5] != 0 {
+			fmt.Printf("%s: have minmax habitable\n", k)
+		}
+		if v[6] > v[7] && v[6] != 0 {
+			fmt.Printf("%s: have minmax outer\n", k)
+		}
+		if v[4] > v[5] && v[5] != 0 {
+			fmt.Printf("%s: have minmax inner\n", k)
+		}
 	}
+
 }
